@@ -4,6 +4,9 @@ import com.cemenghui.course.entity.Course;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.cemenghui.course.entity.Comment;
 
 /**
  * 课程服务接口
@@ -43,4 +46,24 @@ public interface CourseService {
      * @return 热搜关键词列表
      */
     List<String> getHotSearchTrends();
+
+    /**
+     * 收藏/取消收藏
+     */
+    boolean favoriteCourse(Long courseId, Long userId);
+
+    /**
+     * 点赞/取消点赞
+     */
+    boolean likeCourse(Long courseId, Long userId);
+
+    /**
+     * 发表评论
+     */
+    boolean commentCourse(Long courseId, Long userId, String content);
+
+    /**
+     * 获取课程评论分页
+     */
+    Page<Comment> getCourseComments(Long courseId, Pageable pageable);
 } 

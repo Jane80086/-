@@ -1,7 +1,5 @@
-package com.cemenghui.course.service;
+package com.cemenghui.course.service.impl;
 
-import com.cemenghui.course.entity.Course;
-import com.cemenghui.course.entity.FeaturedCourse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -18,7 +16,7 @@ import java.util.*;
  * 集成MCP服务器提供智能推荐功能
  */
 @Service
-public class CourseRecommendationService {
+public class CourseRecommendationServiceImpl {
 
     @Autowired
     private RestTemplate restTemplate;

@@ -5,6 +5,8 @@ import com.cemenghui.course.entity.Question;
 import com.cemenghui.course.service.AIService;
 import com.cemenghui.course.service.QnAService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,6 +101,54 @@ public class QnAServiceImpl implements QnAService {
     public boolean deleteQuestion(Long id) {
         if (!questionRepo.existsById(id)) return false;
         questionRepo.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public Page<Question> getQuestionsByCoursePaged(Long courseId, Pageable pageable) {
+        return questionRepo.findByCourseId(courseId, pageable);
+    }
+
+    @Override
+    @Transactional
+    public boolean likeQuestion(Long id, Long userId) {
+        Question question = questionRepo.findById(id).orElse(null);
+        if (question == null) return false;
+        if (question.getLikeCount() == null) question.setLikeCount(0);
+        question.setLikeCount(question.getLikeCount() + 1); // 简化：不做用户去重
+        questionRepo.save(question);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean reportQuestion(Long id, Long userId, String reason) {
+        Question question = questionRepo.findById(id).orElse(null);
+        if (question == null) return false;
+        if (question.getReportCount() == null) question.setReportCount(0);
+        question.setReportCount(question.getReportCount() + 1);
+        questionRepo.save(question);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean acceptAnswer(Long id, String answerType, String answerContent) {
+        Question question = questionRepo.findById(id).orElse(null);
+        if (question == null) return false;
+        question.setAcceptAnswerType(answerType);
+        question.setAcceptAnswerContent(answerContent);
+        questionRepo.save(question);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean manualReply(Long id, String replyContent, Long replyUserId) {
+        Question question = questionRepo.findById(id).orElse(null);
+        if (question == null) return false;
+        question.setManualAnswer(replyContent);
+        questionRepo.save(question);
         return true;
     }
 }

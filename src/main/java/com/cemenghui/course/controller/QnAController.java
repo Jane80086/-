@@ -4,6 +4,8 @@ import com.cemenghui.course.common.Result;
 import com.cemenghui.course.entity.Question;
 import com.cemenghui.course.service.QnAService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -112,6 +114,89 @@ public class QnAController {
             }
         } catch (Exception e) {
             return Result.fail("问题删除失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 分页获取课程问答
+     */
+    @GetMapping("/course/{courseId}/page")
+    public Result getQuestionsByCoursePaged(@PathVariable Long courseId,
+                                            @RequestParam(defaultValue = "0") int page,
+                                            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Page<Question> questions = qnaService.getQuestionsByCoursePaged(courseId, PageRequest.of(page, size));
+            return Result.success(questions);
+        } catch (Exception e) {
+            return Result.fail("分页获取问答失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 点赞问题
+     */
+    @PostMapping("/{id}/like")
+    public Result likeQuestion(@PathVariable Long id, @RequestParam Long userId) {
+        try {
+            boolean success = qnaService.likeQuestion(id, userId);
+            if (success) {
+                return Result.success("点赞成功", null);
+            } else {
+                return Result.fail("问题不存在或点赞失败");
+            }
+        } catch (Exception e) {
+            return Result.fail("点赞失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 举报问题
+     */
+    @PostMapping("/{id}/report")
+    public Result reportQuestion(@PathVariable Long id, @RequestParam Long userId, @RequestParam String reason) {
+        try {
+            boolean success = qnaService.reportQuestion(id, userId, reason);
+            if (success) {
+                return Result.success("举报成功", null);
+            } else {
+                return Result.fail("问题不存在或举报失败");
+            }
+        } catch (Exception e) {
+            return Result.fail("举报失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 采纳答案
+     */
+    @PostMapping("/{id}/accept")
+    public Result acceptAnswer(@PathVariable Long id, @RequestParam String answerType, @RequestParam String answerContent) {
+        try {
+            boolean success = qnaService.acceptAnswer(id, answerType, answerContent);
+            if (success) {
+                return Result.success("采纳成功", null);
+            } else {
+                return Result.fail("问题不存在或采纳失败");
+            }
+        } catch (Exception e) {
+            return Result.fail("采纳失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 人工回复（分离）
+     */
+    @PostMapping("/{id}/manual-reply")
+    public Result manualReply(@PathVariable Long id, @RequestParam String replyContent, @RequestParam(defaultValue = "1") Long replyUserId) {
+        try {
+            boolean success = qnaService.manualReply(id, replyContent, replyUserId);
+            if (success) {
+                return Result.success("人工回复提交成功", null);
+            } else {
+                return Result.fail("问题不存在或回复失败");
+            }
+        } catch (Exception e) {
+            return Result.fail("人工回复失败: " + e.getMessage());
         }
     }
 } 
