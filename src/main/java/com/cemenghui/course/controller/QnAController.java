@@ -63,7 +63,23 @@ public class QnAController {
     }
 
     /**
-     * 手动回复问题
+     * 获取单个问题详情
+     */
+    @GetMapping("/{id}")
+    public Result getQuestionDetail(@PathVariable Long id) {
+        try {
+            Question question = qnaService.getQuestionById(id);
+            if (question == null) {
+                return Result.fail("问题不存在");
+            }
+            return Result.success(question);
+        } catch (Exception e) {
+            return Result.fail("获取问题详情失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 手动回复问题（保存人工回复）
      */
     @PostMapping("/{id}/reply")
     public Result replyQuestion(
@@ -71,23 +87,29 @@ public class QnAController {
             @RequestParam String replyContent,
             @RequestParam(defaultValue = "1") Long replyUserId) {
         try {
-            // 这里需要实现手动回复逻辑
-            // 简化实现，返回成功消息
-            return Result.success("回复提交成功", null);
+            boolean success = qnaService.replyQuestion(id, replyContent, replyUserId);
+            if (success) {
+                return Result.success("回复提交成功", null);
+            } else {
+                return Result.fail("问题不存在或回复失败");
+            }
         } catch (Exception e) {
             return Result.fail("回复提交失败: " + e.getMessage());
         }
     }
 
     /**
-     * 删除问题
+     * 删除问题（真正删除数据库记录）
      */
     @DeleteMapping("/{id}")
     public Result deleteQuestion(@PathVariable Long id) {
         try {
-            // 这里需要实现删除逻辑
-            // 简化实现，返回成功消息
-            return Result.success("问题删除成功", null);
+            boolean success = qnaService.deleteQuestion(id);
+            if (success) {
+                return Result.success("问题删除成功", null);
+            } else {
+                return Result.fail("问题不存在或删除失败");
+            }
         } catch (Exception e) {
             return Result.fail("问题删除失败: " + e.getMessage());
         }

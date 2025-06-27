@@ -29,4 +29,19 @@ public interface QnAService {
      * @return AI生成的回复
      */
     String autoReply(Question question);
+
+    /**
+     * 根据ID获取单个问题详情
+     */
+    Question getQuestionById(Long id);
+
+    /**
+     * 手动回复问题（保存人工回复）
+     */
+    boolean replyQuestion(Long id, String replyContent, Long replyUserId);
+
+    /**
+     * 删除问题（真正删除数据库记录）
+     */
+    boolean deleteQuestion(Long id);
 } 

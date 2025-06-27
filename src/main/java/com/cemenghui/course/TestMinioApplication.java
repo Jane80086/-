@@ -10,7 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 import java.util.List;
 
-@SpringBootApplication
+//@SpringBootApplication
 @ComponentScan(basePackages = {"com.cemenghui.course.config"})
 public class TestMinioApplication implements CommandLineRunner {
 
