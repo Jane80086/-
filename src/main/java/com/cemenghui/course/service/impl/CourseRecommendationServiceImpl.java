@@ -1,7 +1,5 @@
 package com.cemenghui.course.service.impl;
 
-import com.cemenghui.course.entity.Course;
-import com.cemenghui.course.entity.FeaturedCourse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

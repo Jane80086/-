@@ -55,6 +55,12 @@ public class Course implements Serializable {
     @Column(name = "updated_time")
     private LocalDateTime updatedTime = LocalDateTime.now();
 
+    @Column(name = "like_count")
+    private Integer likeCount = 0;
+
+    @Column(name = "favorite_count")
+    private Integer favoriteCount = 0;
+
     /**
      * 播放该课程内容
      * @throws Exception 可能抛出的异常
@@ -96,7 +102,7 @@ public class Course implements Serializable {
      * 课程创建成功事件
      * @param courseId 课程ID
      */
-    protected void onCourseCreated(Long courseId) {
+    public void onCourseCreated(Long courseId) {
         // 新课程入库，记录创建行为
     }
 

@@ -30,6 +30,21 @@ public class Question implements Serializable {
     @Column(name = "ai_answer", columnDefinition = "TEXT")
     private String aiAnswer;
 
+    @Column(name = "manual_answer", columnDefinition = "TEXT")
+    private String manualAnswer;
+
+    @Column(name = "like_count")
+    private Integer likeCount = 0;
+
+    @Column(name = "accept_answer_type")
+    private String acceptAnswerType; // AI/MANUAL
+
+    @Column(name = "accept_answer_content", columnDefinition = "TEXT")
+    private String acceptAnswerContent;
+
+    @Column(name = "report_count")
+    private Integer reportCount = 0;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 

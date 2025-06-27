@@ -3,10 +3,13 @@ package com.cemenghui.course.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.cemenghui.course.dao.UserDao;
-import com.cemenghui.course.entity.User;
+import com.cemenghui.course.common.User;
 import com.cemenghui.course.entity.UserType;
 import java.util.List;
 import java.util.Optional;
+import com.cemenghui.course.common.AdminUser;
+import com.cemenghui.course.common.EnterpriseUser;
+import com.cemenghui.course.common.NormalUser;
 
 /**
  * 用户服务
@@ -31,7 +34,16 @@ public class UserServiceImpl {
      * @return 用户列表
      */
     public List<User> findByUserType(UserType userType) {
-        return userDao.findByUserType(userType);
+        switch (userType) {
+            case ADMIN:
+                return new java.util.ArrayList<>(userDao.findAllAdmins());
+            case ENTERPRISE:
+                return new java.util.ArrayList<>(userDao.findAllEnterprises());
+            case NORMAL:
+                return new java.util.ArrayList<>(userDao.findAllNormals());
+            default:
+                return java.util.Collections.emptyList();
+        }
     }
 
     /**

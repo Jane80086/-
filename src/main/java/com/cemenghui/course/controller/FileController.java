@@ -2,7 +2,6 @@ package com.cemenghui.course.controller;
 
 import com.cemenghui.course.common.Result;
 import com.cemenghui.course.service.impl.MinioServiceImpl;
-import com.cemenghui.course.service.impl.MCPServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -21,7 +20,7 @@ import java.util.Map;
 public class FileController {
 
     @Autowired
-    private MinioServiceImpl minioService;
+    private MinioServiceImpl minioServiceImpl;
 
     /**
      * 上传课程封面图片
@@ -29,7 +28,7 @@ public class FileController {
     @PostMapping("/upload/course-cover")
     public Result uploadCourseCover(@RequestParam("file") MultipartFile file) {
         try {
-            String fileUrl = minioService.uploadCourseCover(file);
+            String fileUrl = minioServiceImpl.uploadCourseCover(file);
             Map<String, Object> result = new HashMap<>();
             result.put("fileUrl", fileUrl);
             result.put("fileName", file.getOriginalFilename());
@@ -46,7 +45,7 @@ public class FileController {
     @PostMapping("/upload/course-video")
     public Result uploadCourseVideo(@RequestParam("file") MultipartFile file) {
         try {
-            String fileUrl = minioService.uploadCourseVideo(file);
+            String fileUrl = minioServiceImpl.uploadCourseVideo(file);
             Map<String, Object> result = new HashMap<>();
             result.put("fileUrl", fileUrl);
             result.put("fileName", file.getOriginalFilename());
@@ -63,7 +62,7 @@ public class FileController {
     @PostMapping("/upload/user-avatar")
     public Result uploadUserAvatar(@RequestParam("file") MultipartFile file) {
         try {
-            String fileUrl = minioService.uploadUserAvatar(file);
+            String fileUrl = minioServiceImpl.uploadUserAvatar(file);
             Map<String, Object> result = new HashMap<>();
             result.put("fileUrl", fileUrl);
             result.put("fileName", file.getOriginalFilename());
@@ -80,7 +79,7 @@ public class FileController {
     @PostMapping("/upload/document")
     public Result uploadDocument(@RequestParam("file") MultipartFile file) {
         try {
-            String fileUrl = minioService.uploadDocument(file);
+            String fileUrl = minioServiceImpl.uploadDocument(file);
             Map<String, Object> result = new HashMap<>();
             result.put("fileUrl", fileUrl);
             result.put("fileName", file.getOriginalFilename());
@@ -99,7 +98,7 @@ public class FileController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("folder") String folder) {
         try {
-            String fileUrl = minioService.uploadFile(file, folder);
+            String fileUrl = minioServiceImpl.uploadFile(file, folder);
             Map<String, Object> result = new HashMap<>();
             result.put("fileUrl", fileUrl);
             result.put("fileName", file.getOriginalFilename());
@@ -117,7 +116,7 @@ public class FileController {
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> downloadFile(@RequestParam("objectName") String objectName) {
         try {
-            InputStream inputStream = minioService.downloadFile(objectName);
+            InputStream inputStream = minioServiceImpl.downloadFile(objectName);
             InputStreamResource resource = new InputStreamResource(inputStream);
             
             HttpHeaders headers = new HttpHeaders();
@@ -141,7 +140,7 @@ public class FileController {
     @DeleteMapping("/delete")
     public Result deleteFile(@RequestParam("objectName") String objectName) {
         try {
-            minioService.deleteFile(objectName);
+            minioServiceImpl.deleteFile(objectName);
             return Result.success("文件删除成功", null);
         } catch (Exception e) {
             return Result.fail("文件删除失败: " + e.getMessage());
@@ -154,7 +153,7 @@ public class FileController {
     @GetMapping("/list")
     public Result listFiles(@RequestParam("folder") String folder) {
         try {
-            List<String> files = minioService.listFiles(folder);
+            List<String> files = minioServiceImpl.listFiles(folder);
             return Result.success(files);
         } catch (Exception e) {
             return Result.fail("获取文件列表失败: " + e.getMessage());
@@ -167,7 +166,7 @@ public class FileController {
     @GetMapping("/exists")
     public Result fileExists(@RequestParam("objectName") String objectName) {
         try {
-            boolean exists = minioService.fileExists(objectName);
+            boolean exists = minioServiceImpl.fileExists(objectName);
             Map<String, Object> result = new HashMap<>();
             result.put("exists", exists);
             result.put("objectName", objectName);
@@ -185,7 +184,7 @@ public class FileController {
             @RequestParam("objectName") String objectName,
             @RequestParam(defaultValue = "3600") int expirySeconds) {
         try {
-            String presignedUrl = minioService.getPresignedUrl(objectName, expirySeconds);
+            String presignedUrl = minioServiceImpl.getPresignedUrl(objectName, expirySeconds);
             Map<String, Object> result = new HashMap<>();
             result.put("presignedUrl", presignedUrl);
             result.put("expirySeconds", expirySeconds);

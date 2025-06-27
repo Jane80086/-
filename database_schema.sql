@@ -56,6 +56,8 @@ CREATE TABLE courses (
     status VARCHAR(20) DEFAULT 'DRAFT',
     cover_image VARCHAR(255),
     video_url VARCHAR(255),
+    like_count INTEGER DEFAULT 0,
+    favorite_count INTEGER DEFAULT 0,
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -80,6 +82,11 @@ CREATE TABLE questions (
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     question TEXT NOT NULL,
     ai_answer TEXT,
+    manual_answer TEXT,
+    like_count INTEGER DEFAULT 0,
+    accept_answer_type VARCHAR(20),
+    accept_answer_content TEXT,
+    report_count INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -103,6 +110,17 @@ CREATE TABLE featured_courses (
     start_date DATE,
     end_date DATE,
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 新增课程评论表
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGSERIAL PRIMARY KEY,
+    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    like_count INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'NORMAL'
 );
 
 -- 创建索引
@@ -143,6 +161,12 @@ CREATE INDEX idx_reviews_created_time ON reviews(created_time);
 CREATE INDEX idx_featured_courses_order ON featured_courses(featured_order);
 CREATE INDEX idx_featured_courses_start_date ON featured_courses(start_date);
 CREATE INDEX idx_featured_courses_end_date ON featured_courses(end_date);
+
+-- 新增课程评论表索引
+CREATE INDEX IF NOT EXISTS idx_comments_course ON comments(course_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user ON comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_comments_status ON comments(status);
+CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at);
 
 -- 插入测试数据
 INSERT INTO users (username, password, email, user_type) VALUES 
