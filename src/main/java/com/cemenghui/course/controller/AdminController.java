@@ -1,6 +1,10 @@
 package com.cemenghui.course.controller;
 
-import com.cemenghui.common.Result;
+import com.cemenghui.course.common.Result;
+import com.cemenghui.course.common.User;
+import com.cemenghui.course.common.AdminUser;
+import com.cemenghui.course.common.EnterpriseUser;
+import com.cemenghui.course.common.NormalUser;
 import com.cemenghui.course.service.CourseService;
 import com.cemenghui.course.service.QnAService;
 import com.cemenghui.course.service.impl.UserServiceImpl;
