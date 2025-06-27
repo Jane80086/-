@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: course
+  datasource:
+    url: jdbc:kingbase8://localhost:54321/course_management?characterEncoding=UTF-8&useUnicode=true
+    username: SYSTEM
+    password: 123456
+    driver-class-name: com.kingbase8.Driver
+    hikari:
+      # 连接池配置
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      # 连接测试
+      connection-test-query: SELECT 1
+      validation-timeout: 5000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        # 连接池配置
+        hikari:
+          maximum-pool-size: 10
+          minimum-idle: 5
+          connection-timeout: 30000
+          idle-timeout: 600000
+          max-lifetime: 1800000
+          leak-detection-threshold: 60000
+          connection-test-query: SELECT 1
+          validation-timeout: 5000
+  security:
+    user:
+      name: admin
+      password: admin123
+
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      cache:
+        type: redis
+      data:
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Shiro Redis配置
+shiro-redis:
+  enabled: true
+  redis-manager:
+    host: 127.0.0.1:6379
+    password: 
+    database: 0
+    timeout: 3000
+    expire: 1800
+
+# JWT配置
+jwt:
+  secret: your_jwt_secret_key_please_change
+  expiration: 86400000 # 1天，单位毫秒
+
+# 服务器配置
+server:
+  port: 8080
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: course-files
+
+# MCP服务器配置
+mcp:
+  server:
+    url: http://127.0.0.1:6277
+    auth-token: b78780b7f43d9d961b61bdc38227f01e2038491264231081120c505f6f90c8d8
