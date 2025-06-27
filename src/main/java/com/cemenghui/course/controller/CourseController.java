@@ -1,6 +1,6 @@
 package com.cemenghui.course.controller;
 
-import com.cemenghui.common.Result;
+import com.cemenghui.course.common.Result;
 import com.cemenghui.course.entity.Course;
 import com.cemenghui.course.service.CourseService;
 import com.cemenghui.course.service.impl.CourseManagerServiceImpl;

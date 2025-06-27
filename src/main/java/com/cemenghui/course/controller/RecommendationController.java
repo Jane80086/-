@@ -1,6 +1,6 @@
 package com.cemenghui.course.controller;
 
-import com.cemenghui.course.service.impl.CourseRecommendationServiceImpl;
+import com.cemenghui.course.service.CourseRecommendationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ import java.util.Map;
 public class RecommendationController {
 
     @Autowired
-    private CourseRecommendationServiceImpl recommendationService;
+    private CourseRecommendationService recommendationService;
 
     /**
      * 分析课程热度

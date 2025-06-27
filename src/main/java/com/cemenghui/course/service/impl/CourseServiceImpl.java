@@ -7,11 +7,6 @@ import com.cemenghui.course.service.NotFoundException;
 import com.cemenghui.course.service.AIService;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
-import com.cemenghui.course.dao.CommentDao;
-import com.cemenghui.course.entity.Comment;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,7 +19,6 @@ import java.util.stream.Stream;
 public class CourseServiceImpl implements CourseService {
     private CourseDao courseRepo;
     private AIService aiService;
-    private CommentDao commentDao;
 
     /**
      * 获取所有课程列表
@@ -90,44 +84,5 @@ public class CourseServiceImpl implements CourseService {
      */
     protected void onCourseViewed(Long userId, Long courseId) {
         // 记录用户浏览历史
-    }
-
-    @Override
-    @Transactional
-    public boolean favoriteCourse(Long courseId, Long userId) {
-        Course course = courseRepo.findById(courseId).orElse(null);
-        if (course == null) return false;
-        if (course.getFavoriteCount() == null) course.setFavoriteCount(0);
-        course.setFavoriteCount(course.getFavoriteCount() + 1); // 简化：不做用户去重
-        courseRepo.save(course);
-        return true;
-    }
-
-    @Override
-    @Transactional
-    public boolean likeCourse(Long courseId, Long userId) {
-        Course course = courseRepo.findById(courseId).orElse(null);
-        if (course == null) return false;
-        if (course.getLikeCount() == null) course.setLikeCount(0);
-        course.setLikeCount(course.getLikeCount() + 1);
-        courseRepo.save(course);
-        return true;
-    }
-
-    @Override
-    @Transactional
-    public boolean commentCourse(Long courseId, Long userId, String content) {
-        Comment comment = new Comment();
-        comment.setCourseId(courseId);
-        comment.setUserId(userId);
-        comment.setContent(content);
-        comment.setCreatedAt(java.time.LocalDateTime.now());
-        commentDao.save(comment);
-        return true;
-    }
-
-    @Override
-    public Page<Comment> getCourseComments(Long courseId, Pageable pageable) {
-        return commentDao.findByCourseId(courseId, pageable);
     }
 } 

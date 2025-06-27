@@ -1,6 +1,6 @@
 package com.cemenghui.course.controller;
 
-import com.cemenghui.common.Result;
+import com.cemenghui.course.common.Result;
 import com.cemenghui.course.entity.FeaturedCourse;
 import com.cemenghui.course.service.FeaturedCourseService;
 import org.springframework.beans.factory.annotation.Autowired;

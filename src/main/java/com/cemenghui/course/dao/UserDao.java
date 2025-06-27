@@ -1,14 +1,11 @@
 package com.cemenghui.course.dao;
 
-import com.cemenghui.common.User;
-import com.cemenghui.common.AdminUser;
-import com.cemenghui.common.EnterpriseUser;
-import com.cemenghui.common.NormalUser;
+import com.cemenghui.course.entity.User;
+import com.cemenghui.course.entity.UserType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Repository;
 
 /**
  * 用户数据访问接口
@@ -22,15 +19,10 @@ public interface UserDao extends JpaRepository<User, Long> {
      */
     Optional<User> findByUsername(String username);
 
-    // 查找所有管理员用户
-    @Query("SELECT u FROM AdminUser u")
-    List<AdminUser> findAllAdmins();
-
-    // 查找所有企业用户
-    @Query("SELECT u FROM EnterpriseUser u")
-    List<EnterpriseUser> findAllEnterprises();
-
-    // 查找所有普通用户
-    @Query("SELECT u FROM NormalUser u")
-    List<NormalUser> findAllNormals();
+    /**
+     * 根据用户类型查找用户列表
+     * @param usertype 用户类型
+     * @return 用户列表
+     */
+    List<User> findByUserType(UserType usertype);
 } 

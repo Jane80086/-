@@ -2,8 +2,6 @@ package com.cemenghui.course.service;
 
 import com.cemenghui.course.entity.Question;
 import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 /**
  * 问答服务接口
@@ -31,44 +29,4 @@ public interface QnAService {
      * @return AI生成的回复
      */
     String autoReply(Question question);
-
-    /**
-     * 根据ID获取单个问题详情
-     */
-    Question getQuestionById(Long id);
-
-    /**
-     * 手动回复问题（保存人工回复）
-     */
-    boolean replyQuestion(Long id, String replyContent, Long replyUserId);
-
-    /**
-     * 删除问题（真正删除数据库记录）
-     */
-    boolean deleteQuestion(Long id);
-
-    /**
-     * 分页获取课程问答
-     */
-    Page<Question> getQuestionsByCoursePaged(Long courseId, Pageable pageable);
-
-    /**
-     * 点赞/取消点赞
-     */
-    boolean likeQuestion(Long id, Long userId);
-
-    /**
-     * 举报问题
-     */
-    boolean reportQuestion(Long id, Long userId, String reason);
-
-    /**
-     * 采纳答案
-     */
-    boolean acceptAnswer(Long id, String answerType, String answerContent);
-
-    /**
-     * 人工回复
-     */
-    boolean manualReply(Long id, String replyContent, Long replyUserId);
 } 

@@ -5,6 +5,7 @@ import com.cemenghui.course.entity.Course;
 import com.cemenghui.course.service.AIService;
 import com.cemenghui.course.service.NotFoundException;
 import com.cemenghui.course.service.AIException;
+import com.cemenghui.course.service.MCPService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
     @Autowired
     private AIService aiService;
     @Autowired
-    private MCPServiceImpl mcpServiceImpl;
+    private MCPService mcpService;
 
     /**
      * 创建新课程
@@ -95,7 +96,7 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
     public Course optimizeCourseInfo(Course course) throws AIException {
         try {
             // 使用MCP服务优化课程内容
-            MCPServiceImpl.CourseOptimizationResult result = mcpServiceImpl.optimizeCourseContent(
+            MCPService.CourseOptimizationResult result = mcpService.optimizeCourseContent(
                 course, 
                 "初学者", // 可以从课程属性或参数中获取
                 "技术"    // 可以从课程属性或参数中获取
@@ -121,14 +122,14 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      * @return 优化结果
      * @throws NotFoundException 课程未找到时抛出
      */
-    public MCPServiceImpl.CourseOptimizationResult optimizeCourseWithMCP(Long courseId, String targetAudience, String courseType) throws NotFoundException {
+    public MCPService.CourseOptimizationResult optimizeCourseWithMCP(Long courseId, String targetAudience, String courseType) throws NotFoundException {
         Optional<Course> optional = courseRepo.findById(courseId);
         if (!optional.isPresent()) {
             throw new NotFoundException("课程未找到: " + courseId);
         }
         
         Course course = optional.get();
-        return mcpServiceImpl.optimizeCourseContent(course, targetAudience, courseType);
+        return mcpService.optimizeCourseContent(course, targetAudience, courseType);
     }
 
     /**
@@ -137,8 +138,8 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      * @param description 课程描述
      * @return SEO分析结果
      */
-    public MCPServiceImpl.SEOAnalysisResult analyzeCourseSEO(String title, String description) {
-        return mcpServiceImpl.analyzeCourseSEO(title, description);
+    public MCPService.SEOAnalysisResult analyzeCourseSEO(String title, String description) {
+        return mcpService.analyzeCourseSEO(title, description);
     }
 
     /**
@@ -147,8 +148,8 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      * @param targetAudience 目标受众
      * @return 课程模板
      */
-    public MCPServiceImpl.CourseTemplateResult generateCourseTemplates(String courseType, String targetAudience) {
-        return mcpServiceImpl.generateCourseTemplates(courseType, targetAudience);
+    public MCPService.CourseTemplateResult generateCourseTemplates(String courseType, String targetAudience) {
+        return mcpService.generateCourseTemplates(courseType, targetAudience);
     }
 
     /**
