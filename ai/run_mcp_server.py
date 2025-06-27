@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-简单的 HTTP 服务器启动脚本
+简化的 MCP Course Optimizer Server 启动脚本
 """
 
+import asyncio
 import uvicorn
+import anyio
 from mcp.server.fastmcp import FastMCP
-from mcp.server.streamable_http import streamable_http_server
+from mcp.server.stdio import stdio_server
 
-# 创建MCP服务器
+# 重新创建MCP服务器实例
 mcp = FastMCP("Course Optimizer")
 
-# 定义工具函数
+# 重新定义工具函数
 @mcp.tool()
 def optimize_course_content(
     original_title: str,
@@ -58,43 +60,7 @@ def analyze_course_seo(title: str, description: str) -> dict:
     }
 
 
-@mcp.resource("course-optimizer://templates")
-def get_optimization_templates() -> str:
-    """获取课程优化模板"""
-    return """
-    课程优化最佳实践：
-    
-    1. 标题优化：
-       - 长度控制在30-60字符
-       - 包含目标受众关键词
-       - 使用吸引人的动词
-       - 添加具体的学习成果
-    
-    2. 描述优化：
-       - 长度控制在150-300字符
-       - 突出课程价值和学习成果
-       - 包含具体的学习内容
-       - 添加紧迫感或稀缺性元素
-    """
-
-
-def main():
-    """启动HTTP服务器"""
-    print("🚀 启动 MCP Course Optimizer HTTP Server")
-    print("📍 地址: http://localhost:8000")
-    print("📝 使用 streamable-http 传输模式")
-    
-    # 创建 streamable-http 服务器
-    app = streamable_http_server(mcp)
-    
-    # 启动服务器
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000,
-        log_level="info"
-    )
-
-
 if __name__ == "__main__":
-    main() 
+    print("🚀 启动 MCP Course Optimizer Server")
+    print("📍 使用 stdio 传输模式")
+    mcp.run() 
