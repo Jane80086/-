@@ -1,25 +1,15 @@
 -- 金仓数据库表结构
 -- 用户表
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(20),
-    user_type VARCHAR(20),
-    status INTEGER,
-    created_time TIMESTAMP,
-    updated_time TIMESTAMP,
-    admin_level VARCHAR(20),
-    permissions TEXT,
-    business_license VARCHAR(100),
-    company_address TEXT,
-    company_name VARCHAR(100),
-    real_name VARCHAR(50),
-    avatar VARCHAR(255),
-    bio TEXT,
-    contact_person VARCHAR(50),
-    contact_phone VARCHAR(20)
+    user_type VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
+    status INTEGER DEFAULT 1,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 管理员用户表
@@ -54,80 +44,83 @@ CREATE TABLE normal_users (
 );
 
 -- 课程表
-CREATE TABLE IF NOT EXISTS courses (
+CREATE TABLE courses (
     id BIGSERIAL PRIMARY KEY,
-    title VARCHAR(255),
+    title VARCHAR(200) NOT NULL,
     description TEXT,
-    price NUMERIC,
-    duration INTEGER,
-    "level" VARCHAR(50),
+    instructor_id BIGINT REFERENCES users(id),
+    price DECIMAL(10,2) DEFAULT 0.00,
+    duration INTEGER DEFAULT 0,
+    level VARCHAR(20) DEFAULT 'BEGINNER',
     category VARCHAR(50),
-    status VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'DRAFT',
     cover_image VARCHAR(255),
     video_url VARCHAR(255),
-    created_time TIMESTAMP,
-    updated_time TIMESTAMP,
-    instructor_id BIGINT,
-    favorite_count INTEGER,
-    like_count INTEGER
+    like_count INTEGER DEFAULT 0,
+    favorite_count INTEGER DEFAULT 0,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 课程历史表
-CREATE TABLE IF NOT EXISTS course_history (
-    course_history_id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT,
-    course_id BIGINT,
-    progress INTEGER,
-    status VARCHAR(20),
-    start_time TIMESTAMP,
-    last_access_time TIMESTAMP,
+CREATE TABLE course_history (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
+    progress INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'IN_PROGRESS',
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_access_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completion_time TIMESTAMP,
-    viewed_at TIMESTAMP
+    UNIQUE(user_id, course_id)
 );
 
 -- 课程问答表
-CREATE TABLE IF NOT EXISTS questions (
+CREATE TABLE questions (
     id BIGSERIAL PRIMARY KEY,
-    course_id BIGINT,
-    user_id BIGINT,
-    question TEXT,
+    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    question TEXT NOT NULL,
     ai_answer TEXT,
-    created_at TIMESTAMP,
-    accept_answer_content TEXT,
-    accept_answer_type VARCHAR(20),
-    like_count INTEGER,
     manual_answer TEXT,
-    report_count INTEGER
+    like_count INTEGER DEFAULT 0,
+    accept_answer_type VARCHAR(20),
+    accept_answer_content TEXT,
+    report_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 评论表
-CREATE TABLE IF NOT EXISTS comments (
+CREATE TABLE reviews (
     id BIGSERIAL PRIMARY KEY,
-    course_id BIGINT,
-    user_id BIGINT,
+    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
     content TEXT,
-    created_at TIMESTAMP,
-    like_count INTEGER,
-    status VARCHAR(20)
+    status VARCHAR(20) DEFAULT 'PENDING',
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 精选课程表
-CREATE TABLE IF NOT EXISTS featured_course (
-    featured_course_id BIGSERIAL PRIMARY KEY,
-    course_id BIGINT,
-    promoted_by BIGINT,
-    promoted_at TIMESTAMP,
-    priority INTEGER
+CREATE TABLE featured_courses (
+    id BIGSERIAL PRIMARY KEY,
+    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
+    featured_order INTEGER DEFAULT 0,
+    start_date DATE,
+    end_date DATE,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 审核表
-CREATE TABLE IF NOT EXISTS review (
-    review_id BIGSERIAL PRIMARY KEY,
-    course_id BIGINT,
-    reviewer_id BIGINT,
-    status VARCHAR(20),
-    comment VARCHAR(255),
-    reviewed_at TIMESTAMP
+-- 新增课程评论表
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGSERIAL PRIMARY KEY,
+    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    like_count INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'NORMAL'
 );
 
 -- 创建索引
@@ -158,15 +151,16 @@ CREATE INDEX idx_questions_user ON questions(user_id);
 CREATE INDEX idx_questions_created_at ON questions(created_at);
 
 -- 评论表索引
-CREATE INDEX idx_reviews_course ON review(course_id);
-CREATE INDEX idx_reviews_user ON review(reviewer_id);
-CREATE INDEX idx_reviews_status ON review(status);
-CREATE INDEX idx_reviews_reviewed_at ON review(reviewed_at);
+CREATE INDEX idx_reviews_course ON reviews(course_id);
+CREATE INDEX idx_reviews_user ON reviews(user_id);
+CREATE INDEX idx_reviews_rating ON reviews(rating);
+CREATE INDEX idx_reviews_status ON reviews(status);
+CREATE INDEX idx_reviews_created_time ON reviews(created_time);
 
 -- 精选课程表索引
-CREATE INDEX idx_featured_courses_course ON featured_course(course_id);
-CREATE INDEX idx_featured_courses_promoted_by ON featured_course(promoted_by);
-CREATE INDEX idx_featured_courses_promoted_at ON featured_course(promoted_at);
+CREATE INDEX idx_featured_courses_order ON featured_courses(featured_order);
+CREATE INDEX idx_featured_courses_start_date ON featured_courses(start_date);
+CREATE INDEX idx_featured_courses_end_date ON featured_courses(end_date);
 
 -- 新增课程评论表索引
 CREATE INDEX IF NOT EXISTS idx_comments_course ON comments(course_id);
@@ -191,7 +185,7 @@ INSERT INTO courses (title, description, instructor_id, price, level, category, 
 ('数据库设计原理', '数据库设计理论与实践', 2, 149.00, 'INTERMEDIATE', '数据库', 'PUBLISHED');
 
 -- 插入精选课程
-INSERT INTO featured_course (course_id, promoted_by) VALUES
+INSERT INTO featured_courses (course_id, featured_order) VALUES
 (1, 1),
 (2, 2);
 
@@ -207,6 +201,6 @@ INSERT INTO questions (course_id, user_id, question, ai_answer) VALUES
 (2, 3, 'Spring Boot的优势有哪些？', 'Spring Boot的优势包括：1. 自动配置 2. 内嵌服务器 3. 起步依赖 4. 生产就绪功能 5. 无需XML配置');
 
 -- 插入评论
-INSERT INTO review (course_id, reviewer_id, status, comment) VALUES
-(1, 3, 'APPROVED', '非常棒的课程，讲解很详细'),
-(2, 3, 'APPROVED', '内容很实用，推荐学习'); 
+INSERT INTO reviews (course_id, user_id, rating, content, status) VALUES
+(1, 3, 5, '非常棒的课程，讲解很详细', 'APPROVED'),
+(2, 3, 4, '内容很实用，推荐学习', 'APPROVED'); 

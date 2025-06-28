@@ -1,52 +1,50 @@
 spring:
   application:
-    name: integrated-system
-  # 文件上传配置
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
-      enabled: true
+    name: course
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      write-date-timestamps-as-nanoseconds: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    modules-to-install: com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
   datasource:
     url: jdbc:kingbase8://localhost:54321/course_management?characterEncoding=UTF-8&useUnicode=true
     username: SYSTEM
     password: 123456
     driver-class-name: com.kingbase8.Driver
     hikari:
-      # 连接池配置
       maximum-pool-size: 10
-      minimum-idle: 5
+      minimum-idle: 2
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
       leak-detection-threshold: 60000
-      # 连接测试
       connection-test-query: SELECT 1
       validation-timeout: 5000
+      pool-name: CourseHikariCP
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
     open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        # 连接池配置
-        hikari:
-          maximum-pool-size: 10
-          minimum-idle: 5
-          connection-timeout: 30000
-          idle-timeout: 600000
-          max-lifetime: 1800000
-          leak-detection-threshold: 60000
-          connection-test-query: SELECT 1
-          validation-timeout: 5000
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
   security:
     user:
       name: admin
       password: admin123
-
     redis:
       host: localhost
       port: 6379
@@ -64,35 +62,21 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# Shiro Redis配置
 shiro-redis:
   enabled: true
   redis-manager:
     host: 127.0.0.1:6379
-    password: 
+    password:
     database: 0
     timeout: 3000
     expire: 1800
 
-# JWT配置
 jwt:
   secret: your_jwt_secret_key_please_change
-  expiration: 86400000 # 1天，单位毫秒
+  expiration: 86400000
 
-# 服务器配置
 server:
   port: 8080
-  # 连接超时配置
-  connection-timeout: 30000
-  # 请求超时配置
-  servlet:
-    async:
-      request-timeout: 30000
-  # 压缩配置
-  compression:
-    enabled: true
-    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
-    min-response-size: 1024
 
 minio:
   endpoint: http://localhost:9000
@@ -100,43 +84,7 @@ minio:
   secret-key: minioadmin
   bucket: course-files
 
-# MCP服务器配置
 mcp:
   server:
     url: http://127.0.0.1:6277
     auth-token: b78780b7f43d9d961b61bdc38227f01e2038491264231081120c505f6f90c8d8
-
-# 应用自定义配置
-app:
-  # JWT配置
-  jwt:
-    secret: your-secret-key-here-make-it-long-and-secure
-    expiration: 86400000 # 24小时
-  # 文件上传配置
-  upload:
-    max-size: 10MB
-    allowed-types: jpg,jpeg,png,gif,pdf,doc,docx
-  # 缓存配置
-  cache:
-    ttl: 3600 # 1小时
-    max-size: 1000
-  # 安全配置
-  security:
-    password-min-length: 6
-    password-max-length: 20
-    session-timeout: 1800 # 30分钟
-
-# 日志配置
-logging:
-  level:
-    com.cemenghui.meeting: DEBUG
-    com.cemenghui.course: DEBUG
-    org.springframework.jdbc: DEBUG
-    com.zaxxer.hikari: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/integrated-system.log
-    max-size: 100MB
-    max-history: 30

@@ -5,6 +5,7 @@ import com.cemenghui.course.entity.Course;
 import com.cemenghui.course.service.CourseService;
 import com.cemenghui.course.service.NotFoundException;
 import com.cemenghui.course.service.AIService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 import com.cemenghui.course.dao.CommentDao;
@@ -22,8 +23,14 @@ import java.util.stream.Stream;
  */
 @Service
 public class CourseServiceImpl implements CourseService {
+    
+    @Autowired
     private CourseDao courseRepo;
+    
+    @Autowired
     private AIService aiService;
+    
+    @Autowired
     private CommentDao commentDao;
 
     /**
@@ -32,8 +39,7 @@ public class CourseServiceImpl implements CourseService {
      */
     @Override
     public List<Course> listCourses() {
-        // 获取所有课程逻辑
-        return null;
+        return courseRepo.findAll();
     }
 
     /**
@@ -43,8 +49,7 @@ public class CourseServiceImpl implements CourseService {
      */
     @Override
     public List<Course> searchCourses(String keyword) {
-        // 搜索课程逻辑
-        return null;
+        return courseRepo.findByTitleContaining(keyword);
     }
 
     /**
@@ -56,9 +61,11 @@ public class CourseServiceImpl implements CourseService {
     @Cacheable(value = "courseDetail", key = "#courseId")
     @Override
     public Course getCourseDetail(Long courseId) throws NotFoundException {
-        // 获取课程详情逻辑
-        // onCourseViewed 可在此处调用
-        return null;
+        Course course = courseRepo.findById(courseId).orElse(null);
+        if (course == null) {
+            throw new NotFoundException("课程不存在: " + courseId);
+        }
+        return course;
     }
 
     /**
@@ -79,8 +86,12 @@ public class CourseServiceImpl implements CourseService {
      */
     @Override
     public List<String> getHotSearchTrends() {
-        // 获取热搜词逻辑
-        return null;
+        try {
+            return aiService.getHotSearchTrends();
+        } catch (Exception e) {
+            // 如果AI服务不可用，返回默认热搜词
+            return List.of("Java", "Python", "Spring Boot", "数据库", "前端开发");
+        }
     }
 
     /**

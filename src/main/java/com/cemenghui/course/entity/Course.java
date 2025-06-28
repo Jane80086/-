@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.cemenghui.course.entity.CourseStatus;
+import jakarta.validation.constraints.NotBlank;
 /**
  * 课程实体类
  */
@@ -20,6 +21,7 @@ public class Course implements Serializable {
     private Long id;
 
     @Column(name = "title", nullable = false)
+    @NotBlank(message = "课程标题不能为空")
     private String title;
 
     @Column(name = "description", columnDefinition = "TEXT")
@@ -34,8 +36,8 @@ public class Course implements Serializable {
     @Column(name = "duration")
     private Integer duration = 0;
 
-    @Column(name = "level")
-    private String level = "BEGINNER";
+    // @Column(name = "course_level")
+    // private String courseLevel = "BEGINNER";
 
     @Column(name = "category")
     private String category;
