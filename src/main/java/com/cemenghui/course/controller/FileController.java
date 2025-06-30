@@ -1,6 +1,6 @@
 package com.cemenghui.course.controller;
 
-import com.cemenghui.course.common.Result;
+import com.cemenghui.common.Result;
 import com.cemenghui.course.service.impl.MinioServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;

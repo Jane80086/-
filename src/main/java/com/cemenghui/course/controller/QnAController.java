@@ -1,6 +1,6 @@
 package com.cemenghui.course.controller;
 
-import com.cemenghui.course.common.Result;
+import com.cemenghui.common.Result;
 import com.cemenghui.course.entity.Question;
 import com.cemenghui.course.service.QnAService;
 import org.springframework.beans.factory.annotation.Autowired;

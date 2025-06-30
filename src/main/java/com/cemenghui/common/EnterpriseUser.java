@@ -1,4 +1,4 @@
-package com.cemenghui.course.common;
+package com.cemenghui.common;
 
 import jakarta.persistence.*;
 import lombok.Data;

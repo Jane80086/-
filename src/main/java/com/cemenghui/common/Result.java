@@ -1,4 +1,4 @@
-package com.cemenghui.course.common;
+package com.cemenghui.common;
 
 import lombok.Data;
 import java.io.Serializable;

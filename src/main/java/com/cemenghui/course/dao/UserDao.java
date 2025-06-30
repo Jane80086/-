@@ -1,9 +1,9 @@
 package com.cemenghui.course.dao;
 
-import com.cemenghui.course.common.User;
-import com.cemenghui.course.common.AdminUser;
-import com.cemenghui.course.common.EnterpriseUser;
-import com.cemenghui.course.common.NormalUser;
+import com.cemenghui.common.User;
+import com.cemenghui.common.AdminUser;
+import com.cemenghui.common.EnterpriseUser;
+import com.cemenghui.common.NormalUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

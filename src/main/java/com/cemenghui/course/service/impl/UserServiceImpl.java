@@ -3,13 +3,10 @@ package com.cemenghui.course.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.cemenghui.course.dao.UserDao;
-import com.cemenghui.course.common.User;
+import com.cemenghui.common.User;
 import com.cemenghui.course.entity.UserType;
 import java.util.List;
 import java.util.Optional;
-import com.cemenghui.course.common.AdminUser;
-import com.cemenghui.course.common.EnterpriseUser;
-import com.cemenghui.course.common.NormalUser;
 
 /**
  * 用户服务
