@@ -1,7 +1,8 @@
 package com.cemenghui.course.controller;
 
 import com.cemenghui.course.common.Result;
-import com.cemenghui.course.service.MinioService;
+import com.cemenghui.course.service.impl.MinioServiceImpl;
+import com.cemenghui.course.service.impl.MCPServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +21,7 @@ import java.util.Map;
 public class FileController {
 
     @Autowired
-    private MinioService minioService;
+    private MinioServiceImpl minioService;
 
     /**
      * 上传课程封面图片

@@ -1,4 +1,4 @@
-package com.cemenghui.course.service;
+package com.cemenghui.course.service.impl;
 
 import com.cemenghui.course.entity.Course;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class MCPService {
+public class MCPServiceImpl {
 
     @Autowired
     private RestTemplate restTemplate;
