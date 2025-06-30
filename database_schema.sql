@@ -384,3 +384,87 @@ INSERT INTO meeting_review_record (meeting_id, meeting_name, creator, reviewer, 
 -- 已拒绝: 2个
 -- 已删除: 1个
 -- 总计: 18个会议
+
+-- 在用户表中添加nickname和gender字段
+ALTER TABLE users ADD COLUMN nickname VARCHAR(50);
+ALTER TABLE users ADD COLUMN gender INTEGER DEFAULT 0;
+
+-- 创建news表
+CREATE TABLE news (
+                      id BIGSERIAL PRIMARY KEY,
+                      title VARCHAR(200) NOT NULL COMMENT '动态标题',
+                      image VARCHAR(500) COMMENT '新闻图片路径（支持多图片，JSON格式存储）',
+                      content LONGTEXT NOT NULL COMMENT '动态内容（富文本HTML）',
+                      summary TEXT COMMENT '新闻简介',
+                      author VARCHAR(100) NOT NULL COMMENT '作者',
+                      user_id BIGINT NOT NULL COMMENT '发布者用户ID',
+                      status TINYINT DEFAULT 0 COMMENT '审核状态（0:待审核，1:已通过，2:已拒绝，3:草稿）',
+                      view_count INT DEFAULT 0 COMMENT '浏览次数',
+                      is_deleted TINYINT DEFAULT 0 COMMENT '软删除标记（0:未删除，1:已删除）',
+                      audit_comment TEXT COMMENT '审核意见',
+                      audit_user_id BIGINT COMMENT '审核人ID',
+                      audit_time DATETIME COMMENT '审核时间',
+                      deleted_time DATETIME COMMENT '删除时间',
+                      create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                      update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+);
+
+-- 添加外键约束
+ALTER TABLE news ADD CONSTRAINT fk_news_user_id
+    FOREIGN KEY (user_id) REFERENCES users(id);
+
+ALTER TABLE news ADD CONSTRAINT fk_news_audit_user_id
+    FOREIGN KEY (audit_user_id) REFERENCES users(id);
+
+-- 创建索引
+CREATE INDEX idx_news_user_id ON news(user_id);
+CREATE INDEX idx_news_status ON news(status);
+CREATE INDEX idx_news_create_time ON news(create_time);
+CREATE INDEX idx_news_title ON news(title);
+CREATE INDEX idx_news_author ON news(author);
+CREATE INDEX idx_news_is_deleted ON news(is_deleted);
+
+-- 创建user_view_log表
+CREATE TABLE user_view_log (
+                               id BIGSERIAL PRIMARY KEY COMMENT '记录主键ID',
+                               user_id BIGINT COMMENT '用户ID（可为空，支持匿名浏览）',
+                               news_id BIGINT NOT NULL COMMENT '动态ID',
+                               ip_address VARCHAR(50) COMMENT '访问IP地址',
+                               user_agent VARCHAR(500) COMMENT '浏览器信息',
+                               session_id VARCHAR(100) COMMENT '会话ID',
+                               view_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '浏览时间'
+);
+
+-- 添加外键约束
+ALTER TABLE user_view_log ADD CONSTRAINT fk_user_view_log_news_id
+    FOREIGN KEY (news_id) REFERENCES news(id);
+
+-- 创建索引
+CREATE INDEX idx_user_view_log_news_id ON user_view_log(news_id);
+CREATE INDEX idx_user_view_log_user_id ON user_view_log(user_id);
+CREATE INDEX idx_user_view_log_view_time ON user_view_log(view_time);
+CREATE INDEX idx_user_view_log_session_news ON user_view_log(session_id, news_id);
+
+-- 创建user_operation_log表
+CREATE TABLE user_operation_log (
+                                    id BIGSERIAL PRIMARY KEY COMMENT '日志主键ID',
+                                    user_id BIGINT NOT NULL COMMENT '操作用户ID',
+                                    operation_type VARCHAR(50) NOT NULL COMMENT '操作类型（PUBLISH:发布，EDIT:编辑，DELETE:删除，AUDIT:审核）',
+                                    resource_type VARCHAR(50) NOT NULL DEFAULT 'NEWS' COMMENT '资源类型',
+                                    resource_id BIGINT NOT NULL COMMENT '资源ID（动态ID）',
+                                    operation_desc VARCHAR(500) COMMENT '操作描述',
+                                    old_value TEXT COMMENT '操作前的值（JSON格式）',
+                                    new_value TEXT COMMENT '操作后的值（JSON格式）',
+                                    ip_address VARCHAR(50) COMMENT '操作IP地址',
+                                    operation_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+                                    operation_result TINYINT DEFAULT 1 COMMENT '操作结果（0:失败，1:成功）'
+);
+
+-- 添加外键约束
+ALTER TABLE user_operation_log ADD CONSTRAINT fk_user_operation_log_user_id
+    FOREIGN KEY (user_id) REFERENCES users(id);
+
+-- 创建索引
+CREATE INDEX idx_user_operation_log_user_time ON user_operation_log(user_id, operation_time);
+CREATE INDEX idx_user_operation_log_resource ON user_operation_log(resource_type, resource_id);
+CREATE INDEX idx_user_operation_log_operation_type ON user_operation_log(operation_type);
