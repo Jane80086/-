@@ -70,6 +70,12 @@
 			<artifactId>mybatis-spring-boot-starter</artifactId>
 			<version>${mybatis-spring-boot.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-boot-starter</artifactId>
+			<version>3.5.4.1</version>
+		</dependency>
+
 		<!-- hutool工具类-->
 		<dependency>
 			<groupId>cn.hutool</groupId>
