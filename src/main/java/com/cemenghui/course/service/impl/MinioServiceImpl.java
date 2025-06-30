@@ -1,4 +1,4 @@
-package com.cemenghui.course.service.impl;
+package com.cemenghui.course.service;
 
 import io.minio.*;
 import io.minio.http.Method;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class MinioServiceImpl {
+public class MinioService {
 
     @Autowired
     private MinioClient minioClient;
