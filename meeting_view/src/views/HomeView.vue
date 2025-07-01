@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import MeetingList from '../components/MeetingList.vue'; 
 import meetingService from '../services/meetingService';
+import fileService from '../services/fileService';
 
 const router = useRouter();
 const meetings = ref([]);
@@ -20,7 +21,8 @@ const addUploading = ref(false); // 新增会议图片上传状态
 // 搜索和筛选条件
 const searchTerm = ref('');
 const statusFilter = ref('');
-const dateFilter = ref('');
+const startDateFilter = ref('');
+const endDateFilter = ref('');
 
 // 新会议表单
 const newMeeting = ref({
@@ -64,7 +66,9 @@ const fetchMeetings = async () => {
       page: 1,
       size: 100,
       meetingName: searchTerm.value || null,
-      status: statusFilter.value ? parseInt(statusFilter.value) : null
+      status: statusFilter.value ? parseInt(statusFilter.value) : null,
+      startDate: startDateFilter.value || null,
+      endDate: endDateFilter.value || null
     };
     
     console.log('查询参数:', query); // 添加调试信息
@@ -257,17 +261,24 @@ const onAddImageChange = async (event) => {
   addUploading.value = true;
   try {
     const res = await meetingService.uploadMeetingImage(file);
-    if (res.data.code === 200) {
-      newMeeting.value.imageUrl = res.data.data;
+    // 处理后端ApiResponse格式
+    if (res.data && res.data.code === 200 && res.data.data) {
+      // 对于私有bucket，返回的是对象名称，需要获取预签名URL
+      if (!res.data.data.startsWith('http://') && !res.data.data.startsWith('https://')) {
+        const presignedUrl = await fileService.getImageUrl(res.data.data);
+        newMeeting.value.imageUrl = presignedUrl || res.data.data;
+      } else {
+        newMeeting.value.imageUrl = res.data.data;
+      }
     } else {
-      alert('图片上传失败: ' + res.data.message);
+      alert('图片上传失败: ' + (res.data.message || '未知错误'));
     }
   } catch (e) {
     console.error('图片上传错误:', e);
     if (e.response?.status === 413) {
       alert('文件太大，请选择小于10MB的图片');
     } else {
-      alert('图片上传失败，请重试');
+      alert('图片上传失败: ' + (e.response?.data?.message || e.message || '请重试'));
     }
   } finally {
     addUploading.value = false;
@@ -392,13 +403,34 @@ onMounted(() => {
             </div>
             
             <div class="filter-group">
-              <label>日期筛选:</label>
-              <input 
-                v-model="dateFilter" 
-                type="date" 
-                @change="fetchMeetings"
-                class="filter-input"
-              >
+              <label>日期区间筛选:</label>
+              <div class="date-range-inputs">
+                <input 
+                  v-model="startDateFilter" 
+                  type="date" 
+                  @change="fetchMeetings"
+                  class="filter-input"
+                  placeholder="开始日期"
+                  title="选择开始日期，查询该日期及之后的会议"
+                >
+                <span class="date-separator">至</span>
+                <input 
+                  v-model="endDateFilter" 
+                  type="date" 
+                  @change="fetchMeetings"
+                  class="filter-input"
+                  placeholder="结束日期"
+                  title="选择结束日期，查询该日期及之前的会议"
+                >
+              </div>
+              <div class="filter-tip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>请选择开始和结束日期来筛选会议时间范围</span>
+              </div>
             </div>
           </div>
         </div>
@@ -869,6 +901,42 @@ onMounted(() => {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* 日期区间选择器样式 */
+.date-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-separator {
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filter-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+  font-size: 12px;
+  color: #495057;
+}
+
+.filter-tip svg {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.filter-tip span {
+  line-height: 1.4;
+}
+
 .actions {
   display: flex;
   gap: 12px;
@@ -1257,6 +1325,16 @@ onMounted(() => {
   
   .filters {
     flex-direction: column;
+  }
+  
+  .date-range-inputs {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .date-separator {
+    text-align: center;
+    padding: 4px 0;
   }
   
   .actions {
