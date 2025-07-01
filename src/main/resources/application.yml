@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: news
   application:
     name: integrated-system
   # 文件上传配置
@@ -69,7 +71,7 @@ shiro-redis:
   enabled: true
   redis-manager:
     host: 127.0.0.1:6379
-    password: 
+    password:
     database: 0
     timeout: 3000
     expire: 1800
@@ -83,7 +85,8 @@ jwt:
 server:
   port: 8080
   # 连接超时配置
-  connection-timeout: 30000
+  tomcat:
+    connection-timeout: 30000
   # 请求超时配置
   servlet:
     async:
