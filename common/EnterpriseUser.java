@@ -1,35 +1,58 @@
 package com.cemenghui.course.common;
 
 import com.cemenghui.course.entity.Course;
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
  * 企业用户
  */
-@Entity
-@DiscriminatorValue("ENTERPRISE")
+@TableName("users")
 @Data
-public class EnterpriseUser extends User {
+public class EnterpriseUser {
     
-    @Column(name = "company_name", nullable = false)
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
+    @TableField("username")
+    private String username;
+    
+    @TableField("password")
+    private String password;
+    
+    @TableField("email")
+    private String email;
+    
+    @TableField("phone")
+    private String phone;
+    
+    @TableField("user_type")
+    private String userType = "ENTERPRISE";
+    
+    @TableField("status")
+    private Integer status = 1;
+    
+    @TableField("company_name")
     private String companyName;
     
-    @Column(name = "business_license")
+    @TableField("business_license")
     private String businessLicense;
     
-    @Column(name = "contact_person")
+    @TableField("contact_person")
     private String contactPerson;
     
-    @Column(name = "contact_phone")
+    @TableField("contact_phone")
     private String contactPhone;
     
-    @Column(name = "company_address", columnDefinition = "TEXT")
+    @TableField("company_address")
     private String companyAddress;
     
-    @Column(name = "created_time")
+    @TableField("created_time")
     private LocalDateTime createdTime = LocalDateTime.now();
+    
+    @TableField("updated_time")
+    private LocalDateTime updatedTime = LocalDateTime.now();
     
     public Course createCourse(String title, String desc) throws Exception {
         // 创建课程逻辑

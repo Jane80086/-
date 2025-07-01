@@ -1,9 +1,12 @@
 package com.cemenghui.course.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.cemenghui.course.dao.CourseDao;
 import com.cemenghui.course.dao.ReviewDao;
 import com.cemenghui.course.entity.Review;
+import com.cemenghui.course.entity.Course;
 import com.cemenghui.course.service.ReviewService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,8 +16,10 @@ import java.util.List;
  */
 @Service
 public class ReviewServiceImpl implements ReviewService {
-    private ReviewDao reviewRepo;
-    private CourseDao courseRepo;
+    @Autowired
+    private ReviewDao reviewDao;
+    @Autowired
+    private CourseDao courseDao;
 
     /**
      * 审核通过
@@ -24,9 +29,21 @@ public class ReviewServiceImpl implements ReviewService {
      */
     @Override
     public Review approveCourse(Long courseId, Long reviewerId) {
-        // 审核通过逻辑
+        Review review = new Review();
+        review.setCourseId(courseId);
+        review.setReviewerId(reviewerId);
+        review.setStatus(com.cemenghui.course.entity.ReviewStatus.APPROVED);
+        reviewDao.insert(review);
+        
+        // 更新课程状态
+        Course course = courseDao.selectById(courseId);
+        if (course != null) {
+            course.setStatus("PUBLISHED");
+            courseDao.updateById(course);
+        }
+        
         onReviewApproved(courseId);
-        return null;
+        return review;
     }
 
     /**
@@ -37,9 +54,21 @@ public class ReviewServiceImpl implements ReviewService {
      */
     @Override
     public Review rejectCourse(Long courseId, String reason) {
-        // 审核驳回逻辑
+        Review review = new Review();
+        review.setCourseId(courseId);
+        review.setStatus(com.cemenghui.course.entity.ReviewStatus.REJECTED);
+        review.setComment(reason);
+        reviewDao.insert(review);
+        
+        // 更新课程状态
+        Course course = courseDao.selectById(courseId);
+        if (course != null) {
+            course.setStatus("REJECTED");
+            courseDao.updateById(course);
+        }
+        
         onReviewRejected(courseId, reason);
-        return null;
+        return review;
     }
 
     /**
@@ -49,8 +78,9 @@ public class ReviewServiceImpl implements ReviewService {
      */
     @Override
     public List<Review> getReviewLog(Long courseId) {
-        // 查询审核记录逻辑
-        return null;
+        LambdaQueryWrapper<Review> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Review::getCourseId, courseId);
+        return reviewDao.selectList(wrapper);
     }
 
     /**

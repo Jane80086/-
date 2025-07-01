@@ -26,6 +26,6 @@ public class UserViewLog {
     @TableField("session_id")
     private String sessionId;
 
-    @TableField(value = "view_time", fill = FieldFill.INSERT)
+    @TableField("view_time")
     private LocalDateTime viewTime;
 }

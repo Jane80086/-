@@ -1,11 +1,11 @@
 package com.cemenghui.course.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cemenghui.course.entity.Course;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import com.cemenghui.course.entity.Comment;
 
 /**
@@ -65,5 +65,5 @@ public interface CourseService {
     /**
      * 获取课程评论分页
      */
-    Page<Comment> getCourseComments(Long courseId, Pageable pageable);
+    IPage<Comment> getCourseComments(Long courseId, Page<Comment> page);
 } 

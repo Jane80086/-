@@ -1,7 +1,7 @@
 package com.cemenghui.news.dto;
 
 import lombok.Data;
-import jakarta.validation.constraints.*;
+import javax.validation.constraints.*;
 
 @Data
 public class AuditRequest {

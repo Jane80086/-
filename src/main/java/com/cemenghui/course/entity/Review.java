@@ -1,34 +1,40 @@
 package com.cemenghui.course.entity;
 
 import com.cemenghui.course.entity.ReviewStatus;
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
 
 /**
  * 课程审核实体
  */
-@Entity
-@Table(name = "review")
+@TableName("review")
+@Data
 public class Review implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(value = "review_id", type = IdType.AUTO)
     private Long reviewId;
 
+    @TableField("course_id")
     private Long courseId;
+    
+    @TableField("reviewer_id")
     private Long reviewerId;
-    @Enumerated(EnumType.STRING)
+    
+    @TableField("status")
     private ReviewStatus status = ReviewStatus.PENDING;
+    
+    @TableField("comment")
     private String comment;
+    
+    @TableField(value = "reviewed_at", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime reviewedAt;
+
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted = 0;
 
     /**
      * 审核通过该课程

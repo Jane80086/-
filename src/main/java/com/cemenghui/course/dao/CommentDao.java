@@ -1,12 +1,14 @@
 package com.cemenghui.course.dao;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.cemenghui.course.entity.Comment;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.apache.ibatis.annotations.Mapper;
 
-@Repository
-public interface CommentDao extends JpaRepository<Comment, Long> {
-    Page<Comment> findByCourseId(Long courseId, Pageable pageable);
+/**
+ * 评论数据访问接口
+ */
+@Mapper
+public interface CommentDao extends BaseMapper<Comment> {
+    // 使用MyBatis-Plus的QueryWrapper和LambdaQueryWrapper进行查询
+    // 无需自定义SQL，BaseMapper提供的方法已足够
 } 

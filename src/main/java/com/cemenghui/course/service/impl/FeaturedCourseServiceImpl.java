@@ -1,8 +1,10 @@
 package com.cemenghui.course.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.cemenghui.course.dao.FeaturedCourseDao;
 import com.cemenghui.course.entity.FeaturedCourse;
 import com.cemenghui.course.service.FeaturedCourseService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 
@@ -13,7 +15,8 @@ import java.util.List;
  */
 @Service
 public class FeaturedCourseServiceImpl implements FeaturedCourseService {
-    private FeaturedCourseDao featuredRepo;
+    @Autowired
+    private FeaturedCourseDao featuredCourseDao;
 
     /**
      * 设置课程推荐位
@@ -23,8 +26,12 @@ public class FeaturedCourseServiceImpl implements FeaturedCourseService {
      */
     @Override
     public boolean promoteToFeatured(Long courseId, int priority) {
+        FeaturedCourse featuredCourse = new FeaturedCourse();
+        featuredCourse.setCourseId(courseId);
+        featuredCourse.setPriority(priority);
+        featuredCourseDao.insert(featuredCourse);
         onFeaturedPromoted(courseId);
-        return false;
+        return true;
     }
 
     /**
@@ -34,8 +41,11 @@ public class FeaturedCourseServiceImpl implements FeaturedCourseService {
      */
     @Override
     public boolean removeFromFeatured(Long courseId) {
+        LambdaQueryWrapper<FeaturedCourse> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(FeaturedCourse::getCourseId, courseId);
+        featuredCourseDao.delete(wrapper);
         onFeaturedRemoved(courseId);
-        return false;
+        return true;
     }
 
     /**
@@ -45,7 +55,9 @@ public class FeaturedCourseServiceImpl implements FeaturedCourseService {
     @Cacheable(value = "featuredCourses")
     @Override
     public List<FeaturedCourse> listFeaturedCourses() {
-        return null;
+        LambdaQueryWrapper<FeaturedCourse> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByAsc(FeaturedCourse::getPriority);
+        return featuredCourseDao.selectList(wrapper);
     }
 
     /**

@@ -36,7 +36,6 @@ public class News {
     private Integer viewCount = 0;
 
     @TableField("is_deleted")
-    @TableLogic
     private Integer isDeleted = 0;
 
     @TableField("audit_comment")
@@ -51,10 +50,10 @@ public class News {
     @TableField("deleted_time")
     private LocalDateTime deletedTime;
 
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    @TableField("create_time")
     private LocalDateTime createTime;
 
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    @TableField("update_time")
     private LocalDateTime updateTime;
 
     // 业务方法

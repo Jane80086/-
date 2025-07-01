@@ -1,28 +1,33 @@
 package com.cemenghui.course.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
  * 课程观看历史实体
  */
-@Entity
-@Table(name = "course_history")
+@TableName("course_history")
+@Data
 public class CourseHistory implements Serializable {
    private static final long serialVersionUID = 1L;
 
-   @Id
-   @GeneratedValue(strategy = GenerationType.IDENTITY)
+   @TableId(value = "course_history_id", type = IdType.AUTO)
    private Long courseHistoryId;
+   
+   @TableField("course_id")
    private Long courseId;
+   
+   @TableField("user_id")
    private Long userId;
-   private LocalDateTime viewedAt=LocalDateTime.now();
+   
+   @TableField(value = "viewed_at", fill = FieldFill.INSERT)
+   private LocalDateTime viewedAt;
+
+   @TableLogic
+   @TableField("deleted")
+   private Integer deleted = 0;
 
    public Long getCourseHistoryId(){
        return courseHistoryId;

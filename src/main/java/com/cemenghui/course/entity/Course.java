@@ -1,67 +1,69 @@
 package com.cemenghui.course.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.cemenghui.course.entity.CourseStatus;
-import jakarta.validation.constraints.NotBlank;
+import javax.validation.constraints.NotBlank;
 /**
  * 课程实体类
  */
-@Entity
-@Table(name = "courses")
+@TableName("courses")
 @Data
 public class Course implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "title", nullable = false)
+    @TableField("title")
     @NotBlank(message = "课程标题不能为空")
     private String title;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @TableField("description")
     private String description;
 
-    @Column(name = "instructor_id")
+    @TableField("instructor_id")
     private Long instructorId;
 
-    @Column(name = "price", precision = 10, scale = 2)
+    @TableField("price")
     private BigDecimal price = BigDecimal.ZERO;
 
-    @Column(name = "duration")
+    @TableField("duration")
     private Integer duration = 0;
 
-    // @Column(name = "course_level")
+    // @TableField("course_level")
     // private String courseLevel = "BEGINNER";
 
-    @Column(name = "category")
+    @TableField("category")
     private String category;
 
-    @Column(name = "status")
+    @TableField("status")
     private String status = "DRAFT";
 
-    @Column(name = "cover_image")
+    @TableField("cover_image")
     private String coverImage;
 
-    @Column(name = "video_url")
+    @TableField("video_url")
     private String videoUrl;
 
-    @Column(name = "created_time")
-    private LocalDateTime createdTime = LocalDateTime.now();
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    private LocalDateTime createdTime;
 
-    @Column(name = "updated_time")
-    private LocalDateTime updatedTime = LocalDateTime.now();
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedTime;
 
-    @Column(name = "like_count")
+    @TableField("like_count")
     private Integer likeCount = 0;
 
-    @Column(name = "favorite_count")
+    @TableField("favorite_count")
     private Integer favoriteCount = 0;
+
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted = 0;
 
     /**
      * 播放该课程内容

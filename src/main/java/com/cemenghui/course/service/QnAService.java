@@ -1,9 +1,9 @@
 package com.cemenghui.course.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cemenghui.course.entity.Question;
 import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 /**
  * 问答服务接口
@@ -50,7 +50,7 @@ public interface QnAService {
     /**
      * 分页获取课程问答
      */
-    Page<Question> getQuestionsByCoursePaged(Long courseId, Pageable pageable);
+    IPage<Question> getQuestionsByCoursePaged(Long courseId, Page<Question> page);
 
     /**
      * 点赞/取消点赞

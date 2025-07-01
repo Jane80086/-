@@ -1,20 +1,22 @@
 package com.cemenghui.course.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cemenghui.course.dao.QuestionDao;
 import com.cemenghui.course.entity.Question;
 import com.cemenghui.course.service.AIService;
 import com.cemenghui.course.service.QnAService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
 @Service
 public class QnAServiceImpl implements QnAService {
     @Autowired
-    private QuestionDao questionRepo;
+    private QuestionDao questionDao;
     @Autowired
     private AIService aiService;
 
@@ -32,9 +34,7 @@ public class QnAServiceImpl implements QnAService {
         question.setCourseId(courseId);
         question.setUserId(userId);
         question.setQuestion(content);
-        question.setCreatedAt(java.time.LocalDateTime.now());
-        // 保存到数据库
-        question = questionRepo.save(question);
+        questionDao.insert(question);
         return question;
     }
 
@@ -45,7 +45,9 @@ public class QnAServiceImpl implements QnAService {
      */
     @Override
     public List<Question> getQuestions(Long courseId) {
-        return questionRepo.findByCourseId(courseId);
+        LambdaQueryWrapper<Question> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Question::getCourseId, courseId);
+        return questionDao.selectList(wrapper);
     }
 
     /**
@@ -59,12 +61,12 @@ public class QnAServiceImpl implements QnAService {
         try {
             // 若只传id，需查库
             if (question.getId() != null && (question.getQuestion() == null || question.getQuestion().isEmpty())) {
-                question = questionRepo.findById(question.getId()).orElse(null);
+                question = questionDao.selectById(question.getId());
                 if (question == null) return "问题不存在";
             }
             String aiAnswer = aiService.autoReply(question);
             question.setAiAnswer(aiAnswer);
-            questionRepo.save(question);
+            questionDao.updateById(question);
             return aiAnswer;
         } catch (Exception e) {
             return "AI答复失败: " + e.getMessage();
@@ -82,73 +84,76 @@ public class QnAServiceImpl implements QnAService {
 
     @Override
     public Question getQuestionById(Long id) {
-        return questionRepo.findById(id).orElse(null);
+        return questionDao.selectById(id);
     }
 
     @Override
     @Transactional
     public boolean replyQuestion(Long id, String replyContent, Long replyUserId) {
-        Question question = questionRepo.findById(id).orElse(null);
+        Question question = questionDao.selectById(id);
         if (question == null) return false;
         // 这里简单保存人工回复到aiAnswer字段（如需区分可扩展字段）
         question.setAiAnswer(replyContent);
-        questionRepo.save(question);
+        questionDao.updateById(question);
         return true;
     }
 
     @Override
     @Transactional
     public boolean deleteQuestion(Long id) {
-        if (!questionRepo.existsById(id)) return false;
-        questionRepo.deleteById(id);
+        if (questionDao.selectById(id) == null) return false;
+        questionDao.deleteById(id);
         return true;
     }
 
     @Override
-    public Page<Question> getQuestionsByCoursePaged(Long courseId, Pageable pageable) {
-        return questionRepo.findByCourseId(courseId, pageable);
+    public IPage<Question> getQuestionsByCoursePaged(Long courseId, Page<Question> page) {
+        LambdaQueryWrapper<Question> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Question::getCourseId, courseId)
+               .orderByDesc(Question::getCreatedAt);
+        return questionDao.selectPage(page, wrapper);
     }
 
     @Override
     @Transactional
     public boolean likeQuestion(Long id, Long userId) {
-        Question question = questionRepo.findById(id).orElse(null);
+        Question question = questionDao.selectById(id);
         if (question == null) return false;
         if (question.getLikeCount() == null) question.setLikeCount(0);
         question.setLikeCount(question.getLikeCount() + 1); // 简化：不做用户去重
-        questionRepo.save(question);
+        questionDao.updateById(question);
         return true;
     }
 
     @Override
     @Transactional
     public boolean reportQuestion(Long id, Long userId, String reason) {
-        Question question = questionRepo.findById(id).orElse(null);
+        Question question = questionDao.selectById(id);
         if (question == null) return false;
         if (question.getReportCount() == null) question.setReportCount(0);
         question.setReportCount(question.getReportCount() + 1);
-        questionRepo.save(question);
+        questionDao.updateById(question);
         return true;
     }
 
     @Override
     @Transactional
     public boolean acceptAnswer(Long id, String answerType, String answerContent) {
-        Question question = questionRepo.findById(id).orElse(null);
+        Question question = questionDao.selectById(id);
         if (question == null) return false;
         question.setAcceptAnswerType(answerType);
         question.setAcceptAnswerContent(answerContent);
-        questionRepo.save(question);
+        questionDao.updateById(question);
         return true;
     }
 
     @Override
     @Transactional
     public boolean manualReply(Long id, String replyContent, Long replyUserId) {
-        Question question = questionRepo.findById(id).orElse(null);
+        Question question = questionDao.selectById(id);
         if (question == null) return false;
         question.setManualAnswer(replyContent);
-        questionRepo.save(question);
+        questionDao.updateById(question);
         return true;
     }
 }

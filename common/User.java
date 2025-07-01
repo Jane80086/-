@@ -1,49 +1,45 @@
 package com.cemenghui.course.common;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 用户实体类，定义用户的基本属性和行为
  */
-@Entity
-@Table(name = "users")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
+@TableName("users")
 @Data
 public class User {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    protected Long id;
+    @TableId(type = IdType.AUTO)
+    private Long id;
     
-    @Column(name = "username", nullable = false, unique = true)
-    protected String username;
+    @TableField("username")
+    private String username;
     
-    @Column(name = "password", nullable = false)
-    protected String password;
+    @TableField("password")
+    private String password;
     
-    @Column(name = "email", nullable = false, unique = true)
-    protected String email;
+    @TableField("email")
+    private String email;
     
-    @Column(name = "phone")
-    protected String phone;
+    @TableField("phone")
+    private String phone;
     
-    @Column(name = "status")
-    protected Integer status = 1;
+    @TableField("user_type")
+    private String userType;
     
-    @Column(name = "created_time")
-    protected LocalDateTime createdTime = LocalDateTime.now();
+    @TableField("status")
+    private Integer status = 1;
     
-    @Column(name = "updated_time")
-    protected LocalDateTime updatedTime = LocalDateTime.now();
+    @TableField("created_time")
+    private LocalDateTime createdTime = LocalDateTime.now();
+    
+    @TableField("updated_time")
+    private LocalDateTime updatedTime = LocalDateTime.now();
     
     /** 是否已登录 */
-    @Transient
-    protected boolean loggedIn = false;
+    private boolean loggedIn = false;
 
     /**
      * 登录校验方法，校验通过则返回 true，否则抛出 Exception

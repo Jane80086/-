@@ -5,11 +5,11 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.cemenghui.course.shiro.AccountProfile;
+import com.cemenghui.course.entity.AccountProfile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
 

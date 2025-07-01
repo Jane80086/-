@@ -1,33 +1,35 @@
 package com.cemenghui.course.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "comments")
+@TableName("comments")
 @Data
 public class Comment implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "course_id", nullable = false)
+    @TableField("course_id")
     private Long courseId;
 
-    @Column(name = "user_id", nullable = false)
+    @TableField("user_id")
     private Long userId;
 
-    @Column(name = "content", columnDefinition = "TEXT")
+    @TableField("content")
     private String content;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
 
-    @Column(name = "like_count")
+    @TableField("like_count")
     private Integer likeCount = 0;
 
-    @Column(name = "status")
+    @TableField("status")
     private String status = "NORMAL"; // NORMAL/REVIEWED/REJECTED
+
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted = 0;
 } 

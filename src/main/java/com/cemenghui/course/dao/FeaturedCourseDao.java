@@ -1,24 +1,14 @@
 package com.cemenghui.course.dao;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.cemenghui.course.entity.FeaturedCourse;
-import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.List;
-import org.springframework.stereotype.Repository;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
  * 首页推荐课程数据访问接口
  */
-@Repository
-public interface FeaturedCourseDao extends JpaRepository<FeaturedCourse, Long> {
-    /**
-     * 获取首页推荐课程，按优先级升序排序
-     * @return 推荐课程列表
-     */
-    List<FeaturedCourse> findAllByOrderByPriorityAsc();
-
-    /**
-     * 移除某课程的推荐记录
-     * @param courseId 课程ID
-     */
-    void deleteByCourseId(Long courseId);
+@Mapper
+public interface FeaturedCourseDao extends BaseMapper<FeaturedCourse> {
+    // 使用MyBatis-Plus的QueryWrapper和LambdaQueryWrapper进行查询
+    // 无需自定义SQL，BaseMapper提供的方法已足够
 } 

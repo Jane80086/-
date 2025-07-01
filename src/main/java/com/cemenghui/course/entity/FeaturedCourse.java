@@ -1,28 +1,36 @@
 package com.cemenghui.course.entity;
 
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 
 /**
  * 首页推荐课程实体
  */
-@Entity
-@Table(name = "featured_course")
+@TableName("featured_course")
+@Data
 public class FeaturedCourse implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(value = "featured_course_id", type = IdType.AUTO)
     private Long featuredCourseId;
+    
+    @TableField("course_id")
     private Long courseId;
+    
+    @TableField("promoted_by")
     private Long promotedBy;
-    private LocalDateTime promotedAt = LocalDateTime.now();
+    
+    @TableField(value = "promoted_at", fill = FieldFill.INSERT)
+    private LocalDateTime promotedAt;
+    
+    @TableField("priority")
     private int priority = 0;
+
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted = 0;
 
     /**
      * 推送该课程至首页

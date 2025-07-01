@@ -1,15 +1,25 @@
 package com.cemenghui.common;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import java.time.LocalDateTime;
 
-@Entity
-@DiscriminatorValue("ENTERPRISE")
+@TableName("users")
 @Data
+@EqualsAndHashCode(callSuper = false)
 public class EnterpriseUser extends User {
+    
+    @TableField("company_name")
     private String companyName;
+    
+    @TableField("business_license")
     private String businessLicense;
+    
+    @TableField("contact_person")
     private String contactPerson;
-    private String contactPhone;
-    private String companyAddress;
+    
+    public EnterpriseUser() {
+        this.setUserType("ENTERPRISE");
+    }
 } 

@@ -1,17 +1,19 @@
 package com.cemenghui.course.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cemenghui.course.dao.CourseDao;
+import com.cemenghui.course.dao.CommentDao;
 import com.cemenghui.course.entity.Course;
+import com.cemenghui.course.entity.Comment;
 import com.cemenghui.course.service.CourseService;
 import com.cemenghui.course.service.NotFoundException;
 import com.cemenghui.course.service.AIService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
-import com.cemenghui.course.dao.CommentDao;
-import com.cemenghui.course.entity.Comment;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
@@ -25,7 +27,7 @@ import java.util.stream.Stream;
 public class CourseServiceImpl implements CourseService {
     
     @Autowired
-    private CourseDao courseRepo;
+    private CourseDao courseDao;
     
     @Autowired
     private AIService aiService;
@@ -39,7 +41,7 @@ public class CourseServiceImpl implements CourseService {
      */
     @Override
     public List<Course> listCourses() {
-        return courseRepo.findAll();
+        return courseDao.selectList(null);
     }
 
     /**
@@ -49,7 +51,9 @@ public class CourseServiceImpl implements CourseService {
      */
     @Override
     public List<Course> searchCourses(String keyword) {
-        return courseRepo.findByTitleContaining(keyword);
+        LambdaQueryWrapper<Course> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(Course::getTitle, keyword);
+        return courseDao.selectList(wrapper);
     }
 
     /**
@@ -61,7 +65,7 @@ public class CourseServiceImpl implements CourseService {
     @Cacheable(value = "courseDetail", key = "#courseId")
     @Override
     public Course getCourseDetail(Long courseId) throws NotFoundException {
-        Course course = courseRepo.findById(courseId).orElse(null);
+        Course course = courseDao.selectById(courseId);
         if (course == null) {
             throw new NotFoundException("课程不存在: " + courseId);
         }
@@ -106,22 +110,22 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional
     public boolean favoriteCourse(Long courseId, Long userId) {
-        Course course = courseRepo.findById(courseId).orElse(null);
+        Course course = courseDao.selectById(courseId);
         if (course == null) return false;
         if (course.getFavoriteCount() == null) course.setFavoriteCount(0);
         course.setFavoriteCount(course.getFavoriteCount() + 1); // 简化：不做用户去重
-        courseRepo.save(course);
+        courseDao.updateById(course);
         return true;
     }
 
     @Override
     @Transactional
     public boolean likeCourse(Long courseId, Long userId) {
-        Course course = courseRepo.findById(courseId).orElse(null);
+        Course course = courseDao.selectById(courseId);
         if (course == null) return false;
         if (course.getLikeCount() == null) course.setLikeCount(0);
         course.setLikeCount(course.getLikeCount() + 1);
-        courseRepo.save(course);
+        courseDao.updateById(course);
         return true;
     }
 
@@ -132,13 +136,15 @@ public class CourseServiceImpl implements CourseService {
         comment.setCourseId(courseId);
         comment.setUserId(userId);
         comment.setContent(content);
-        comment.setCreatedAt(java.time.LocalDateTime.now());
-        commentDao.save(comment);
+        commentDao.insert(comment);
         return true;
     }
 
     @Override
-    public Page<Comment> getCourseComments(Long courseId, Pageable pageable) {
-        return commentDao.findByCourseId(courseId, pageable);
+    public IPage<Comment> getCourseComments(Long courseId, Page<Comment> page) {
+        LambdaQueryWrapper<Comment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Comment::getCourseId, courseId)
+               .orderByDesc(Comment::getCreatedAt);
+        return commentDao.selectPage(page, wrapper);
     }
 } 

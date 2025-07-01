@@ -1,25 +1,48 @@
 package com.cemenghui.course.common;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
  * 管理员用户
  */
-@Entity
-@DiscriminatorValue("ADMIN")
+@TableName("users")
 @Data
-public class AdminUser extends User {
+public class AdminUser {
     
-    @Column(name = "admin_level")
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
+    @TableField("username")
+    private String username;
+    
+    @TableField("password")
+    private String password;
+    
+    @TableField("email")
+    private String email;
+    
+    @TableField("phone")
+    private String phone;
+    
+    @TableField("user_type")
+    private String userType = "ADMIN";
+    
+    @TableField("status")
+    private Integer status = 1;
+    
+    @TableField("admin_level")
     private String adminLevel = "ADMIN";
     
-    @Column(name = "permissions", columnDefinition = "TEXT")
+    @TableField("permissions")
     private String permissions;
     
-    @Column(name = "created_time")
+    @TableField("created_time")
     private LocalDateTime createdTime = LocalDateTime.now();
+    
+    @TableField("updated_time")
+    private LocalDateTime updatedTime = LocalDateTime.now();
     
     public void approveCourse(Long courseId) throws Exception {
         // 审核并通过课程逻辑

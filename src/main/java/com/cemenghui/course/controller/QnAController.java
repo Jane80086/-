@@ -1,11 +1,11 @@
 package com.cemenghui.course.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cemenghui.course.common.Result;
 import com.cemenghui.course.entity.Question;
 import com.cemenghui.course.service.QnAService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -122,10 +122,11 @@ public class QnAController {
      */
     @GetMapping("/course/{courseId}/page")
     public Result getQuestionsByCoursePaged(@PathVariable Long courseId,
-                                            @RequestParam(defaultValue = "0") int page,
-                                            @RequestParam(defaultValue = "10") int size) {
+                                            @RequestParam(defaultValue = "1") long current,
+                                            @RequestParam(defaultValue = "10") long size) {
         try {
-            Page<Question> questions = qnaService.getQuestionsByCoursePaged(courseId, PageRequest.of(page, size));
+            Page<Question> page = new Page<>(current, size);
+            IPage<Question> questions = qnaService.getQuestionsByCoursePaged(courseId, page);
             return Result.success(questions);
         } catch (Exception e) {
             return Result.fail("分页获取问答失败: " + e.getMessage());

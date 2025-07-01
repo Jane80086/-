@@ -1,5 +1,6 @@
 package com.cemenghui.course.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.cemenghui.course.dao.UserDao;
@@ -27,7 +28,10 @@ public class UserServiceImpl {
      */
     public Optional<User> findByUsername(String username) {
         try {
-            return userDao.findByUsername(username);
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getUsername, username);
+            User user = userDao.selectOne(wrapper);
+            return Optional.ofNullable(user);
         } catch (Exception e) {
             System.err.println("根据用户名查找用户失败: " + e.getMessage());
             return Optional.empty();
@@ -41,16 +45,21 @@ public class UserServiceImpl {
      */
     public List<User> findByUserType(UserType userType) {
         try {
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
             switch (userType) {
                 case ADMIN:
-                    return new ArrayList<>(userDao.findAllAdmins());
+                    wrapper.eq(User::getUserType, "ADMIN");
+                    break;
                 case ENTERPRISE:
-                    return new ArrayList<>(userDao.findAllEnterprises());
+                    wrapper.eq(User::getUserType, "ENTERPRISE");
+                    break;
                 case NORMAL:
-                    return new ArrayList<>(userDao.findAllNormals());
+                    wrapper.eq(User::getUserType, "NORMAL");
+                    break;
                 default:
                     return getAllUsers();
             }
+            return userDao.selectList(wrapper);
         } catch (Exception e) {
             System.err.println("根据用户类型查找用户失败: " + e.getMessage());
             return getMockUsers(); // 返回模拟数据
@@ -63,7 +72,7 @@ public class UserServiceImpl {
      */
     public List<User> getAllUsers() {
         try {
-            return new ArrayList<>(userDao.findAll());
+            return userDao.selectList(null);
         } catch (Exception e) {
             System.err.println("获取所有用户失败: " + e.getMessage());
             return getMockUsers(); // 返回模拟数据
@@ -77,7 +86,7 @@ public class UserServiceImpl {
      */
     public User getById(Long id) {
         try {
-            return userDao.findById(id).orElse(null);
+        return userDao.selectById(id);
         } catch (Exception e) {
             System.err.println("根据ID查找用户失败: " + e.getMessage());
             return null;
@@ -91,7 +100,8 @@ public class UserServiceImpl {
      */
     public User saveUser(User user) {
         try {
-            return userDao.save(user);
+            userDao.insert(user);
+            return user;
         } catch (Exception e) {
             System.err.println("保存用户失败: " + e.getMessage());
             return null;
@@ -120,8 +130,9 @@ public class UserServiceImpl {
      */
     public User updateUser(User user) {
         try {
-            if (user.getId() != null && userDao.existsById(user.getId())) {
-                return userDao.save(user);
+            if (user.getId() != null && userDao.selectById(user.getId()) != null) {
+                userDao.updateById(user);
+                return user;
             }
             return null;
         } catch (Exception e) {
@@ -137,7 +148,7 @@ public class UserServiceImpl {
      */
     public boolean existsById(Long id) {
         try {
-            return userDao.existsById(id);
+            return userDao.selectById(id) != null;
         } catch (Exception e) {
             System.err.println("检查用户是否存在失败: " + e.getMessage());
             return false;
@@ -150,7 +161,7 @@ public class UserServiceImpl {
      */
     public long count() {
         try {
-            return userDao.count();
+            return userDao.selectCount(null);
         } catch (Exception e) {
             System.err.println("获取用户总数失败: " + e.getMessage());
             return 0;

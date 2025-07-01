@@ -16,7 +16,7 @@ import java.util.Optional;
 @Service
 public class CourseManagerServiceImpl implements com.cemenghui.course.service.CourseManagerService {
     @Autowired
-    private CourseDao courseRepo;
+    private CourseDao courseDao;
     @Autowired
     private AIService aiService;
     @Autowired
@@ -29,7 +29,8 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      */
     @Override
     public Course createCourse(Course course) {
-        return courseRepo.save(course);
+        courseDao.insert(course);
+        return course;
     }
 
     /**
@@ -41,13 +42,13 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      */
     @Override
     public Course editCourse(Long id, Course updated) throws NotFoundException {
-        Optional<Course> optional = courseRepo.findById(id);
-        if (!optional.isPresent()) {
+        Course course = courseDao.selectById(id);
+        if (course == null) {
             throw new NotFoundException("课程未找到: " + id);
         }
-        Course course = optional.get();
         course.edit(updated.getTitle(), updated.getDescription(), updated.getCoverImage());
-        return courseRepo.save(course);
+        courseDao.updateById(course);
+        return course;
     }
 
     /**
@@ -57,10 +58,10 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      */
     @Override
     public boolean deleteCourse(Long courseId) {
-        if (!courseRepo.existsById(courseId)) {
+        if (courseDao.selectById(courseId) == null) {
             return false;
         }
-        courseRepo.deleteById(courseId);
+        courseDao.deleteById(courseId);
         return true;
     }
 
@@ -71,14 +72,13 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      */
     @Override
     public boolean submitForReview(Long courseId) {
-        Optional<Course> optional = courseRepo.findById(courseId);
-        if (!optional.isPresent()) {
+        Course course = courseDao.selectById(courseId);
+        if (course == null) {
             return false;
         }
-        Course course = optional.get();
         try {
             course.submitForReview();
-            courseRepo.save(course);
+            courseDao.updateById(course);
             onCourseSubmitted(courseId);
             return true;
         } catch (Exception e) {
@@ -122,12 +122,11 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      * @throws NotFoundException 课程未找到时抛出
      */
     public MCPServiceImpl.CourseOptimizationResult optimizeCourseWithMCP(Long courseId, String targetAudience, String courseType) throws NotFoundException {
-        Optional<Course> optional = courseRepo.findById(courseId);
-        if (!optional.isPresent()) {
+        Course course = courseDao.selectById(courseId);
+        if (course == null) {
             throw new NotFoundException("课程未找到: " + courseId);
         }
         
-        Course course = optional.get();
         return mcpServiceImpl.optimizeCourseContent(course, targetAudience, courseType);
     }
 

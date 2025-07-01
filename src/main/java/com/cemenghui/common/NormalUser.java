@@ -1,13 +1,25 @@
 package com.cemenghui.common;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import java.time.LocalDateTime;
 
-@Entity
-@DiscriminatorValue("NORMAL")
+@TableName("users")
 @Data
+@EqualsAndHashCode(callSuper = false)
 public class NormalUser extends User {
-    private String realName;
+    
+    @TableField("nickname")
+    private String nickname;
+    
+    @TableField("avatar")
     private String avatar;
-    private String bio;
+    
+    @TableField("learning_level")
+    private String learningLevel = "BEGINNER";
+    
+    public NormalUser() {
+        this.setUserType("NORMAL");
+    }
 } 

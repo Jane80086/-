@@ -1,31 +1,36 @@
 package com.cemenghui.common;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "users")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
+@TableName("users")
 @Data
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    protected Long id;
-    @Column(name = "username", nullable = false, unique = true)
-    protected String username;
-    @Column(name = "password", nullable = false)
-    protected String password;
-    @Column(name = "email", nullable = false, unique = true)
-    protected String email;
-    @Column(name = "phone")
-    protected String phone;
-    @Column(name = "status")
-    protected Integer status = 1;
-    @Column(name = "created_time")
-    protected LocalDateTime createdTime = LocalDateTime.now();
-    @Column(name = "updated_time")
-    protected LocalDateTime updatedTime = LocalDateTime.now();
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
+    @TableField("username")
+    private String username;
+    
+    @TableField("password")
+    private String password;
+    
+    @TableField("email")
+    private String email;
+    
+    @TableField("phone")
+    private String phone;
+    
+    @TableField("user_type")
+    private String userType;
+    
+    @TableField("status")
+    private Integer status = 1;
+    
+    @TableField("created_time")
+    private LocalDateTime createdTime = LocalDateTime.now();
+    
+    @TableField("updated_time")
+    private LocalDateTime updatedTime = LocalDateTime.now();
 } 

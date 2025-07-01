@@ -5,7 +5,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -15,6 +17,9 @@ public class SecurityConfig {
     @Autowired
     private CorsConfigurationSource corsConfigurationSource;
 
+    @Autowired
+    private JwtFilter jwtFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -23,9 +28,18 @@ public class SecurityConfig {
             // 配置跨域
             .cors().configurationSource(corsConfigurationSource)
             .and()
-            // 允许所有请求
-            .authorizeHttpRequests()
-                .anyRequest().permitAll();
+            // 使用无状态会话
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            // 配置请求授权
+            .authorizeRequests()
+                .antMatchers("/api/auth/**", "/api/public/**").permitAll()
+                .antMatchers("/api/admin/**").hasRole("ADMIN")
+                .antMatchers("/api/enterprise/**").hasRole("ENTERPRISE")
+                .anyRequest().authenticated()
+            .and()
+            // 添加JWT过滤器
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }

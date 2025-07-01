@@ -13,5 +13,17 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="meeting_management@localhost" uuid="cb6a3538-d159-4e9c-b4aa-8158ab9731d8">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/src/main/resources/application-meeting.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/meeting_management?characterEncoding=UTF-8&amp;useUnicode=true</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

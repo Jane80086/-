@@ -26,21 +26,6 @@ spring:
       connection-test-query: SELECT 1
       validation-timeout: 5000
       pool-name: CourseHikariCP
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    open-in-view: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: false
-        use_sql_comments: false
-        jdbc:
-          batch_size: 20
-        order_inserts: true
-        order_updates: true
-        batch_versioned_data: true
   security:
     user:
       name: admin
@@ -55,21 +40,14 @@ spring:
 
 mybatis-plus:
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+    cache-enabled: false
   global-config:
     db-config:
       id-type: auto
-      logic-delete-value: 1
-      logic-not-delete-value: 0
+  type-aliases-package: com.cemenghui.course.entity
 
-shiro-redis:
-  enabled: true
-  redis-manager:
-    host: 127.0.0.1:6379
-    password:
-    database: 0
-    timeout: 3000
-    expire: 1800
+
 
 jwt:
   secret: your_jwt_secret_key_please_change

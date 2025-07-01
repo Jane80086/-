@@ -112,7 +112,7 @@ public class AdminController {
             return Result.success("用户已封禁", result);
         } catch (Exception e) {
             return Result.fail("封禁用户失败: " + e.getMessage());
-        }
+    }
     }
     
     @PostMapping("/user/{id}/unban")
@@ -136,7 +136,7 @@ public class AdminController {
     @GetMapping("/courses")
     public Result getCourses(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         try {
-            // 这里只做示例，实际应实现分页
+        // 这里只做示例，实际应实现分页
             List<Course> courses = courseService.listCourses();
             return Result.success(courses);
         } catch (Exception e) {

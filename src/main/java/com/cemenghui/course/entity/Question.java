@@ -1,6 +1,6 @@
 package com.cemenghui.course.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -8,45 +8,47 @@ import java.time.LocalDateTime;
 /**
  * 课程问答实体
  */
-@Entity
-@Table(name = "questions")
+@TableName("questions")
 @Data
 public class Question implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "course_id", nullable = false)
+    @TableField("course_id")
     private Long courseId;
 
-    @Column(name = "user_id", nullable = false)
+    @TableField("user_id")
     private Long userId;
 
-    @Column(name = "question", nullable = false, columnDefinition = "TEXT")
+    @TableField("question")
     private String question;
 
-    @Column(name = "ai_answer", columnDefinition = "TEXT")
+    @TableField("ai_answer")
     private String aiAnswer;
 
-    @Column(name = "manual_answer", columnDefinition = "TEXT")
+    @TableField("manual_answer")
     private String manualAnswer;
 
-    @Column(name = "like_count")
+    @TableField("like_count")
     private Integer likeCount = 0;
 
-    @Column(name = "accept_answer_type")
+    @TableField("accept_answer_type")
     private String acceptAnswerType; // AI/MANUAL
 
-    @Column(name = "accept_answer_content", columnDefinition = "TEXT")
+    @TableField("accept_answer_content")
     private String acceptAnswerContent;
 
-    @Column(name = "report_count")
+    @TableField("report_count")
     private Integer reportCount = 0;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted = 0;
 
     /**
      * 提交一个问题
