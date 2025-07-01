@@ -102,8 +102,9 @@ public class JwtUtil {
                 throw new IllegalArgumentException("Token不能为空");
             }
             
-            Claims claims = Jwts.parser()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
 
@@ -131,8 +132,9 @@ public class JwtUtil {
                 return false;
             }
             
-            Claims claims = Jwts.parser()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
             
@@ -179,8 +181,9 @@ public class JwtUtil {
                 return false;
             }
             
-            Claims claims = Jwts.parser()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
             
@@ -221,8 +224,9 @@ public class JwtUtil {
      */
     public Date getExpirationDate(String token) {
         try {
-            Claims claims = Jwts.parser()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
             
