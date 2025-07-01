@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import meetingService from '../services/meetingService';
+import fileService from '../services/fileService';
 
 const route = useRoute();
 const router = useRouter();
@@ -90,10 +91,31 @@ const formatDateTime = (dateTime) => {
   }
 };
 
+// 处理会议图片URL，支持私有bucket
+const processMeetingImageUrl = async (meeting) => {
+  if (meeting.imageUrl && !meeting.imageUrl.startsWith('http://') && !meeting.imageUrl.startsWith('https://')) {
+    try {
+      const presignedUrl = await fileService.getImageUrl(meeting.imageUrl);
+      if (presignedUrl) {
+        meeting.imageUrl = presignedUrl;
+      }
+    } catch (error) {
+      console.error('获取会议图片URL失败:', error);
+    }
+  }
+};
+
 // 返回列表
 const goBack = () => {
   router.push('/');
 };
+
+// 监听会议数据变化，自动处理图片URL
+watch(() => meeting.value, async (newMeeting) => {
+  if (newMeeting) {
+    await processMeetingImageUrl(newMeeting);
+  }
+}, { immediate: true });
 
 onMounted(() => {
   fetchUserInfo();
