@@ -1,7 +1,6 @@
 package com.cemenghui.meeting.util;
 
-import com.cemenghui.meeting.entity.Meeting;
-import com.cemenghui.meeting.service.UserService;
+import com.cemenghui.meeting.dao.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -9,20 +8,28 @@ import org.springframework.stereotype.Component;
 public class PermissionUtil {
     
     @Autowired
-    private UserService userService;
+    private UserDao userDao;
     
     /**
      * 检查用户是否为管理员
      */
     public boolean isAdmin(String username) {
-        return userService.isAdmin(username);
+        if (username == null) {
+            return false;
+        }
+        var user = userDao.findByUsername(username);
+        return user != null && "ADMIN".equals(user.getUserType());
     }
     
     /**
      * 检查用户是否为企业用户
      */
     public boolean isEnterpriseUser(String username) {
-        return userService.isEnterpriseUser(username);
+        if (username == null) {
+            return false;
+        }
+        var user = userDao.findByUsername(username);
+        return user != null && "ENTERPRISE".equals(user.getUserType());
     }
     
     /**
@@ -33,56 +40,53 @@ public class PermissionUtil {
     }
     
     /**
-     * 检查用户是否有权限创建会议
-     */
-    public boolean canCreateMeeting(String username) {
-        return isAdmin(username) || isEnterpriseUser(username);
-    }
-    
-    /**
      * 检查用户是否有权限编辑会议
+     * 只有创建者或管理员可以编辑
      */
-    public boolean canEditMeeting(String username, String meetingCreator) {
-        // 管理员可以编辑所有会议
-        if (isAdmin(username)) {
-            return true;
-        }
-        // 企业用户只能编辑自己创建的会议
-        return username.equals(meetingCreator);
+    public boolean canEditMeeting(String username, String creator) {
+        return username != null && (username.equals(creator) || isAdmin(username));
     }
     
     /**
      * 检查用户是否有权限删除会议
+     * 只有创建者或管理员可以删除
      */
-    public boolean canDeleteMeeting(String username, String meetingCreator) {
-        // 管理员可以删除所有会议
-        if (isAdmin(username)) {
-            return true;
-        }
-        // 企业用户只能删除自己创建的会议
-        return username.equals(meetingCreator);
+    public boolean canDeleteMeeting(String username, String creator) {
+        return username != null && (username.equals(creator) || isAdmin(username));
     }
     
     /**
      * 检查用户是否有权限审核会议
+     * 只有管理员可以审核
      */
     public boolean canReviewMeeting(String username) {
         return isAdmin(username);
     }
     
     /**
-     * 检查用户是否有权限查看会议列表
+     * 检查用户是否有权限创建会议
+     * 管理员和企业用户可以创建会议
+     */
+    public boolean canCreateMeeting(String username) {
+        return isAdmin(username) || isEnterpriseUser(username);
+    }
+    
+    /**
+     * 检查用户是否有权限查看所有会议
+     * 所有用户都可以查看已通过的会议
      */
     public boolean canViewMeetings(String username) {
-        // 所有登录用户都可以查看会议列表
-        return username != null && !username.trim().isEmpty();
+        return username != null;
     }
     
     /**
      * 检查用户是否有权限查看特定会议
+     * 管理员可以查看所有会议
+     * 企业用户可以查看自己创建的会议和已通过的会议
+     * 普通用户只能查看已通过的会议
      */
-    public boolean canViewMeeting(String username, Meeting meeting) {
-        if (meeting == null) {
+    public boolean canViewMeeting(String username, com.cemenghui.meeting.bean.Meeting meeting) {
+        if (username == null || meeting == null) {
             return false;
         }
         

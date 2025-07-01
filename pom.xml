@@ -5,8 +5,8 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.0</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<version>2.7.18</version>
+		relativePath/ <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.cemenghui</groupId>
 	<artifactId>course</artifactId>
@@ -116,11 +116,6 @@
 			<artifactId>jakarta.servlet-api</artifactId>
 			<version>6.0.0</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>jakarta.validation</groupId>
-			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.0.2</version>
 		</dependency>
 		<!-- MinIO对象存储 -->
 		<dependency>

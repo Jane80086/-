@@ -2,11 +2,11 @@ package com.cemenghui.course.entity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import javax.persistence.Entity;  
+import javax.persistence.Table;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 
 /**
  * 首页推荐课程实体

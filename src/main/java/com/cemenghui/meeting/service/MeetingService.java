@@ -1,40 +1,39 @@
 package com.cemenghui.meeting.service;
 
-import com.cemenghui.meeting.entity.Meeting;
-import com.cemenghui.meeting.entity.MeetingQuery;
-import com.cemenghui.meeting.entity.MeetingReviewRequest;
-import com.cemenghui.meeting.entity.MeetingReviewRecord;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.cemenghui.meeting.bean.Meeting;
+import com.cemenghui.meeting.bean.MeetingQuery;
+import com.cemenghui.meeting.bean.MeetingReviewRequest;
+import com.cemenghui.meeting.bean.MeetingReviewRecord;
 import com.cemenghui.meeting.dao.MeetingDao;
 import com.cemenghui.meeting.util.PermissionUtil;
 import com.cemenghui.meeting.util.ValidationUtil;
-import com.cemenghui.meeting.controller.GlobalExceptionHandler;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.time.format.DateTimeFormatter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.time.LocalDateTime;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class MeetingService {
-    private static final Logger logger = LoggerFactory.getLogger(MeetingService.class);
     
-    @Autowired
-    private MeetingDao meetingDao;
-    
-    @Autowired
-    private PermissionUtil permissionUtil;
-    
-    @Autowired
-    private ValidationUtil validationUtil;
-    
-    @Autowired
-    private MinioService minioService;
+    private final MeetingDao meetingDao;
+    private final PermissionUtil permissionUtil;
+    private final ValidationUtil validationUtil;
+    @Value("${minio.endpoint}")
+    private String minioEndpoint;
+    @Value("${minio.bucket}")
+    private String minioBucket;
 
     /**
      * 创建会议
@@ -44,11 +43,11 @@ public class MeetingService {
         try {
             // 参数验证
             if (meeting == null) {
-                throw new GlobalExceptionHandler.BusinessException("会议数据不能为空");
+                throw new IllegalArgumentException("会议数据不能为空");
             }
             
             if (username == null || username.trim().isEmpty()) {
-                throw new GlobalExceptionHandler.BusinessException("用户名不能为空");
+                throw new IllegalArgumentException("用户名不能为空");
             }
             
             // 权限验证
@@ -59,7 +58,7 @@ public class MeetingService {
             // 数据验证
             String validationError = validationUtil.validateMeetingCreate(meeting);
             if (validationError != null) {
-                throw new GlobalExceptionHandler.BusinessException(validationError);
+                throw new IllegalArgumentException(validationError);
             }
             
             // 设置创建人
@@ -73,8 +72,9 @@ public class MeetingService {
             }
             
             // 设置创建时间和更新时间
-            meeting.setCreateTime(java.time.LocalDateTime.now());
-            meeting.setUpdateTime(java.time.LocalDateTime.now());
+            meeting.setCreateTime(LocalDateTime.now());
+            meeting.setUpdateTime(LocalDateTime.now());
+            meeting.setDeleted(0); // 设置逻辑删除字段
             
             // 插入数据库
             int result = meetingDao.insert(meeting);
@@ -82,14 +82,14 @@ public class MeetingService {
                 throw new RuntimeException("会议创建失败，数据库插入异常");
             }
             
-            logger.info("用户 {} 成功创建会议: {} (ID: {})", username, meeting.getMeetingName(), meeting.getId());
+            log.info("用户 {} 成功创建会议: {} (ID: {})", username, meeting.getMeetingName(), meeting.getId());
             return meeting;
             
-        } catch (SecurityException | GlobalExceptionHandler.BusinessException e) {
-            logger.warn("用户 {} 创建会议失败: {}", username, e.getMessage());
+        } catch (SecurityException | IllegalArgumentException e) {
+            log.warn("用户 {} 创建会议失败: {}", username, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("用户 {} 创建会议时发生系统错误", username, e);
+            log.error("用户 {} 创建会议时发生系统错误", username, e);
             throw new RuntimeException("会议创建失败: " + e.getMessage());
         }
     }
@@ -100,12 +100,12 @@ public class MeetingService {
     public Meeting getMeetingById(Long id) {
         try {
             if (id == null || id <= 0) {
-                throw new GlobalExceptionHandler.BusinessException("会议ID无效");
+                throw new IllegalArgumentException("会议ID无效");
             }
             
-            Meeting meeting = meetingDao.findById(id);
-            if (meeting == null) {
-                throw new GlobalExceptionHandler.ResourceNotFoundException("会议不存在");
+            Meeting meeting = meetingDao.selectById(id);
+            if (meeting == null || meeting.getDeleted() == 1) {
+                throw new IllegalArgumentException("会议不存在");
             }
             
             // 处理图片URL
@@ -113,11 +113,11 @@ public class MeetingService {
             
             return meeting;
             
-        } catch (GlobalExceptionHandler.ResourceNotFoundException | GlobalExceptionHandler.BusinessException e) {
-            logger.warn("获取会议详情失败: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.warn("获取会议详情失败: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("获取会议详情时发生系统错误, ID: {}", id, e);
+            log.error("获取会议详情时发生系统错误, ID: {}", id, e);
             throw new RuntimeException("获取会议详情失败: " + e.getMessage());
         }
     }
@@ -130,23 +130,23 @@ public class MeetingService {
         try {
             // 参数验证
             if (meeting == null) {
-                throw new GlobalExceptionHandler.BusinessException("会议数据不能为空");
+                throw new IllegalArgumentException("会议数据不能为空");
             }
             
             if (username == null || username.trim().isEmpty()) {
-                throw new GlobalExceptionHandler.BusinessException("用户名不能为空");
+                throw new IllegalArgumentException("用户名不能为空");
             }
             
             // 数据验证
             String validationError = validationUtil.validateMeetingUpdate(meeting);
             if (validationError != null) {
-                throw new GlobalExceptionHandler.BusinessException(validationError);
+                throw new IllegalArgumentException(validationError);
             }
             
             // 获取原会议信息
-            Meeting originalMeeting = meetingDao.findById(meeting.getId());
-            if (originalMeeting == null) {
-                throw new GlobalExceptionHandler.ResourceNotFoundException("会议不存在");
+            Meeting originalMeeting = meetingDao.selectById(meeting.getId());
+            if (originalMeeting == null || originalMeeting.getDeleted() == 1) {
+                throw new IllegalArgumentException("会议不存在");
             }
             
             // 权限验证
@@ -156,26 +156,26 @@ public class MeetingService {
             
             // 检查会议状态
             if (originalMeeting.getStatus() == 3) {
-                throw new GlobalExceptionHandler.BusinessException("已删除的会议不能编辑");
+                throw new IllegalArgumentException("已删除的会议不能编辑");
             }
             
             // 设置更新时间
-            meeting.setUpdateTime(java.time.LocalDateTime.now());
+            meeting.setUpdateTime(LocalDateTime.now());
             
             // 更新数据库
-            int result = meetingDao.update(meeting);
+            int result = meetingDao.updateById(meeting);
             if (result <= 0) {
                 throw new RuntimeException("会议更新失败，数据库更新异常");
             }
             
-            logger.info("用户 {} 成功更新会议: {} (ID: {})", username, meeting.getMeetingName(), meeting.getId());
+            log.info("用户 {} 成功更新会议: {} (ID: {})", username, meeting.getMeetingName(), meeting.getId());
             return true;
             
-        } catch (SecurityException | GlobalExceptionHandler.BusinessException | GlobalExceptionHandler.ResourceNotFoundException e) {
-            logger.warn("用户 {} 更新会议失败: {}", username, e.getMessage());
+        } catch (SecurityException | IllegalArgumentException e) {
+            log.warn("用户 {} 更新会议失败: {}", username, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("用户 {} 更新会议时发生系统错误", username, e);
+            log.error("用户 {} 更新会议时发生系统错误", username, e);
             throw new RuntimeException("会议更新失败: " + e.getMessage());
         }
     }
@@ -188,21 +188,21 @@ public class MeetingService {
         try {
             // 参数验证
             if (id == null || id <= 0) {
-                throw new GlobalExceptionHandler.BusinessException("会议ID无效");
+                throw new IllegalArgumentException("会议ID无效");
             }
             
             if (username == null || username.trim().isEmpty()) {
-                throw new GlobalExceptionHandler.BusinessException("用户名不能为空");
+                throw new IllegalArgumentException("用户名不能为空");
             }
             
             if (!confirmDelete) {
-                throw new GlobalExceptionHandler.BusinessException("请确认删除操作");
+                throw new IllegalArgumentException("请确认删除操作");
             }
             
             // 获取会议信息
-            Meeting meeting = meetingDao.findById(id);
-            if (meeting == null) {
-                throw new GlobalExceptionHandler.ResourceNotFoundException("会议不存在");
+            Meeting meeting = meetingDao.selectById(id);
+            if (meeting == null || meeting.getDeleted() == 1) {
+                throw new IllegalArgumentException("会议不存在");
             }
             
             // 权限验证
@@ -210,25 +210,20 @@ public class MeetingService {
                 throw new SecurityException("您没有权限删除此会议");
             }
             
-            // 检查会议状态
-            if (meeting.getStatus() == 3) {
-                throw new GlobalExceptionHandler.BusinessException("会议已经被删除");
-            }
-            
-            // 删除数据库记录
+            // 逻辑删除
             int result = meetingDao.deleteById(id);
             if (result <= 0) {
                 throw new RuntimeException("会议删除失败，数据库删除异常");
             }
             
-            logger.info("用户 {} 成功删除会议: {} (ID: {})", username, meeting.getMeetingName(), id);
+            log.info("用户 {} 成功删除会议: {} (ID: {})", username, meeting.getMeetingName(), id);
             return true;
             
-        } catch (SecurityException | GlobalExceptionHandler.BusinessException | GlobalExceptionHandler.ResourceNotFoundException e) {
-            logger.warn("用户 {} 删除会议失败: {}", username, e.getMessage());
+        } catch (SecurityException | IllegalArgumentException e) {
+            log.warn("用户 {} 删除会议失败: {}", username, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("用户 {} 删除会议时发生系统错误", username, e);
+            log.error("用户 {} 删除会议时发生系统错误", username, e);
             throw new RuntimeException("会议删除失败: " + e.getMessage());
         }
     }
@@ -241,18 +236,11 @@ public class MeetingService {
         try {
             // 参数验证
             if (request == null) {
-                throw new GlobalExceptionHandler.BusinessException("审核请求不能为空");
+                throw new IllegalArgumentException("审核请求不能为空");
             }
             
             if (reviewer == null || reviewer.trim().isEmpty()) {
-                throw new GlobalExceptionHandler.BusinessException("审核人不能为空");
-            }
-            
-            // 验证审核请求
-            String validationError = validationUtil.validateReviewRequest(
-                request.getMeetingId(), request.getStatus(), request.getReviewComment());
-            if (validationError != null) {
-                throw new GlobalExceptionHandler.BusinessException(validationError);
+                throw new IllegalArgumentException("审核人不能为空");
             }
             
             // 权限验证
@@ -261,70 +249,65 @@ public class MeetingService {
             }
             
             // 获取会议信息
-            Meeting meeting = meetingDao.findById(request.getMeetingId());
-            if (meeting == null) {
-                throw new GlobalExceptionHandler.ResourceNotFoundException("会议不存在");
+            Meeting meeting = meetingDao.selectById(request.getMeetingId());
+            if (meeting == null || meeting.getDeleted() == 1) {
+                throw new IllegalArgumentException("会议不存在");
             }
             
             // 检查会议状态
             if (meeting.getStatus() != 0) {
-                throw new GlobalExceptionHandler.BusinessException("只能审核待审核状态的会议");
-            }
-            
-            // 检查是否审核自己的会议
-            if (meeting.getCreator().equals(reviewer)) {
-                throw new GlobalExceptionHandler.BusinessException("不能审核自己创建的会议");
+                throw new IllegalArgumentException("只能审核待审核状态的会议");
             }
             
             // 更新会议状态
-            int result = meetingDao.review(request.getMeetingId(), request.getStatus(), 
-                                    reviewer, request.getReviewComment());
+            meeting.setStatus(request.getStatus());
+            meeting.setReviewer(reviewer);
+            meeting.setReviewTime(LocalDateTime.now());
+            meeting.setReviewComment(request.getReviewComment());
+            meeting.setUpdateTime(LocalDateTime.now());
+            
+            int result = meetingDao.updateById(meeting);
             if (result <= 0) {
                 throw new RuntimeException("会议审核失败，数据库更新异常");
             }
             
             // 插入审核记录
             MeetingReviewRecord record = new MeetingReviewRecord();
-            record.setMeetingId(meeting.getId());
+            record.setMeetingId(request.getMeetingId());
             record.setMeetingName(meeting.getMeetingName());
             record.setCreator(meeting.getCreator());
             record.setReviewer(reviewer);
             record.setStatus(request.getStatus());
             record.setReviewComment(request.getReviewComment());
-            record.setReviewTime(java.time.LocalDateTime.now());
+            record.setReviewTime(LocalDateTime.now());
             
-            int recordResult = meetingDao.insertReviewRecord(record);
-            if (recordResult <= 0) {
-                throw new RuntimeException("审核记录创建失败");
-            }
+            meetingDao.insertReviewRecord(record);
             
-            logger.info("审核人 {} 成功审核会议: {} (ID: {}), 状态: {}", 
-                reviewer, meeting.getMeetingName(), meeting.getId(), 
-                request.getStatus() == 1 ? "通过" : "拒绝");
-            
+            log.info("审核人 {} 成功审核会议: {} (ID: {}), 状态: {}", 
+                reviewer, meeting.getMeetingName(), request.getMeetingId(), request.getStatus());
             return true;
             
-        } catch (SecurityException | GlobalExceptionHandler.BusinessException | GlobalExceptionHandler.ResourceNotFoundException e) {
-            logger.warn("审核人 {} 审核会议失败: {}", reviewer, e.getMessage());
+        } catch (SecurityException | IllegalArgumentException e) {
+            log.warn("审核人 {} 审核会议失败: {}", reviewer, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("审核人 {} 审核会议时发生系统错误", reviewer, e);
+            log.error("审核人 {} 审核会议时发生系统错误", reviewer, e);
             throw new RuntimeException("会议审核失败: " + e.getMessage());
         }
     }
 
     /**
-     * 根据条件查询会议列表
+     * 根据条件查询会议
      */
     public Map<String, Object> getMeetingsByCondition(MeetingQuery query, String username) {
         try {
             // 参数验证
             if (query == null) {
-                throw new GlobalExceptionHandler.BusinessException("查询参数不能为空");
+                throw new IllegalArgumentException("查询条件不能为空");
             }
             
             if (username == null || username.trim().isEmpty()) {
-                throw new GlobalExceptionHandler.BusinessException("用户名不能为空");
+                throw new IllegalArgumentException("用户名不能为空");
             }
             
             // 权限验证
@@ -332,328 +315,155 @@ public class MeetingService {
                 throw new SecurityException("您没有权限查看会议");
             }
             
-            // 验证查询参数
-            String validationError = validationUtil.validateMeetingQuery(
-                query.getPage(), query.getSize(), query.getMeetingName(), 
-                query.getCreator(), query.getStartDate() != null ? query.getStartDate().toString() : null,
-                query.getEndDate() != null ? query.getEndDate().toString() : null);
-            if (validationError != null) {
-                throw new GlobalExceptionHandler.BusinessException(validationError);
-            }
+            // 构建查询条件
+            LambdaQueryWrapper<Meeting> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(Meeting::getDeleted, 0); // 只查询未删除的会议
             
-            // 设置默认分页参数
-            if (query.getPage() == null || query.getPage() < 1) {
-                query.setPage(1);
-            }
-            if (query.getSize() == null || query.getSize() < 1 || query.getSize() > 100) {
-                query.setSize(20);
-            }
-            
-            int offset = (query.getPage() - 1) * query.getSize();
-            
-            String startDate = query.getStartDate() != null ? 
-                query.getStartDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
-            String endDate = query.getEndDate() != null ? 
-                query.getEndDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : null;
-            
-            List<Meeting> meetings;
-            int total;
-            
-            // 根据用户权限和查询条件选择合适的方法
+            // 根据用户权限设置查询条件
             if (permissionUtil.isAdmin(username)) {
-                // 管理员可以查看所有会议
-                if (query.getMeetingName() != null && !query.getMeetingName().isEmpty() && 
-                    query.getCreator() != null && !query.getCreator().isEmpty()) {
-                    // 按会议名称和创建人查询
-                    meetings = meetingDao.findByMeetingNameAndCreatorAndAdminRelated(
-                        query.getMeetingName(), query.getCreator(), username, query.getSize(), offset
-                    );
-                    total = meetingDao.countByMeetingNameAndCreatorAndAdminRelated(query.getMeetingName(), query.getCreator(), username);
-                } else if (query.getMeetingName() != null && !query.getMeetingName().isEmpty()) {
-                    // 按会议名称查询
-                    meetings = meetingDao.findByMeetingNameAndAdminRelated(
-                        query.getMeetingName(), username, query.getSize(), offset
-                    );
-                    total = meetingDao.countByMeetingNameAndAdminRelated(query.getMeetingName(), username);
-                } else if (query.getCreator() != null && !query.getCreator().isEmpty()) {
-                    // 按创建人查询
-                    meetings = meetingDao.findByCreatorAndAdminRelated(
-                        query.getCreator(), username, query.getSize(), offset
-                    );
-                    total = meetingDao.countByCreatorAndAdminRelated(query.getCreator(), username);
-                } else if (startDate != null && endDate != null) {
-                    // 按日期范围查询
-                    meetings = meetingDao.findByDateRangeAndAdminRelated(
-                        startDate, endDate, username, query.getSize(), offset
-                    );
-                    total = meetingDao.countByDateRangeAndAdminRelated(startDate, endDate, username);
-                } else if (startDate != null) {
-                    // 按开始日期查询
-                    meetings = meetingDao.findByStartDateAndAdminRelated(
-                        startDate, username, query.getSize(), offset
-                    );
-                    total = meetingDao.countByStartDateAndAdminRelated(startDate, username);
-                } else {
-                    // 查询所有会议
-                    meetings = meetingDao.findByAdminRelated(username, query.getSize(), offset);
-                    total = meetingDao.countByAdminRelated(username);
+                // 管理员只能看到自己审核的会议和未审核的会议
+                wrapper.and(w -> w.eq(Meeting::getReviewer, username).or().eq(Meeting::getStatus, 0));
+                if (query.getStatus() != null) {
+                    wrapper.eq(Meeting::getStatus, query.getStatus());
                 }
             } else if (permissionUtil.isEnterpriseUser(username)) {
-                // 企业用户可以看到自己创建的会议和已通过的会议
-                if (query.getMeetingName() != null && !query.getMeetingName().isEmpty() && 
-                    query.getCreator() != null && !query.getCreator().isEmpty()) {
-                    // 按会议名称和创建人查询
-                    meetings = meetingDao.findByMeetingNameAndCreator(
-                        query.getMeetingName(), query.getCreator(), query.getSize(), offset
-                    );
-                    total = meetingDao.countByMeetingNameAndCreator(query.getMeetingName(), query.getCreator());
-                } else if (query.getMeetingName() != null && !query.getMeetingName().isEmpty()) {
-                    // 按会议名称查询
-                    meetings = meetingDao.findByMeetingNameAndCreatorOrApproved(
-                        query.getMeetingName(), username, query.getSize(), offset
-                    );
-                    total = meetingDao.countByMeetingNameAndCreatorOrApproved(query.getMeetingName(), username);
-                } else if (query.getCreator() != null && !query.getCreator().isEmpty()) {
-                    // 按创建人查询
-                    meetings = meetingDao.findByCreator(
-                        query.getCreator(), query.getSize(), offset
-                    );
-                    total = meetingDao.countByCreator(query.getCreator());
-                } else if (startDate != null && endDate != null) {
-                    // 按日期范围查询
-                    meetings = meetingDao.findByDateRangeAndCreatorOrApproved(
-                        startDate, endDate, username, query.getSize(), offset
-                    );
-                    total = meetingDao.countByDateRangeAndCreatorOrApproved(startDate, endDate, username);
-                } else if (startDate != null) {
-                    // 按开始日期查询
-                    meetings = meetingDao.findByStartDateAndCreatorOrApproved(
-                        startDate, username, query.getSize(), offset
-                    );
-                    total = meetingDao.countByStartDateAndCreatorOrApproved(startDate, username);
-                } else {
-                    // 查询自己的会议和已通过的会议
-                    meetings = meetingDao.findByCreatorOrApproved(username, query.getSize(), offset);
-                    total = meetingDao.countByCreatorOrApproved(username);
-                }
+                // 企业用户可以查看自己的会议和已通过的会议
+                wrapper.and(w -> w.eq(Meeting::getCreator, username).or().eq(Meeting::getStatus, 1));
             } else {
                 // 普通用户只能查看已通过的会议
-                if (query.getMeetingName() != null && !query.getMeetingName().isEmpty() && 
-                    query.getCreator() != null && !query.getCreator().isEmpty()) {
-                    // 按会议名称和创建人查询
-                    meetings = meetingDao.findByMeetingNameAndCreator(
-                        query.getMeetingName(), query.getCreator(), query.getSize(), offset
-                    );
-                    total = meetingDao.countByMeetingNameAndCreator(query.getMeetingName(), query.getCreator());
-                } else if (query.getMeetingName() != null && !query.getMeetingName().isEmpty()) {
-                    // 按会议名称查询
-                    meetings = meetingDao.findByMeetingNameAndStatus(
-                        query.getMeetingName(), 1, query.getSize(), offset
-                    );
-                    total = meetingDao.countByMeetingNameAndStatus(query.getMeetingName(), 1);
-                } else if (query.getCreator() != null && !query.getCreator().isEmpty()) {
-                    // 按创建人查询
-                    meetings = meetingDao.findByCreator(
-                        query.getCreator(), query.getSize(), offset
-                    );
-                    total = meetingDao.countByCreator(query.getCreator());
-                } else if (startDate != null && endDate != null) {
-                    // 按日期范围查询
-                    meetings = meetingDao.findByDateRangeAndStatus(
-                        startDate, endDate, 1, query.getSize(), offset
-                    );
-                    total = meetingDao.countByDateRangeAndStatus(startDate, endDate, 1);
-                } else if (startDate != null) {
-                    // 按开始日期查询
-                    meetings = meetingDao.findByStartDateAndStatus(
-                        startDate, 1, query.getSize(), offset
-                    );
-                    total = meetingDao.countByStartDateAndStatus(startDate, 1);
-                } else {
-                    // 查询所有已通过的会议
-                    meetings = meetingDao.findByStatus(1, query.getSize(), offset);
-                    total = meetingDao.countByStatus(1);
-                }
+                wrapper.eq(Meeting::getStatus, 1);
             }
             
-            Map<String, Object> result = new HashMap<>();
-            result.put("meetings", meetings);
-            result.put("total", total);
-            result.put("page", query.getPage());
-            result.put("size", query.getSize());
-            result.put("pages", (int) Math.ceil((double) total / query.getSize()));
+            // 添加其他查询条件
+            if (query.getMeetingName() != null && !query.getMeetingName().trim().isEmpty()) {
+                wrapper.like(Meeting::getMeetingName, query.getMeetingName());
+            }
             
-            // 处理会议列表中的图片URL
-            processImageUrls(meetings);
+            if (query.getCreator() != null && !query.getCreator().trim().isEmpty()) {
+                wrapper.like(Meeting::getCreator, query.getCreator());
+            }
             
-            logger.info("用户 {} 成功查询会议列表，共 {} 条记录", username, total);
-            return result;
+            if (query.getStartDate() != null) {
+                wrapper.ge(Meeting::getStartTime, query.getStartDate().atStartOfDay());
+            }
             
-        } catch (SecurityException | GlobalExceptionHandler.BusinessException e) {
-            logger.warn("用户 {} 查询会议列表失败: {}", username, e.getMessage());
+            if (query.getEndDate() != null) {
+                wrapper.le(Meeting::getEndTime, query.getEndDate().atTime(23, 59, 59));
+            }
+            
+            // 排序
+            wrapper.orderByDesc(Meeting::getCreateTime);
+            
+            // 分页查询
+            Page<Meeting> page = new Page<>(query.getPage(), query.getSize());
+            Page<Meeting> result = meetingDao.selectPage(page, wrapper);
+            
+            // 处理图片URL
+            processImageUrls(result.getRecords());
+            
+            // 构建返回结果
+            Map<String, Object> response = new HashMap<>();
+            response.put("meetings", result.getRecords());
+            response.put("total", result.getTotal());
+            response.put("pages", result.getPages());
+            response.put("current", result.getCurrent());
+            response.put("size", result.getSize());
+            
+            return response;
+            
+        } catch (SecurityException | IllegalArgumentException e) {
+            log.warn("用户 {} 查询会议失败: {}", username, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("用户 {} 查询会议列表时发生系统错误", username, e);
-            throw new RuntimeException("查询会议列表失败: " + e.getMessage());
+            log.error("用户 {} 查询会议时发生系统错误", username, e);
+            throw new RuntimeException("查询会议失败: " + e.getMessage());
         }
     }
 
     /**
-     * 获取待审核会议列表（无参数版本，用于管理员查看所有待审核会议）
-     */
-    public List<Meeting> getPendingMeetings() {
-        try {
-            List<Meeting> meetings = meetingDao.findPendingMeetings();
-            
-            // 处理会议列表中的图片URL
-            processImageUrls(meetings);
-            
-            logger.info("成功查询待审核会议列表，共 {} 条记录", meetings.size());
-            return meetings;
-            
-        } catch (Exception e) {
-            logger.error("查询待审核会议时发生系统错误", e);
-            throw new RuntimeException("查询待审核会议失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 获取待审核会议列表（带用户名参数版本，用于权限验证）
+     * 获取待审核会议列表
      */
     public List<Meeting> getPendingMeetings(String username) {
         try {
-            if (username == null || username.trim().isEmpty()) {
-                throw new GlobalExceptionHandler.BusinessException("用户名不能为空");
-            }
-            
             // 权限验证
             if (!permissionUtil.canReviewMeeting(username)) {
                 throw new SecurityException("您没有权限查看待审核会议");
             }
             
             List<Meeting> meetings = meetingDao.findPendingMeetings();
-            
-            // 处理会议列表中的图片URL
             processImageUrls(meetings);
-            
-            logger.info("用户 {} 成功查询待审核会议列表，共 {} 条记录", username, meetings.size());
             return meetings;
             
-        } catch (SecurityException | GlobalExceptionHandler.BusinessException e) {
-            logger.warn("用户 {} 查询待审核会议失败: {}", username, e.getMessage());
+        } catch (SecurityException e) {
+            log.warn("用户 {} 获取待审核会议失败: {}", username, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("用户 {} 查询待审核会议时发生系统错误", username, e);
-            throw new RuntimeException("查询待审核会议失败: " + e.getMessage());
+            log.error("用户 {} 获取待审核会议时发生系统错误", username, e);
+            throw new RuntimeException("获取待审核会议失败: " + e.getMessage());
         }
     }
 
     /**
-     * 根据审核人获取审核记录
+     * 获取审核记录
      */
     public List<MeetingReviewRecord> getReviewRecordsByReviewer(String reviewer) {
         try {
-            if (reviewer == null || reviewer.trim().isEmpty()) {
-                throw new GlobalExceptionHandler.BusinessException("审核人不能为空");
-            }
-            
-            List<MeetingReviewRecord> records = meetingDao.findReviewRecordsByReviewer(reviewer);
-            logger.info("成功查询审核人 {} 的审核记录，共 {} 条", reviewer, records.size());
-            return records;
-            
-        } catch (GlobalExceptionHandler.BusinessException e) {
-            logger.warn("查询审核记录失败: {}", e.getMessage());
-            throw e;
+            return meetingDao.findReviewRecordsByReviewer(reviewer);
         } catch (Exception e) {
-            logger.error("查询审核记录时发生系统错误", e);
-            throw new RuntimeException("查询审核记录失败: " + e.getMessage());
+            log.error("获取审核记录失败: {}", e.getMessage());
+            throw new RuntimeException("获取审核记录失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 根据创建人获取审核记录
-     */
     public List<MeetingReviewRecord> getReviewRecordsByCreator(String creator) {
         try {
-            if (creator == null || creator.trim().isEmpty()) {
-                throw new GlobalExceptionHandler.BusinessException("创建人不能为空");
-            }
-            
-            List<MeetingReviewRecord> records = meetingDao.findReviewRecordsByCreator(creator);
-            logger.info("成功查询创建人 {} 的审核记录，共 {} 条", creator, records.size());
-            return records;
-            
-        } catch (GlobalExceptionHandler.BusinessException e) {
-            logger.warn("查询审核记录失败: {}", e.getMessage());
-            throw e;
+            return meetingDao.findReviewRecordsByCreator(creator);
         } catch (Exception e) {
-            logger.error("查询审核记录时发生系统错误", e);
-            throw new RuntimeException("查询审核记录失败: " + e.getMessage());
+            log.error("获取审核记录失败: {}", e.getMessage());
+            throw new RuntimeException("获取审核记录失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 根据会议ID获取审核记录
-     */
-    public List<MeetingReviewRecord> getReviewRecordsByMeeting(Long meetingId) {
-        try {
-            if (meetingId == null || meetingId <= 0) {
-                throw new GlobalExceptionHandler.BusinessException("会议ID无效");
-            }
-            
-            List<MeetingReviewRecord> records = meetingDao.findReviewRecordsByMeetingId(meetingId);
-            logger.info("成功查询会议 {} 的审核记录，共 {} 条", meetingId, records.size());
-            return records;
-            
-        } catch (GlobalExceptionHandler.BusinessException e) {
-            logger.warn("查询审核记录失败: {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            logger.error("查询审核记录时发生系统错误", e);
-            throw new RuntimeException("查询审核记录失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 根据会议ID获取审核记录（保持向后兼容）
-     */
     public List<MeetingReviewRecord> getReviewRecordsByMeetingId(Long meetingId) {
-        return getReviewRecordsByMeeting(meetingId);
+        try {
+            return meetingDao.findReviewRecordsByMeetingId(meetingId);
+        } catch (Exception e) {
+            log.error("获取审核记录失败: {}", e.getMessage());
+            throw new RuntimeException("获取审核记录失败: " + e.getMessage());
+        }
     }
 
     /**
-     * 处理会议列表中的图片URL
+     * 处理会议列表的图片URL
      */
     private void processImageUrls(List<Meeting> meetings) {
-        if (meetings == null || meetings.isEmpty()) {
-            return;
-        }
-        
-        for (Meeting meeting : meetings) {
-            if (meeting.getImageUrl() != null && !meeting.getImageUrl().startsWith("http")) {
-                // 如果存储的是文件名而不是完整URL，则生成预签名URL
-                try {
-                    String presignedUrl = minioService.getPresignedUrl(meeting.getImageUrl());
-                    meeting.setImageUrl(presignedUrl);
-                } catch (Exception e) {
-                    logger.warn("生成会议图片预签名URL失败: {}, 会议ID: {}", meeting.getImageUrl(), meeting.getId());
-                    // 如果生成失败，保持原URL不变
-                }
+        if (meetings != null) {
+            for (Meeting meeting : meetings) {
+                processImageUrl(meeting);
             }
         }
     }
 
     /**
      * 处理单个会议的图片URL
+     * 对于私有bucket，保持对象名称，前端需要通过API获取预签名URL
      */
     private void processImageUrl(Meeting meeting) {
-        if (meeting != null && meeting.getImageUrl() != null && !meeting.getImageUrl().startsWith("http")) {
+        if (meeting != null && meeting.getImageUrl() != null && !meeting.getImageUrl().trim().isEmpty()) {
             try {
-                String presignedUrl = minioService.getPresignedUrl(meeting.getImageUrl());
-                meeting.setImageUrl(presignedUrl);
+                String url = meeting.getImageUrl();
+                // 如果是完整的HTTP URL，说明是公开访问的
+                if (url.startsWith("http://") || url.startsWith("https://")) {
+                    // 保持原有URL不变
+                    return;
+                }
+                
+                // 对于私有bucket，保持对象名称格式
+                // 前端需要通过 /api/file/presigned-url/{objectName} 获取预签名URL
+                // 这里不做任何修改，保持对象名称
+                
             } catch (Exception e) {
-                logger.warn("生成会议图片预签名URL失败: {}, 会议ID: {}", meeting.getImageUrl(), meeting.getId());
-                // 如果生成失败，保持原URL不变
+                log.warn("处理会议图片URL失败: {}", e.getMessage());
             }
         }
     }

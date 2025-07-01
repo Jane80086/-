@@ -1,6 +1,6 @@
 package com.cemenghui.course.entity;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
