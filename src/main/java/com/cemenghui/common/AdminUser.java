@@ -1,12 +1,14 @@
 package com.cemenghui.common;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Entity
-@DiscriminatorValue("ADMIN")
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class AdminUser extends User {
-    private String adminLevel = "ADMIN";
-    private String permissions;
-} 
+
+    public AdminUser() {
+        this.userType = "ADMIN";
+        this.adminLevel = "ADMIN";
+    }
+}

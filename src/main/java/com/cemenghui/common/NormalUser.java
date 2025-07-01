@@ -1,13 +1,13 @@
 package com.cemenghui.common;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Entity
-@DiscriminatorValue("NORMAL")
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class NormalUser extends User {
-    private String realName;
-    private String avatar;
-    private String bio;
-} 
+
+    public NormalUser() {
+        this.userType = "NORMAL";
+    }
+}

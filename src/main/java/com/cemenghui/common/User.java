@@ -1,31 +1,69 @@
 package com.cemenghui.common;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "users")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
 @Data
+@TableName("users")
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @TableId(value = "id", type = IdType.AUTO)
     protected Long id;
-    @Column(name = "username", nullable = false, unique = true)
+
+    @TableField("username")
     protected String username;
-    @Column(name = "password", nullable = false)
+
+    @TableField("password")
     protected String password;
-    @Column(name = "email", nullable = false, unique = true)
+
+    @TableField("email")
     protected String email;
-    @Column(name = "phone")
+
+    @TableField("phone")
     protected String phone;
-    @Column(name = "status")
+
+    @TableField("status")
     protected Integer status = 1;
-    @Column(name = "created_time")
-    protected LocalDateTime createdTime = LocalDateTime.now();
-    @Column(name = "updated_time")
-    protected LocalDateTime updatedTime = LocalDateTime.now();
-} 
+
+    @TableField(value = "user_type")
+    protected String userType;
+
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    protected LocalDateTime createdTime;
+
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
+    protected LocalDateTime updatedTime;
+
+    // 普通用户字段
+    @TableField(value = "real_name", condition = SqlCondition.LIKE)
+    protected String realName;
+
+    @TableField("avatar")
+    protected String avatar;
+
+    @TableField("bio")
+    protected String bio;
+
+    // 企业用户字段
+    @TableField("company_name")
+    protected String companyName;
+
+    @TableField("business_license")
+    protected String businessLicense;
+
+    @TableField("contact_person")
+    protected String contactPerson;
+
+    @TableField("contact_phone")
+    protected String contactPhone;
+
+    @TableField("company_address")
+    protected String companyAddress;
+
+    // 管理员用户字段
+    @TableField("admin_level")
+    protected String adminLevel;
+
+    @TableField("permissions")
+    protected String permissions;
+}

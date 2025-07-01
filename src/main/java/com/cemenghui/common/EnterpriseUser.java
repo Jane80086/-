@@ -1,15 +1,13 @@
 package com.cemenghui.common;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Entity
-@DiscriminatorValue("ENTERPRISE")
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class EnterpriseUser extends User {
-    private String companyName;
-    private String businessLicense;
-    private String contactPerson;
-    private String contactPhone;
-    private String companyAddress;
-} 
+
+    public EnterpriseUser() {
+        this.userType = "ENTERPRISE";
+    }
+}

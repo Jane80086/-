@@ -64,12 +64,6 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/kingbase8-9.0.0.jar</systemPath>
         </dependency>
-		<!-- 只保留MyBatis Spring Boot Starter，移除MyBatis Plus -->
-		<dependency>
-			<groupId>org.mybatis.spring.boot</groupId>
-			<artifactId>mybatis-spring-boot-starter</artifactId>
-			<version>${mybatis-spring-boot.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-boot-starter</artifactId>
@@ -185,7 +179,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>com.cemenghui.meeting.MeetingApplication</mainClass>
+					<mainClass>com.cemenghui.meeting.NewsApplication</mainClass>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

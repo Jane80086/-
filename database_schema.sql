@@ -464,3 +464,20 @@ ALTER TABLE user_operation_log ADD CONSTRAINT fk_user_operation_log_user_id
 CREATE INDEX idx_user_operation_log_user_time ON user_operation_log(user_id, operation_time);
 CREATE INDEX idx_user_operation_log_resource ON user_operation_log(resource_type, resource_id);
 CREATE INDEX idx_user_operation_log_operation_type ON user_operation_log(operation_type);
+
+
+-- 为users表添加普通用户字段
+ALTER TABLE users ADD COLUMN real_name VARCHAR(50);
+ALTER TABLE users ADD COLUMN avatar VARCHAR(255);
+ALTER TABLE users ADD COLUMN bio TEXT;
+
+-- 为users表添加企业用户字段
+ALTER TABLE users ADD COLUMN company_name VARCHAR(100);
+ALTER TABLE users ADD COLUMN business_license VARCHAR(100);
+ALTER TABLE users ADD COLUMN contact_person VARCHAR(50);
+ALTER TABLE users ADD COLUMN contact_phone VARCHAR(20);
+ALTER TABLE users ADD COLUMN company_address TEXT;
+
+-- 为users表添加管理员用户字段
+ALTER TABLE users ADD COLUMN admin_level VARCHAR(20) DEFAULT 'ADMIN';
+ALTER TABLE users ADD COLUMN permissions TEXT;
