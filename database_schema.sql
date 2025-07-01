@@ -205,8 +205,9 @@ INSERT INTO reviews (course_id, user_id, rating, content, status) VALUES
 (1, 3, 5, '非常棒的课程，讲解很详细', 'APPROVED'),
 (2, 3, 4, '内容很实用，推荐学习', 'APPROVED');
 
--- 会议管理子系统数据库初始化脚本
+-- 会议管理系统数据库初始化脚本
 -- 包含用户表和会议表的完整测试数据
+-- 遵循数据库规范：表名使用小写+下划线，字段使用snake_case
 
 -- ========================================
 -- 1. 创建用户信息表
@@ -221,7 +222,8 @@ CREATE TABLE IF NOT EXISTS user_info (
     user_type VARCHAR(20) NOT NULL, -- ADMIN, ENTERPRISE, NORMAL
     status INTEGER DEFAULT 1, -- 0: 禁用, 1: 启用
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted INTEGER DEFAULT 0
     );
 
 -- 创建索引
@@ -245,7 +247,8 @@ CREATE TABLE IF NOT EXISTS meeting_info (
     review_time TIMESTAMP,
     review_comment VARCHAR(500),
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted INTEGER DEFAULT 0
     );
 
 -- 创建索引
@@ -276,80 +279,80 @@ CREATE INDEX IF NOT EXISTS idx_review_creator ON meeting_review_record(creator);
 -- 3. 插入用户测试数据
 -- ========================================
 
--- 管理员用户 (密码都是123456的MD5值: e10adc3949ba59abbe56e057f20f883e)
-INSERT INTO user_info (username, password, real_name, email, phone, user_type, status) VALUES
-                                                                                           ('admin', 'e10adc3949ba59abbe56e057f20f883e', '系统管理员', 'admin@company.com', '13800138001', 'ADMIN', 1),
-                                                                                           ('admin001', 'e10adc3949ba59abbe56e057f20f883e', '张管理员', 'admin001@company.com', '13800138002', 'ADMIN', 1),
-                                                                                           ('admin002', 'e10adc3949ba59abbe56e057f20f883e', '李管理员', 'admin002@company.com', '13800138003', 'ADMIN', 1),
-                                                                                           ('admin003', 'e10adc3949ba59abbe56e057f20f883e', '王管理员', 'admin003@company.com', '13800138004', 'ADMIN', 1),
-                                                                                           ('admin004', 'e10adc3949ba59abbe56e057f20f883e', '赵管理员', 'admin004@company.com', '13800138005', 'ADMIN', 1);
+-- 管理员用户 (密码都是123456的BCrypt加密值)
+INSERT INTO user_info (username, password, real_name, email, phone, user_type, status, deleted) VALUES
+                                                                                                    ('admin', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '系统管理员', 'admin@company.com', '13800138001', 'ADMIN', 1, 0),
+                                                                                                    ('admin001', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '张管理员', 'admin001@company.com', '13800138002', 'ADMIN', 1, 0),
+                                                                                                    ('admin002', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '李管理员', 'admin002@company.com', '13800138003', 'ADMIN', 1, 0),
+                                                                                                    ('admin003', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '王管理员', 'admin003@company.com', '13800138004', 'ADMIN', 1, 0),
+                                                                                                    ('admin004', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '赵管理员', 'admin004@company.com', '13800138005', 'ADMIN', 1, 0);
 
 -- 企业用户
-INSERT INTO user_info (username, password, real_name, email, phone, user_type, status) VALUES
-                                                                                           ('enterprise1', 'e10adc3949ba59abbe56e057f20f883e', '腾讯科技', 'contact@tencent.com', '13800138006', 'ENTERPRISE', 1),
-                                                                                           ('enterprise2', 'e10adc3949ba59abbe56e057f20f883e', '阿里巴巴', 'contact@alibaba.com', '13800138007', 'ENTERPRISE', 1),
-                                                                                           ('enterprise3', 'e10adc3949ba59abbe56e057f20f883e', '百度公司', 'contact@baidu.com', '13800138008', 'ENTERPRISE', 1),
-                                                                                           ('enterprise4', 'e10adc3949ba59abbe56e057f20f883e', '字节跳动', 'contact@bytedance.com', '13800138009', 'ENTERPRISE', 1),
-                                                                                           ('enterprise5', 'e10adc3949ba59abbe56e057f20f883e', '美团点评', 'contact@meituan.com', '13800138010', 'ENTERPRISE', 1),
-                                                                                           ('enterprise6', 'e10adc3949ba59abbe56e057f20f883e', '京东集团', 'contact@jd.com', '13800138011', 'ENTERPRISE', 1),
-                                                                                           ('enterprise7', 'e10adc3949ba59abbe56e057f20f883e', '网易公司', 'contact@netease.com', '13800138012', 'ENTERPRISE', 1),
-                                                                                           ('enterprise8', 'e10adc3949ba59abbe56e057f20f883e', '小米科技', 'contact@mi.com', '13800138013', 'ENTERPRISE', 1),
-                                                                                           ('enterprise9', 'e10adc3949ba59abbe56e057f20f883e', '华为技术', 'contact@huawei.com', '13800138014', 'ENTERPRISE', 1),
-                                                                                           ('enterprise10', 'e10adc3949ba59abbe56e057f20f883e', '联想集团', 'contact@lenovo.com', '13800138015', 'ENTERPRISE', 1);
+INSERT INTO user_info (username, password, real_name, email, phone, user_type, status, deleted) VALUES
+                                                                                                    ('enterprise1', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '腾讯科技', 'contact@tencent.com', '13800138006', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise2', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '阿里巴巴', 'contact@alibaba.com', '13800138007', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise3', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '百度公司', 'contact@baidu.com', '13800138008', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise4', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '字节跳动', 'contact@bytedance.com', '13800138009', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise5', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '美团点评', 'contact@meituan.com', '13800138010', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise6', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '京东集团', 'contact@jd.com', '13800138011', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise7', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '网易公司', 'contact@netease.com', '13800138012', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise8', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '小米科技', 'contact@mi.com', '13800138013', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise9', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '华为技术', 'contact@huawei.com', '13800138014', 'ENTERPRISE', 1, 0),
+                                                                                                    ('enterprise10', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '联想集团', 'contact@lenovo.com', '13800138015', 'ENTERPRISE', 1, 0);
 
 -- 普通用户
-INSERT INTO user_info (username, password, real_name, email, phone, user_type, status) VALUES
-                                                                                           ('user1', 'e10adc3949ba59abbe56e057f20f883e', '张三', 'zhangsan@email.com', '13800138016', 'NORMAL', 1),
-                                                                                           ('user2', 'e10adc3949ba59abbe56e057f20f883e', '李四', 'lisi@email.com', '13800138017', 'NORMAL', 1),
-                                                                                           ('user3', 'e10adc3949ba59abbe56e057f20f883e', '王五', 'wangwu@email.com', '13800138018', 'NORMAL', 1),
-                                                                                           ('user4', 'e10adc3949ba59abbe56e057f20f883e', '赵六', 'zhaoliu@email.com', '13800138019', 'NORMAL', 1),
-                                                                                           ('user5', 'e10adc3949ba59abbe56e057f20f883e', '钱七', 'qianqi@email.com', '13800138020', 'NORMAL', 1),
-                                                                                           ('user6', 'e10adc3949ba59abbe56e057f20f883e', '孙八', 'sunba@email.com', '13800138021', 'NORMAL', 1),
-                                                                                           ('user7', 'e10adc3949ba59abbe56e057f20f883e', '周九', 'zhoujiu@email.com', '13800138022', 'NORMAL', 1),
-                                                                                           ('user8', 'e10adc3949ba59abbe56e057f20f883e', '吴十', 'wushi@email.com', '13800138023', 'NORMAL', 1),
-                                                                                           ('user9', 'e10adc3949ba59abbe56e057f20f883e', '郑十一', 'zhengshiyi@email.com', '13800138024', 'NORMAL', 1),
-                                                                                           ('user10', 'e10adc3949ba59abbe56e057f20f883e', '王十二', 'wangshier@email.com', '13800138025', 'NORMAL', 1);
+INSERT INTO user_info (username, password, real_name, email, phone, user_type, status, deleted) VALUES
+                                                                                                    ('user1', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '张三', 'zhangsan@email.com', '13800138016', 'NORMAL', 1, 0),
+                                                                                                    ('user2', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '李四', 'lisi@email.com', '13800138017', 'NORMAL', 1, 0),
+                                                                                                    ('user3', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '王五', 'wangwu@email.com', '13800138018', 'NORMAL', 1, 0),
+                                                                                                    ('user4', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '赵六', 'zhaoliu@email.com', '13800138019', 'NORMAL', 1, 0),
+                                                                                                    ('user5', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '钱七', 'qianqi@email.com', '13800138020', 'NORMAL', 1, 0),
+                                                                                                    ('user6', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '孙八', 'sunba@email.com', '13800138021', 'NORMAL', 1, 0),
+                                                                                                    ('user7', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '周九', 'zhoujiu@email.com', '13800138022', 'NORMAL', 1, 0),
+                                                                                                    ('user8', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '吴十', 'wushi@email.com', '13800138023', 'NORMAL', 1, 0),
+                                                                                                    ('user9', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '郑十一', 'zhengshiyi@email.com', '13800138024', 'NORMAL', 1, 0),
+                                                                                                    ('user10', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '王十二', 'wangshier@email.com', '13800138025', 'NORMAL', 1, 0);
 
 -- 禁用用户（用于测试）
-INSERT INTO user_info (username, password, real_name, email, phone, user_type, status) VALUES
-    ('disabled_user', 'e10adc3949ba59abbe56e057f20f883e', '禁用用户', 'disabled@email.com', '13800138026', 'NORMAL', 0);
+INSERT INTO user_info (username, password, real_name, email, phone, user_type, status, deleted) VALUES
+    ('disabled_user', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.AQubh4a', '禁用用户', 'disabled@email.com', '13800138026', 'NORMAL', 0, 0);
 
 -- ========================================
 -- 4. 插入会议测试数据
 -- ========================================
 
 -- 管理员创建的会议（直接通过）
-INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, create_time) VALUES
-                                                                                                                            ('2024年第一季度工作总结会议', '2024-01-15 09:00:00', '2024-01-15 11:00:00', 'admin', '回顾第一季度工作成果，分析存在的问题，制定第二季度工作计划。', 'https://example.com/cover1.jpg', 1, '2024-01-10 10:00:00'),
-                                                                                                                            ('技术架构评审会议', '2024-01-20 14:00:00', '2024-01-20 16:00:00', 'admin', '评审新系统的技术架构设计，确保系统的可扩展性和稳定性。', 'https://example.com/cover2.jpg', 1, '2024-01-12 14:30:00'),
-                                                                                                                            ('年度战略规划会议', '2024-02-01 09:00:00', '2024-02-01 17:00:00', 'admin001', '制定公司年度发展战略，确定重点业务方向和资源配置。', 'https://example.com/cover3.jpg', 1, '2024-01-25 09:00:00'),
-                                                                                                                            ('产品发布会', '2024-02-15 10:00:00', '2024-02-15 12:00:00', 'admin002', '发布新产品，介绍产品特性和市场定位。', 'https://example.com/cover4.jpg', 1, '2024-02-01 15:00:00'),
-                                                                                                                            ('团队建设活动', '2024-02-28 13:00:00', '2024-02-28 18:00:00', 'admin003', '组织团队建设活动，增强团队凝聚力和协作能力。', 'https://example.com/cover5.jpg', 1, '2024-02-15 11:00:00');
+INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, create_time, update_time, deleted) VALUES
+                                                                                                                                                  ('2024年第一季度工作总结会议', '2024-01-15 09:00:00', '2024-01-15 11:00:00', 'admin', '回顾第一季度工作成果，分析存在的问题，制定第二季度工作计划。', 'https://example.com/cover1.jpg', 1, '2024-01-10 10:00:00', '2024-01-10 10:00:00', 0),
+                                                                                                                                                  ('技术架构评审会议', '2024-01-20 14:00:00', '2024-01-20 16:00:00', 'admin', '评审新系统的技术架构设计，确保系统的可扩展性和稳定性。', 'https://example.com/cover2.jpg', 1, '2024-01-12 14:30:00', '2024-01-12 14:30:00', 0),
+                                                                                                                                                  ('年度战略规划会议', '2024-02-01 09:00:00', '2024-02-01 17:00:00', 'admin001', '制定公司年度发展战略，确定重点业务方向和资源配置。', 'https://example.com/cover3.jpg', 1, '2024-01-25 09:00:00', '2024-01-25 09:00:00', 0),
+                                                                                                                                                  ('产品发布会', '2024-02-15 10:00:00', '2024-02-15 12:00:00', 'admin002', '发布新产品，介绍产品特性和市场定位。', 'https://example.com/cover4.jpg', 1, '2024-02-01 15:00:00', '2024-02-01 15:00:00', 0),
+                                                                                                                                                  ('团队建设活动', '2024-02-28 13:00:00', '2024-02-28 18:00:00', 'admin003', '组织团队建设活动，增强团队凝聚力和协作能力。', 'https://example.com/cover5.jpg', 1, '2024-02-15 11:00:00', '2024-02-15 11:00:00', 0);
 
 -- 企业用户创建的会议（已通过审核）
-INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, reviewer, review_time, review_comment, create_time) VALUES
-                                                                                                                                                                   ('腾讯云技术分享会', '2024-01-18 14:00:00', '2024-01-18 16:00:00', 'enterprise1', '分享腾讯云最新技术成果和应用案例，探讨云计算发展趋势。', 'https://example.com/cover6.jpg', 1, 'admin', '2024-01-16 10:00:00', '内容符合要求，审核通过', '2024-01-15 16:00:00'),
-                                                                                                                                                                   ('阿里云解决方案研讨会', '2024-01-25 09:00:00', '2024-01-25 11:00:00', 'enterprise2', '探讨阿里云在企业数字化转型中的解决方案和应用实践。', 'https://example.com/cover7.jpg', 1, 'admin001', '2024-01-23 14:30:00', '会议内容有价值，同意举办', '2024-01-22 09:00:00'),
-                                                                                                                                                                   ('百度AI技术交流会', '2024-02-05 15:00:00', '2024-02-05 17:00:00', 'enterprise3', '交流百度在人工智能领域的最新研究成果和技术应用。', 'https://example.com/cover8.jpg', 1, 'admin002', '2024-02-03 11:00:00', '技术交流很有意义', '2024-02-02 10:00:00'),
-                                                                                                                                                                   ('字节跳动产品创新论坛', '2024-02-12 10:00:00', '2024-02-12 12:00:00', 'enterprise4', '探讨产品创新理念和方法，分享成功案例和经验教训。', 'https://example.com/cover9.jpg', 1, 'admin003', '2024-02-10 16:00:00', '创新主题很好', '2024-02-09 14:00:00'),
-                                                                                                                                                                   ('美团本地生活服务峰会', '2024-02-20 13:00:00', '2024-02-20 15:00:00', 'enterprise5', '探讨本地生活服务行业发展趋势和商业模式创新。', 'https://example.com/cover10.jpg', 1, 'admin004', '2024-02-18 09:30:00', '行业峰会很有价值', '2024-02-17 15:30:00');
+INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, reviewer, review_time, review_comment, create_time, update_time, deleted) VALUES
+                                                                                                                                                                                         ('腾讯云技术分享会', '2024-01-18 14:00:00', '2024-01-18 16:00:00', 'enterprise1', '分享腾讯云最新技术成果和应用案例，探讨云计算发展趋势。', 'https://example.com/cover6.jpg', 1, 'admin', '2024-01-16 10:00:00', '内容符合要求，审核通过', '2024-01-15 16:00:00', '2024-01-15 16:00:00', 0),
+                                                                                                                                                                                         ('阿里云解决方案研讨会', '2024-01-25 09:00:00', '2024-01-25 11:00:00', 'enterprise2', '探讨阿里云在企业数字化转型中的解决方案和应用实践。', 'https://example.com/cover7.jpg', 1, 'admin001', '2024-01-23 14:30:00', '会议内容有价值，同意举办', '2024-01-22 09:00:00', '2024-01-22 09:00:00', 0),
+                                                                                                                                                                                         ('百度AI技术交流会', '2024-02-05 15:00:00', '2024-02-05 17:00:00', 'enterprise3', '交流百度在人工智能领域的最新研究成果和技术应用。', 'https://example.com/cover8.jpg', 1, 'admin002', '2024-02-03 11:00:00', '技术交流很有意义', '2024-02-02 10:00:00', '2024-02-02 10:00:00', 0),
+                                                                                                                                                                                         ('字节跳动产品创新论坛', '2024-02-12 10:00:00', '2024-02-12 12:00:00', 'enterprise4', '探讨产品创新理念和方法，分享成功案例和经验教训。', 'https://example.com/cover9.jpg', 1, 'admin003', '2024-02-10 16:00:00', '创新主题很好', '2024-02-09 14:00:00', '2024-02-09 14:00:00', 0),
+                                                                                                                                                                                         ('美团本地生活服务峰会', '2024-02-20 13:00:00', '2024-02-20 15:00:00', 'enterprise5', '探讨本地生活服务行业发展趋势和商业模式创新。', 'https://example.com/cover10.jpg', 1, 'admin004', '2024-02-18 09:30:00', '行业峰会很有价值', '2024-02-17 15:30:00', '2024-02-17 15:30:00', 0);
 
 -- 企业用户创建的会议（待审核）
-INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, create_time) VALUES
-                                                                                                                            ('京东电商技术峰会', '2024-03-01 09:00:00', '2024-03-01 11:00:00', 'enterprise6', '探讨电商技术发展趋势，分享京东在电商领域的技术创新。', 'https://example.com/cover11.jpg', 0, '2024-02-25 10:00:00'),
-                                                                                                                            ('网易游戏开发者大会', '2024-03-08 14:00:00', '2024-03-08 16:00:00', 'enterprise7', '游戏开发者技术交流，分享游戏开发经验和最新技术。', 'https://example.com/cover12.jpg', 0, '2024-02-28 16:00:00'),
-                                                                                                                            ('小米IoT生态大会', '2024-03-15 10:00:00', '2024-03-15 12:00:00', 'enterprise8', '探讨IoT生态建设，展示小米在智能家居领域的最新成果。', 'https://example.com/cover13.jpg', 0, '2024-03-05 11:00:00'),
-                                                                                                                            ('华为5G技术研讨会', '2024-03-22 15:00:00', '2024-03-22 17:00:00', 'enterprise9', '探讨5G技术发展趋势，分享华为在5G领域的技术优势。', 'https://example.com/cover14.jpg', 0, '2024-03-12 14:00:00'),
-                                                                                                                            ('联想数字化转型论坛', '2024-03-29 13:00:00', '2024-03-29 15:00:00', 'enterprise10', '探讨企业数字化转型策略，分享联想在数字化转型中的实践经验。', 'https://example.com/cover15.jpg', 0, '2024-03-19 09:00:00');
+INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, create_time, update_time, deleted) VALUES
+                                                                                                                                                  ('京东电商技术峰会', '2024-03-01 09:00:00', '2024-03-01 11:00:00', 'enterprise6', '探讨电商技术发展趋势，分享京东在电商领域的技术创新。', 'https://example.com/cover11.jpg', 0, '2024-02-25 10:00:00', '2024-02-25 10:00:00', 0),
+                                                                                                                                                  ('网易游戏开发者大会', '2024-03-08 14:00:00', '2024-03-08 16:00:00', 'enterprise7', '游戏开发者技术交流，分享游戏开发经验和最新技术。', 'https://example.com/cover12.jpg', 0, '2024-02-28 16:00:00', '2024-02-28 16:00:00', 0),
+                                                                                                                                                  ('小米IoT生态大会', '2024-03-15 10:00:00', '2024-03-15 12:00:00', 'enterprise8', '探讨IoT生态建设，展示小米在智能家居领域的最新成果。', 'https://example.com/cover13.jpg', 0, '2024-03-05 11:00:00', '2024-03-05 11:00:00', 0),
+                                                                                                                                                  ('华为5G技术研讨会', '2024-03-22 15:00:00', '2024-03-22 17:00:00', 'enterprise9', '探讨5G技术发展趋势，分享华为在5G领域的技术优势。', 'https://example.com/cover14.jpg', 0, '2024-03-12 14:00:00', '2024-03-12 14:00:00', 0),
+                                                                                                                                                  ('联想数字化转型论坛', '2024-03-29 13:00:00', '2024-03-29 15:00:00', 'enterprise10', '探讨企业数字化转型策略，分享联想在数字化转型中的实践经验。', 'https://example.com/cover15.jpg', 0, '2024-03-19 09:00:00', '2024-03-19 09:00:00', 0);
 
 -- 企业用户创建的会议（已拒绝）
-INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, reviewer, review_time, review_comment, create_time) VALUES
-                                                                                                                                                                   ('被拒绝的会议1', '2024-01-30 09:00:00', '2024-01-30 11:00:00', 'enterprise1', '这个会议内容不符合要求，应该被拒绝。', 'https://example.com/cover16.jpg', 2, 'admin', '2024-01-28 10:00:00', '会议内容不符合平台规范，拒绝通过', '2024-01-27 14:00:00'),
-                                                                                                                                                                   ('被拒绝的会议2', '2024-02-10 14:00:00', '2024-02-10 16:00:00', 'enterprise2', '另一个不符合要求的会议。', 'https://example.com/cover17.jpg', 2, 'admin001', '2024-02-08 15:30:00', '时间安排不合理，建议重新规划', '2024-02-07 16:00:00');
+INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, reviewer, review_time, review_comment, create_time, update_time, deleted) VALUES
+                                                                                                                                                                                         ('被拒绝的会议1', '2024-01-30 09:00:00', '2024-01-30 11:00:00', 'enterprise1', '这个会议内容不符合要求，应该被拒绝。', 'https://example.com/cover16.jpg', 2, 'admin', '2024-01-28 10:00:00', '会议内容不符合平台规范，拒绝通过', '2024-01-27 14:00:00', '2024-01-27 14:00:00', 0),
+                                                                                                                                                                                         ('被拒绝的会议2', '2024-02-10 14:00:00', '2024-02-10 16:00:00', 'enterprise2', '另一个不符合要求的会议。', 'https://example.com/cover17.jpg', 2, 'admin001', '2024-02-08 15:30:00', '时间安排不合理，建议重新规划', '2024-02-07 16:00:00', '2024-02-07 16:00:00', 0);
 
 -- 已删除的会议
-INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, create_time) VALUES
-    ('已删除的会议', '2024-01-10 09:00:00', '2024-01-10 11:00:00', 'enterprise3', '这个会议已经被删除。', 'https://example.com/cover18.jpg', 3, '2024-01-05 10:00:00');
+INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, create_time, update_time, deleted) VALUES
+    ('已删除的会议', '2024-01-10 09:00:00', '2024-01-10 11:00:00', 'enterprise3', '这个会议已经被删除。', 'https://example.com/cover18.jpg', 3, '2024-01-05 10:00:00', '2024-01-05 10:00:00', 1);
 
 -- ========================================
 -- 5. 插入审核记录测试数据
@@ -383,7 +386,7 @@ INSERT INTO meeting_review_record (meeting_id, meeting_name, creator, reviewer, 
 -- 待审核: 5个
 -- 已拒绝: 2个
 -- 已删除: 1个
--- 总计: 18个会议
+-- 总计: 18个会议 （密码无所谓，默认123456密码登录，重点在会议功能）
 
 -- 创建news表
 CREATE TABLE news (
