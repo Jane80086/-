@@ -1,6 +1,6 @@
 spring:
   application:
-    name: meeting-system
+    name: demo
   # 文件上传配置
   servlet:
     multipart:
@@ -8,39 +8,54 @@ spring:
       max-request-size: 10MB
       enabled: true
   datasource:
-    url: jdbc:kingbase8://localhost:54321/meeting_management?characterEncoding=UTF-8&useUnicode=true
-    username: SYSTEM
+    url: jdbc:kingbase8://localhost:54321/test?currentSchema=public
+    username: system
     password: 123456
     driver-class-name: com.kingbase8.Driver
     hikari:
       # 连接池配置
-      maximum-pool-size: 10
+      maximum-pool-size: 20
       minimum-idle: 5
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-      leak-detection-threshold: 60000
-      # 连接测试
+      # 连接测试配置
       connection-test-query: SELECT 1
       validation-timeout: 5000
-    # SQL脚本自动执行配置
-    sql:
-      init:
-        mode: always
-        schema-locations: file:sql/meeting_database_init.sql
-        continue-on-error: true
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-    open-in-view: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+      leak-detection-threshold: 60000
+      # 连接池监控
+      pool-name: MeetingHikariCP
+      register-mbeans: true
+      # 连接初始化
+      connection-init-sql: SET timezone = 'Asia/Shanghai'
+      # 自动提交
+      auto-commit: true
+      # 事务隔离级别
+      transaction-isolation: TRANSACTION_READ_COMMITTED
 
-# MyBatis配置（会议系统使用）
-mybatis:
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+
+  # Spring Security配置
+  security:
+    user:
+      name: admin
+      password: admin123
+
+# MyBatis-Plus配置
+mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
@@ -53,17 +68,19 @@ mybatis:
     auto-mapping-behavior: PARTIAL
     # 默认执行器
     default-executor-type: SIMPLE
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath:mapper/*.xml
 
-# JWT配置
-jwt:
-  secret: meeting_jwt_secret_key_please_change
-  expiration: 86400000 # 1天，单位毫秒
-
-# 服务器配置
 server:
-  port: 8081
+  port: 8080
   # 连接超时配置
-  connection-timeout: 30000
+  tomcat:
+    connection-timeout: 30000
   # 请求超时配置
   servlet:
     async:
@@ -74,18 +91,31 @@ server:
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
     min-response-size: 1024
 
-minio:
-  endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin
-  bucket: meeting-files
+# 日志配置
+logging:
+  level:
+    com.example.demo.dao: DEBUG
+    org.springframework.jdbc: DEBUG
+    com.zaxxer.hikari: DEBUG
+    com.example.demo.controller: INFO
+    com.example.demo.service: INFO
+    com.example.demo.util: INFO
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/meeting-system.log
+    max-size: 100MB
+    max-history: 30
 
 # 应用自定义配置
 app:
   # JWT配置
   jwt:
-    secret: meeting-secret-key-here-make-it-long-and-secure
+    secret: your-secret-key-here-make-it-long-and-secure-for-production-use
     expiration: 86400000 # 24小时
+    refresh-expiration: 604800000 # 7天
   # 文件上传配置
   upload:
     max-size: 10MB
@@ -99,17 +129,28 @@ app:
     password-min-length: 6
     password-max-length: 20
     session-timeout: 1800 # 30分钟
+    # 不需要认证的路径
+    permit-all-paths:
+      - /api/auth/**
+      - /api/public/**
+      - /swagger-ui/**
+      - /v3/api-docs/**
+      - /error
 
-# 日志配置
-logging:
-  level:
-    com.cemenghui.meeting: DEBUG
-    org.springframework.jdbc: DEBUG
-    com.zaxxer.hikari: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/meeting-system.log
-    max-size: 100MB
-    max-history: 30 
+# MinIO配置
+minio:
+  endpoint: http://localhost:9000
+  accessKey: minioadmin
+  secretKey: minioadmin
+  bucket: meeting-files
+  presigned-url-expiration: 3600  # 预签名URL过期时间（秒），默认1小时
+
+# Springdoc OpenAPI配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  packages-to-scan: com.example.demo.controller

@@ -1,109 +1,81 @@
-package com.cemenghui.meeting.controller;
+package com.cemenghui.meeting.controller;       
 
-import com.cemenghui.meeting.entity.*;
+import com.cemenghui.meeting.bean.*;
 import com.cemenghui.meeting.service.UserService;
-import com.cemenghui.meeting.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequiredArgsConstructor
+@Slf4j
+@Tag(name = "用户管理", description = "用户信息管理相关接口")
 public class UserController {
-    @Autowired
-    private UserService userService;
     
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final UserService userService;
 
-    @PostMapping("/register")
-    public ApiResponse<User> register(@RequestBody UserRegisterRequest request) {
+    @GetMapping("/profile")
+    @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
+    public ApiResponse<User> getCurrentUserInfo() {
         try {
-            User user = userService.register(request);
-            return ApiResponse.success("用户注册成功", user);
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.error(400, e.getMessage());
-        } catch (Exception e) {
-            return ApiResponse.error("用户注册失败: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/login")
-    public ApiResponse<Map<String, Object>> login(@RequestBody UserLoginRequest request) {
-        try {
-            String token = userService.login(request);
-            User user = userService.getUserByUsername(request.getUsername());
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("token", token);
-            result.put("user", user);
-            
-            return ApiResponse.success("登录成功", result);
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.error(400, e.getMessage());
-        } catch (Exception e) {
-            return ApiResponse.error("登录失败: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/info")
-    public ApiResponse<User> getUserInfo(@RequestHeader("Authorization") String token) {
-        try {
-            if (!jwtUtil.validateToken(token.replace("Bearer ", ""))) {
-                return ApiResponse.error(401, "无效的token");
-            }
-            String username = jwtUtil.getUsernameFromToken(token.replace("Bearer ", ""));
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
             User user = userService.getUserByUsername(username);
             if (user != null) {
-                return ApiResponse.success("获取用户信息成功", user);
+                return ApiResponse.success(user);
             } else {
-                return ApiResponse.error("用户不存在");
+                return ApiResponse.error(404, "用户不存在");
             }
         } catch (Exception e) {
-            return ApiResponse.error("获取用户信息失败: " + e.getMessage());
+            log.error("获取用户信息失败", e);
+            return ApiResponse.error(500, "获取用户信息失败");
         }
     }
 
-    @PostMapping("/update")
-    public ApiResponse<Boolean> updateUserInfo(@RequestBody User user,
-                                              @RequestHeader("Authorization") String token) {
+    @PutMapping("/profile")
+    @Operation(summary = "更新用户信息", description = "更新当前登录用户的基本信息")
+    public ApiResponse<Boolean> updateUserInfo(@Valid @RequestBody User user) {
         try {
-            if (!jwtUtil.validateToken(token.replace("Bearer ", ""))) {
-                return ApiResponse.error(401, "无效的token");
-            }
-            String username = jwtUtil.getUsernameFromToken(token.replace("Bearer ", ""));
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
             User currentUser = userService.getUserByUsername(username);
             if (currentUser == null) {
-                return ApiResponse.error("用户不存在");
+                return ApiResponse.error(404, "用户不存在");
             }
             
             user.setId(currentUser.getId());
             boolean success = userService.updateUserInfo(user);
             if (success) {
-                return ApiResponse.success("用户信息更新成功", true);
+                return ApiResponse.success(true);
             } else {
-                return ApiResponse.error("用户信息更新失败");
+                return ApiResponse.error(500, "用户信息更新失败");
             }
         } catch (Exception e) {
-            return ApiResponse.error("用户信息更新失败: " + e.getMessage());
+            log.error("更新用户信息失败", e);
+            return ApiResponse.error(500, "用户信息更新失败");
         }
     }
 
-    @PostMapping("/password")
-    public ApiResponse<Boolean> updatePassword(@RequestBody Map<String, String> request,
-                                              @RequestHeader("Authorization") String token) {
+    @PutMapping("/password")
+    @Operation(summary = "修改密码", description = "修改当前登录用户的密码")
+    public ApiResponse<Boolean> updatePassword(@RequestBody Map<String, String> request) {
         try {
-            if (!jwtUtil.validateToken(token.replace("Bearer ", ""))) {
-                return ApiResponse.error(401, "无效的token");
-            }
-            String username = jwtUtil.getUsernameFromToken(token.replace("Bearer ", ""));
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
             User user = userService.getUserByUsername(username);
             if (user == null) {
-                return ApiResponse.error("用户不存在");
+                return ApiResponse.error(404, "用户不存在");
             }
             
             String newPassword = request.get("newPassword");
@@ -113,60 +85,84 @@ public class UserController {
             
             boolean success = userService.updatePassword(user.getId(), newPassword);
             if (success) {
-                return ApiResponse.success("密码修改成功", true);
+                return ApiResponse.success(true);
             } else {
-                return ApiResponse.error("密码修改失败");
+                return ApiResponse.error(500, "密码修改失败");
             }
         } catch (Exception e) {
-            return ApiResponse.error("密码修改失败: " + e.getMessage());
+            log.error("修改密码失败", e);
+            return ApiResponse.error(500, "密码修改失败");
         }
     }
 
-    @PostMapping("/list")
-    public ApiResponse<List<User>> getUserList(@RequestHeader("Authorization") String token) {
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "获取用户列表", description = "获取所有用户列表（仅管理员）")
+    public ApiResponse<List<User>> getUserList() {
         try {
-            if (!jwtUtil.validateToken(token.replace("Bearer ", ""))) {
-                return ApiResponse.error(401, "无效的token");
-            }
-            String username = jwtUtil.getUsernameFromToken(token.replace("Bearer ", ""));
-            
-            // 只有管理员可以查看用户列表
-            if (!userService.isAdmin(username)) {
-                return ApiResponse.error(403, "权限不足");
-            }
-            
             List<User> users = userService.getAllUsers();
-            return ApiResponse.success("获取用户列表成功", users);
+            return ApiResponse.success(users);
         } catch (Exception e) {
-            return ApiResponse.error("获取用户列表失败: " + e.getMessage());
+            log.error("获取用户列表失败", e);
+            return ApiResponse.error(500, "获取用户列表失败");
         }
     }
 
-    @PostMapping("/status")
-    public ApiResponse<Boolean> updateUserStatus(@RequestBody Map<String, Object> request,
-                                                @RequestHeader("Authorization") String token) {
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @Operation(summary = "获取用户详情", description = "根据用户ID获取用户详情")
+    public ApiResponse<User> getUserById(@Parameter(description = "用户ID") @PathVariable Long id) {
         try {
-            if (!jwtUtil.validateToken(token.replace("Bearer ", ""))) {
-                return ApiResponse.error(401, "无效的token");
-            }
-            String username = jwtUtil.getUsernameFromToken(token.replace("Bearer ", ""));
-            
-            // 只有管理员可以修改用户状态
-            if (!userService.isAdmin(username)) {
-                return ApiResponse.error(403, "权限不足");
-            }
-            
-            Long userId = Long.valueOf(request.get("userId").toString());
-            Integer status = Integer.valueOf(request.get("status").toString());
-            
-            boolean success = userService.updateUserStatus(userId, status);
-            if (success) {
-                return ApiResponse.success("用户状态更新成功", true);
+            User user = userService.getUserById(id);
+            if (user != null) {
+                return ApiResponse.success(user);
             } else {
-                return ApiResponse.error("用户状态更新失败");
+                return ApiResponse.error(404, "用户不存在");
             }
         } catch (Exception e) {
-            return ApiResponse.error("用户状态更新失败: " + e.getMessage());
+            log.error("获取用户详情失败", e);
+            return ApiResponse.error(500, "获取用户详情失败");
+        }
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "更新用户状态", description = "更新用户状态（仅管理员）")
+    public ApiResponse<Boolean> updateUserStatus(
+            @Parameter(description = "用户ID") @PathVariable Long id,
+            @RequestBody Map<String, Integer> request) {
+        try {
+            Integer status = request.get("status");
+            if (status == null) {
+                return ApiResponse.error(400, "状态不能为空");
+            }
+            
+            boolean success = userService.updateUserStatus(id, status);
+            if (success) {
+                return ApiResponse.success(true);
+            } else {
+                return ApiResponse.error(500, "用户状态更新失败");
+            }
+        } catch (Exception e) {
+            log.error("更新用户状态失败", e);
+            return ApiResponse.error(500, "用户状态更新失败");
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "删除用户", description = "删除用户（仅管理员）")
+    public ApiResponse<Boolean> deleteUser(@Parameter(description = "用户ID") @PathVariable Long id) {
+        try {
+            boolean success = userService.deleteUser(id);
+            if (success) {
+                return ApiResponse.success(true);
+            } else {
+                return ApiResponse.error(500, "删除用户失败");
+            }
+        } catch (Exception e) {
+            log.error("删除用户失败", e);
+            return ApiResponse.error(500, "删除用户失败");
         }
     }
 } 

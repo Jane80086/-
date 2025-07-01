@@ -24,15 +24,22 @@ const handleLogin = async () => {
       password: password.value
     });
     
-    if (response.data.code === 200) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    if (response.data && response.data.code === 200) {
+      const data = response.data.data;
+      if (data && data.token) {
+        localStorage.setItem('token', data.token);
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
       router.push('/');
+      } else {
+        error.value = '登录响应数据格式错误';
+      }
     } else {
       error.value = response.data.message || '登录失败';
     }
   } catch (err) {
-    error.value = err.response?.data?.message || '登录失败，请检查网络连接';
+    error.value = err.response?.data?.message || err.message || '登录失败，请检查网络连接';
     console.error(err);
   } finally {
     isLoading.value = false;

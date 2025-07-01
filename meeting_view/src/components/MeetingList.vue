@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import meetingService from '../services/meetingService';
+import fileService from '../services/fileService';
 
 const props = defineProps({
   meetings: {
@@ -121,22 +122,70 @@ const onEditImageChange = async (event) => {
   editUploading.value = true;
   try {
     const res = await meetingService.uploadMeetingImage(file);
-    if (res.data.code === 200) {
-      currentMeeting.value.imageUrl = res.data.data;
+    // 处理后端ApiResponse格式
+    if (res.data && res.data.code === 200 && res.data.data) {
+      // 对于私有bucket，返回的是对象名称，需要获取预签名URL
+      if (!res.data.data.startsWith('http://') && !res.data.data.startsWith('https://')) {
+        const presignedUrl = await fileService.getImageUrl(res.data.data);
+        currentMeeting.value.imageUrl = presignedUrl || res.data.data;
+      } else {
+        currentMeeting.value.imageUrl = res.data.data;
+      }
     } else {
-      alert('图片上传失败: ' + res.data.message);
+      alert('图片上传失败: ' + (res.data.message || '未知错误'));
     }
   } catch (e) {
     console.error('图片上传错误:', e);
     if (e.response?.status === 413) {
       alert('文件太大，请选择小于10MB的图片');
     } else {
-      alert('图片上传失败，请重试');
+      alert('图片上传失败: ' + (e.response?.data?.message || e.message || '请重试'));
     }
   } finally {
     editUploading.value = false;
   }
 };
+
+// 处理会议图片URL，支持私有bucket
+const processMeetingImageUrl = async (meeting) => {
+  if (meeting.imageUrl && !meeting.imageUrl.startsWith('http://') && !meeting.imageUrl.startsWith('https://')) {
+    try {
+      const presignedUrl = await fileService.getImageUrl(meeting.imageUrl);
+      if (presignedUrl) {
+        meeting.imageUrl = presignedUrl;
+      }
+    } catch (error) {
+      console.error('获取会议图片URL失败:', error);
+    }
+  }
+};
+
+// 批量处理会议图片URL
+const processMeetingsImageUrls = async (meetings) => {
+  if (!meetings || meetings.length === 0) return;
+  
+  const promises = meetings.map(meeting => processMeetingImageUrl(meeting));
+  await Promise.all(promises);
+};
+
+// 监听会议数据变化，自动处理图片URL
+watch(() => props.meetings, async (newMeetings) => {
+  if (newMeetings && newMeetings.length > 0) {
+    await processMeetingsImageUrls(newMeetings);
+  }
+}, { immediate: true });
+
+onMounted(async () => {
+  console.log('会议列表数据:', props.meetings);
+  if (props.meetings && props.meetings.length > 0) {
+    // 处理图片URL
+    await processMeetingsImageUrls(props.meetings);
+    
+    props.meetings.forEach((m, i) => {
+      console.log(`会议${i + 1} imageUrl:`, m.imageUrl);
+    });
+  }
+});
 </script>
 
 <template>
@@ -182,6 +231,10 @@ const onEditImageChange = async (event) => {
                 <span>{{ formatDateTime(meeting.endTime) }}</span>
               </div>
             </div>
+          </div>
+          <!-- 新增会议图片展示 -->
+          <div v-if="meeting.imageUrl" class="meeting-image-preview">
+            <img :src="meeting.imageUrl" alt="会议图片" style="max-width: 100%; max-height: 160px; border-radius: 8px; margin-bottom: 12px; object-fit: contain; background: #f8f9fa;" />
           </div>
           
           <div class="meeting-meta">

@@ -1,30 +1,34 @@
 package com.cemenghui.news.constants;
 
+/**
+ * 新闻模块常量类
+ */
 public class NewsConstants {
 
-    // 分页常量
-    public static final Integer DEFAULT_PAGE_SIZE = 10;
-    public static final Integer MAX_PAGE_SIZE = 100;
-    public static final Integer DEFAULT_PAGE_NUM = 1;
-
-    // 新闻相关常量
-    public static final Integer MAX_TITLE_LENGTH = 200;
-    public static final Integer MAX_SUMMARY_LENGTH = 500;
-    public static final Integer MAX_AUTHOR_LENGTH = 100;
-
-    // 文件上传常量
-    public static final Long MAX_IMAGE_SIZE = 5 * 1024 * 1024L; // 5MB
-    public static final String[] ALLOWED_IMAGE_TYPES = {"jpg", "jpeg", "png", "gif", "webp"};
-    public static final String UPLOAD_PATH = "/uploads/images/";
-
-    // 默认值
-    public static final Integer DEFAULT_VIEW_COUNT = 0;
-    public static final Integer DEFAULT_STATUS = 0;
-    public static final Integer NOT_DELETED = 0;
-    public static final Integer DELETED = 1;
-
-    // 权限相关
+    // 用户类型常量
     public static final String ROLE_ADMIN = "ADMIN";
     public static final String ROLE_ENTERPRISE = "ENTERPRISE";
     public static final String ROLE_NORMAL = "NORMAL";
+
+    // 新闻状态常量
+    public static final Integer NEWS_STATUS_DRAFT = 0;      // 草稿
+    public static final Integer NEWS_STATUS_PENDING = 1;    // 待审核
+    public static final Integer NEWS_STATUS_APPROVED = 2;   // 已审核通过
+    public static final Integer NEWS_STATUS_REJECTED = 3;   // 审核不通过
+    public static final Integer NEWS_STATUS_PUBLISHED = 4;  // 已发布
+
+    // 操作权限常量
+    public static final String PERMISSION_CREATE = "CREATE";
+    public static final String PERMISSION_EDIT = "EDIT";
+    public static final String PERMISSION_DELETE = "DELETE";
+    public static final String PERMISSION_PUBLISH = "PUBLISH";
+    public static final String PERMISSION_AUDIT = "AUDIT";
+    public static final String PERMISSION_VIEW = "VIEW";
+
+    // 默认分页参数
+    public static final Integer DEFAULT_PAGE_SIZE = 10;
+    public static final Integer DEFAULT_PAGE_NUM = 1;
+
+    // 私有构造函数，防止实例化
+    private NewsConstants() {}
 }
