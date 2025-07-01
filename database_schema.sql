@@ -385,15 +385,11 @@ INSERT INTO meeting_review_record (meeting_id, meeting_name, creator, reviewer, 
 -- 已删除: 1个
 -- 总计: 18个会议
 
--- 在用户表中添加nickname和gender字段
-ALTER TABLE users ADD COLUMN nickname VARCHAR(50);
-ALTER TABLE users ADD COLUMN gender INTEGER DEFAULT 0;
-
 -- 创建news表
 CREATE TABLE news (
                       id BIGSERIAL PRIMARY KEY,
                       title VARCHAR(200) NOT NULL COMMENT '动态标题',
-                      image VARCHAR(500) COMMENT '新闻图片路径（支持多图片，JSON格式存储）',
+                      image TEXT COMMENT '新闻图片路径（支持多图片，JSON格式存储）',
                       content LONGTEXT NOT NULL COMMENT '动态内容（富文本HTML）',
                       summary TEXT COMMENT '新闻简介',
                       author VARCHAR(100) NOT NULL COMMENT '作者',

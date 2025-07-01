@@ -1,21 +1,23 @@
 package com.cemenghui.news.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cemenghui.common.User;
 import com.cemenghui.news.constants.NewsConstants;
 import com.cemenghui.news.exception.UnauthorizedException;
 import com.cemenghui.news.mapper.NewsMapper;
-import com.cemenghui.course.dao.UserDao;
+import com.cemenghui.news.mapper.UserMapper;
 import com.cemenghui.news.service.AuthorizationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
 public class AuthorizationServiceImpl implements AuthorizationService {
 
-    private final UserDao userMapper;
+    private final UserMapper userMapper;
     private final NewsMapper newsMapper;
 
     @Override
@@ -23,6 +25,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (userId == null || newsId == null) {
             return false;
         }
+        // 检查新闻是否存在且属于该用户
         return newsMapper.existsByIdAndUserId(newsId, userId);
     }
 
@@ -32,14 +35,24 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             return false;
         }
 
+        // 获取用户类型，避免查询整个用户对象
+        String userType = userMapper.getUserType(userId);
+        if (!StringUtils.hasText(userType)) {
+            return false;
+        }
+
         // 管理员可以编辑所有新闻
-        User user = userMapper.selectById(userId);
-        if (user != null && NewsConstants.ROLE_ADMIN.equals(user.getUserType())) {
+        if (NewsConstants.ROLE_ADMIN.equals(userType)) {
             return true;
         }
 
-        // 新闻所有者可以编辑自己的新闻
-        return isOwner(userId, newsId);
+        // 企业用户只能编辑自己的新闻
+        if (NewsConstants.ROLE_ENTERPRISE.equals(userType)) {
+            return isOwner(userId, newsId);
+        }
+
+        // 普通用户不能编辑新闻
+        return false;
     }
 
     @Override
@@ -48,14 +61,23 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             return false;
         }
 
+        String userType = userMapper.getUserType(userId);
+        if (!StringUtils.hasText(userType)) {
+            return false;
+        }
+
         // 管理员可以删除所有新闻
-        User user = userMapper.selectById(userId);
-        if (user != null && NewsConstants.ROLE_ADMIN.equals(user.getUserType())) {
+        if (NewsConstants.ROLE_ADMIN.equals(userType)) {
             return true;
         }
 
-        // 新闻所有者可以删除自己的新闻
-        return isOwner(userId, newsId);
+        // 企业用户只能删除自己的新闻
+        if (NewsConstants.ROLE_ENTERPRISE.equals(userType)) {
+            return isOwner(userId, newsId);
+        }
+
+        // 普通用户不能删除新闻
+        return false;
     }
 
     @Override
@@ -64,8 +86,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             throw new UnauthorizedException("用户未登录");
         }
 
-        User user = userMapper.selectById(userId);
-        if (user == null || !NewsConstants.ROLE_ADMIN.equals(user.getUserType())) {
+        String userType = userMapper.getUserType(userId);
+        if (!NewsConstants.ROLE_ADMIN.equals(userType)) {
             throw new UnauthorizedException("需要管理员权限");
         }
     }
@@ -76,15 +98,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             throw new UnauthorizedException("用户未登录");
         }
 
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw new UnauthorizedException("用户不存在");
+        String userType = userMapper.getUserType(userId);
+        if (StringUtils.hasText(userType) &&
+                (NewsConstants.ROLE_ENTERPRISE.equals(userType) || NewsConstants.ROLE_ADMIN.equals(userType))) {
+            return;
         }
-
-        if (!NewsConstants.ROLE_ENTERPRISE.equals(user.getUserType()) &&
-                !NewsConstants.ROLE_ADMIN.equals(user.getUserType())) {
-            throw new UnauthorizedException("需要企业用户或管理员权限");
-        }
+        throw new UnauthorizedException("需要企业用户或管理员权限");
     }
 
     @Override
@@ -93,23 +112,28 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             return false;
         }
 
-        User user = userMapper.selectById(userId);
-        if (user == null) {
+        String userType = userMapper.getUserType(userId);
+        if (!StringUtils.hasText(userType)) {
             return false;
         }
 
         // 管理员拥有所有权限
-        if (NewsConstants.ROLE_ADMIN.equals(user.getUserType())) {
+        if (NewsConstants.ROLE_ADMIN.equals(userType)) {
             return true;
         }
 
-        // 根据具体操作和资源判断权限
+        // 根据具体操作和用户类型判断权限
         switch (operation) {
-            case "EDIT":
-            case "DELETE":
+            case NewsConstants.PERMISSION_EDIT:
+            case NewsConstants.PERMISSION_DELETE:
                 return canEditNews(userId, resourceId);
-            case "PUBLISH":
-                return NewsConstants.ROLE_ENTERPRISE.equals(user.getUserType());
+            case NewsConstants.PERMISSION_CREATE:
+            case NewsConstants.PERMISSION_PUBLISH:
+                return NewsConstants.ROLE_ENTERPRISE.equals(userType);
+            case NewsConstants.PERMISSION_AUDIT:
+                return NewsConstants.ROLE_ADMIN.equals(userType);
+            case NewsConstants.PERMISSION_VIEW:
+                return true; // 所有用户都可以查看
             default:
                 return false;
         }
@@ -119,19 +143,63 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public Long getCurrentUserId() {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.isAuthenticated()) {
-                // 这里需要根据实际的认证实现来获取用户ID
-                // 假设principal中存储的是用户名，需要查询获取用户ID
-                String username = authentication.getName();
-                User user = userMapper.selectOne(
-                        new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<User>()
-                                .eq("username", username)
-                );
-                return user != null ? user.getId() : null;
+            if (authentication != null && authentication.isAuthenticated() &&
+                    !"anonymousUser".equals(authentication.getPrincipal())) {
+
+                // 方式1: 如果principal直接是User对象
+                if (authentication.getPrincipal() instanceof User) {
+                    return ((User) authentication.getPrincipal()).getId();
+                }
+
+                // 方式2: 如果principal是用户名字符串
+                if (authentication.getPrincipal() instanceof String) {
+                    String username = (String) authentication.getPrincipal();
+                    User user = userMapper.selectByUsername(username);
+                    return user != null ? user.getId() : null;
+                }
+
+                // 方式3: 如果是自定义的UserDetails实现
+                // 这里需要根据你的具体实现来调整
             }
             return null;
         } catch (Exception e) {
+            // 记录日志但不抛出异常，避免影响业务流程
             return null;
         }
+    }
+
+    /**
+     * 检查用户是否可以发布新闻
+     */
+    public boolean canPublishNews(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+
+        String userType = userMapper.getUserType(userId);
+        return NewsConstants.ROLE_ADMIN.equals(userType) ||
+                NewsConstants.ROLE_ENTERPRISE.equals(userType);
+    }
+
+    /**
+     * 检查用户是否可以审核新闻
+     */
+    public boolean canAuditNews(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+
+        String userType = userMapper.getUserType(userId);
+        return NewsConstants.ROLE_ADMIN.equals(userType);
+    }
+
+    /**
+     * 获取用户类型
+     */
+    public String getUserType(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        return userMapper.getUserType(userId);
     }
 }

@@ -1,2 +1,46 @@
-// 此文件已删除，因为移除了MyBatis Plus依赖
-// 如果需要分页功能，可以使用MyBatis原生的分页插件
+package com.cemenghui.course.config;
+
+import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.apache.ibatis.reflection.MetaObject;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+
+@Configuration
+public class MybatisPlusConfig {
+
+    /**
+     * 分页插件
+     */
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        return interceptor;
+    }
+
+    /**
+     * 自动填充处理器
+     */
+    @Component
+    public static class MyMetaObjectHandler implements MetaObjectHandler {
+
+        @Override
+        public void insertFill(MetaObject metaObject) {
+            this.strictInsertFill(metaObject, "createTime", LocalDateTime.class, LocalDateTime.now());
+            this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
+            this.strictInsertFill(metaObject, "viewTime", LocalDateTime.class, LocalDateTime.now());
+            this.strictInsertFill(metaObject, "operationTime", LocalDateTime.class, LocalDateTime.now());
+        }
+
+        @Override
+        public void updateFill(MetaObject metaObject) {
+            this.strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
+        }
+    }
+}
