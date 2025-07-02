@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.system.repository.UserMapper">
+    <!-- 注册企业用户，插入用户信息到数据库 -->
+    <insert id="saveEnterpriseUser" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO enterprise_user (
+            enterprise_name,
+            enterprise_contact,
+            account,
+            password,
+            enterprise_type,
+            create_time,
+            update_time
+        )
+        VALUES (
+                   #{enterpriseName},
+                   #{enterpriseContact},
+                   #{account},
+                   #{password},
+                   #{enterpriseType},
+                   NOW(),
+                   NOW()
+               )
+    </insert>
+
+    <!-- 根据账号查询用户，用于校验账号是否已存在 -->
+    <select id="findByAccount" resultType="com.system.entity.EnterpriseUser">
+        SELECT * FROM enterprise_user
+        WHERE account = #{account}
+    </select>
+
+    <!-- 根据企业名称查询管理员用户（可根据实际需求调整，比如校验企业相关权限等 ） -->
+    <select id="findAdminByAccount" resultType="com.system.entity.AdminUser">
+        SELECT * FROM admin_user
+        WHERE account = #{account}
+    </select>
+
+    <!-- 更新用户记住登录状态 -->
+    <update id="updateRememberStatus">
+        UPDATE enterprise_user
+        SET is_remembered = #{isRemembered}
+        WHERE user_id = #{userId}
+    </update>
+</mapper>

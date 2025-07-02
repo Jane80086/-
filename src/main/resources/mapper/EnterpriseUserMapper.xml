@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.system.repository.EnterpriseUserMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.system.entity.EnterpriseUser">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="enterprise_name" property="enterpriseName" jdbcType="VARCHAR"/>
+        <result column="enterprise_contact" property="enterpriseContact" jdbcType="VARCHAR"/>
+        <result column="account" property="account" jdbcType="VARCHAR"/>
+        <result column="password" property="password" jdbcType="VARCHAR"/>
+        <result column="enterprise_type" property="enterpriseType" jdbcType="VARCHAR"/>
+        <result column="department" property="department" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 注册企业用户 -->
+    <insert id="save" parameterType="com.system.entity.EnterpriseUser">
+        INSERT INTO enterprise_user (
+            enterprise_name, enterprise_contact, account,
+            password, enterprise_type, department, create_time
+        ) VALUES (
+                     #{enterpriseName}, #{enterpriseContact}, #{account},
+                     #{password}, #{enterpriseType}, #{department}, NOW()
+                 )
+    </insert>
+
+    <!-- 根据账号查询企业用户 -->
+    <select id="findByAccount" resultMap="BaseResultMap">
+        SELECT * FROM enterprise_user WHERE account = #{account}
+    </select>
+
+    <!-- 根据企业名称查询用户 -->
+    <select id="findByEnterpriseName" resultMap="BaseResultMap">
+        SELECT * FROM enterprise_user WHERE enterprise_name = #{enterpriseName}
+    </select>
+
+    <!-- 更新用户信息 -->
+    <update id="update">
+        UPDATE enterprise_user
+        SET enterprise_contact = #{enterpriseContact},
+            password = #{password},
+            enterprise_type = #{enterpriseType},
+            department = #{department},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用户记住登录状态 -->
+    <update id="updateRememberStatus">
+        UPDATE enterprise_user
+        SET is_remembered = #{isRemembered}
+        WHERE id = #{userId}
+    </update>
+    <!-- 统计同名企业数量 -->
+    <select id="countByEnterpriseName" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM business_info WHERE enterprise_name = #{enterpriseName}
+    </select>
+</mapper>
