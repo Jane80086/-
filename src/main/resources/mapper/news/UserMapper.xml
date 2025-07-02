@@ -3,7 +3,7 @@
 <mapper namespace="com.cemenghui.news.mapper.UserMapper">
 
     <!-- 分页查询用户，支持条件筛选 -->
-    <select id="findUsersByCondition" resultType="com.cemenghui.common.User">
+    <select id="findUsersByCondition" resultType="com.wakeup.pojo.User">
         SELECT * FROM users
         <where>
             <if test="username != null and username != ''">

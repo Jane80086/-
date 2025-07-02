@@ -10,6 +10,7 @@ import com.cemenghui.news.service.AuthorizationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -35,7 +36,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             return false;
         }
 
-        // 获取用户类型，避免查询整个用户对象
         String userType = userMapper.getUserType(userId);
         if (!StringUtils.hasText(userType)) {
             return false;
@@ -48,7 +48,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
         // 企业用户只能编辑自己的新闻
         if (NewsConstants.ROLE_ENTERPRISE.equals(userType)) {
-            return isOwner(userId, newsId);
+            return isOwner(userId, newsId); // 检查是否是所有者
         }
 
         // 普通用户不能编辑新闻
@@ -73,7 +73,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
         // 企业用户只能删除自己的新闻
         if (NewsConstants.ROLE_ENTERPRISE.equals(userType)) {
-            return isOwner(userId, newsId);
+            return isOwner(userId, newsId); // 检查是否是所有者
         }
 
         // 普通用户不能删除新闻
@@ -126,14 +126,14 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         switch (operation) {
             case NewsConstants.PERMISSION_EDIT:
             case NewsConstants.PERMISSION_DELETE:
-                return canEditNews(userId, resourceId);
+                return canEditNews(userId, resourceId); // 复用canEditNews和canDeleteNews逻辑
             case NewsConstants.PERMISSION_CREATE:
             case NewsConstants.PERMISSION_PUBLISH:
                 return NewsConstants.ROLE_ENTERPRISE.equals(userType);
             case NewsConstants.PERMISSION_AUDIT:
                 return NewsConstants.ROLE_ADMIN.equals(userType);
             case NewsConstants.PERMISSION_VIEW:
-                return true; // 所有用户都可以查看
+                return true; // 所有用户都可以查看（这里通常还需要考虑新闻状态）
             default:
                 return false;
         }
@@ -146,24 +146,29 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             if (authentication != null && authentication.isAuthenticated() &&
                     !"anonymousUser".equals(authentication.getPrincipal())) {
 
-                // 方式1: 如果principal直接是User对象
+                // 方式1: 如果principal直接是User对象 (假设User对象包含id)
                 if (authentication.getPrincipal() instanceof User) {
                     return ((User) authentication.getPrincipal()).getId();
                 }
 
-                // 方式2: 如果principal是用户名字符串
-                if (authentication.getPrincipal() instanceof String) {
-                    String username = (String) authentication.getPrincipal();
-                    User user = userMapper.selectByUsername(username);
+                // 方式2: 如果principal是UserDetails对象 (例如Spring Security的User)
+                if (authentication.getPrincipal() instanceof UserDetails) {
+                    String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+                    User user = userMapper.selectByUsername(username); // 你需要有这个方法
                     return user != null ? user.getId() : null;
                 }
 
-                // 方式3: 如果是自定义的UserDetails实现
-                // 这里需要根据你的具体实现来调整
+                // 方式3: 如果principal是用户名字符串
+                if (authentication.getPrincipal() instanceof String) {
+                    String username = (String) authentication.getPrincipal();
+                    User user = userMapper.selectByUsername(username); // 你需要有这个方法
+                    return user != null ? user.getId() : null;
+                }
             }
-            return null;
+            return null; // 未登录或无法获取到用户ID
         } catch (Exception e) {
-            // 记录日志但不抛出异常，避免影响业务流程
+            // 记录日志，例如使用 slf4j
+            // log.warn("Failed to get current user ID: {}", e.getMessage());
             return null;
         }
     }
@@ -175,7 +180,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (userId == null) {
             return false;
         }
-
         String userType = userMapper.getUserType(userId);
         return NewsConstants.ROLE_ADMIN.equals(userType) ||
                 NewsConstants.ROLE_ENTERPRISE.equals(userType);
@@ -188,7 +192,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (userId == null) {
             return false;
         }
-
         String userType = userMapper.getUserType(userId);
         return NewsConstants.ROLE_ADMIN.equals(userType);
     }
@@ -201,5 +204,20 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             return null;
         }
         return userMapper.getUserType(userId);
+    }
+
+    // 实现 AuthorizationService 接口新增的方法
+    @Override
+    public boolean isAdmin(Long userId) {
+        if (userId == null) return false;
+        String userType = userMapper.getUserType(userId);
+        return NewsConstants.ROLE_ADMIN.equals(userType);
+    }
+
+    @Override
+    public boolean isEnterprise(Long userId) {
+        if (userId == null) return false;
+        String userType = userMapper.getUserType(userId);
+        return NewsConstants.ROLE_ENTERPRISE.equals(userType);
     }
 }

@@ -15,7 +15,7 @@ public class News {
     private String title;
 
     @TableField("image")
-    private String image;
+    private String image; // 之前是 imagePath，现在是 image
 
     @TableField("content")
     private String content;
@@ -30,12 +30,13 @@ public class News {
     private Long userId;
 
     @TableField("status")
-    private Integer status = 0;
+    private Integer status = 0; // 0:待审核, 1:审核通过, 2:审核拒绝, (可能还有 3:已下架/禁用)
 
     @TableField("view_count")
     private Integer viewCount = 0;
 
     @TableField("is_deleted")
+    @TableLogic
     private Integer isDeleted = 0;
 
     @TableField("audit_comment")
@@ -50,10 +51,10 @@ public class News {
     @TableField("deleted_time")
     private LocalDateTime deletedTime;
 
-    @TableField("create_time")
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
-    @TableField("update_time")
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     // 业务方法
@@ -62,10 +63,12 @@ public class News {
     }
 
     public boolean canEdit() {
+        // 根据你提供的逻辑：0:待审核, 2:审核拒绝, 3:已下架/禁用 状态允许编辑
         return this.status != null && (this.status == 0 || this.status == 2 || this.status == 3);
     }
 
     public boolean canDelete() {
+        // 未删除状态即可删除
         return this.isDeleted == 0;
     }
 
@@ -74,6 +77,6 @@ public class News {
     }
 
     public boolean isApproved() {
-        return this.status != null && this.status == 1;
+        return this.status != null && this.status == 1; // 1代表审核通过
     }
 }

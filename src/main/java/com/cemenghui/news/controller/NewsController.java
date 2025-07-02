@@ -24,7 +24,7 @@ public class NewsController {
     @GetMapping("/search")
     public Result searchNews(SearchRequest searchRequest) {
         PageResult<NewsVO> result = newsService.searchNews(searchRequest);
-        return Result.success("查询成功", result);
+        return Result.success(result);
     }
 
     /**
@@ -33,7 +33,7 @@ public class NewsController {
     @GetMapping("/{newsId}")
     public Result getNewsDetail(@PathVariable Long newsId) {
         NewsVO newsVO = newsService.getNewsDetail(newsId);
-        return Result.success("获取成功", newsVO);
+        return Result.success(newsVO);
     }
 
     /**
@@ -42,6 +42,6 @@ public class NewsController {
     @GetMapping("/popular")
     public Result getPopularNews(@RequestParam(defaultValue = "10") Integer limit) {
         List<NewsVO> result = newsService.getPopularNews(limit);
-        return Result.success("获取成功", result);
+        return Result.success(result);
     }
 }

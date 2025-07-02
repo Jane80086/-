@@ -35,7 +35,7 @@ public class UserOperationLog {
     @TableField("ip_address")
     private String ipAddress;
 
-    @TableField("operation_time")
+    @TableField(value = "operation_time", fill = FieldFill.INSERT)
     private LocalDateTime operationTime;
 
     @TableField("operation_result")

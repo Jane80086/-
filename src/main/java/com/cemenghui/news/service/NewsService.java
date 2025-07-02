@@ -3,73 +3,45 @@ package com.cemenghui.news.service;
 import com.cemenghui.news.dto.*;
 import com.cemenghui.news.dto.NewsVO;
 import com.cemenghui.news.dto.PageResult;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 public interface NewsService {
-
-    /**
-     * 搜索新闻
-     */
     PageResult<NewsVO> searchNews(SearchRequest searchRequest);
-
-    /**
-     * 获取新闻详情
-     */
     NewsVO getNewsDetail(Long newsId);
-
-    /**
-     * 发布新闻
-     */
     Long publishNews(NewsRequest newsRequest);
-
-    /**
-     * 获取我的新闻列表
-     */
+    Long adminPublishNews(NewsRequest newsRequest); // 新增管理员发布新闻方法
     PageResult<NewsVO> getMyNewsList(PageRequest pageRequest);
-
-    /**
-     * 编辑新闻
-     */
     boolean editNews(Long newsId, NewsRequest newsRequest);
-
-    /**
-     * 删除新闻
-     */
     boolean deleteNews(Long newsId);
-
-    /**
-     * 获取待审核新闻列表
-     */
     PageResult<NewsVO> getPendingNewsList(PageRequest pageRequest);
-
-    /**
-     * 审核新闻
-     */
     boolean auditNews(Long newsId, AuditRequest auditRequest);
-
-    /**
-     * 管理员编辑新闻
-     */
     boolean adminEditNews(Long newsId, NewsRequest newsRequest);
-
-    /**
-     * 获取所有新闻列表
-     */
     PageResult<NewsVO> getAllNewsList(SearchRequest searchRequest);
-
-    /**
-     * 管理员删除新闻
-     */
     boolean adminDeleteNews(Long newsId);
-
-    /**
-     * 获取热门新闻
-     */
     List<NewsVO> getPopularNews(Integer limit);
-
     /**
-     * 获取基础统计数据
+     * 获取管理员仪表盘基础统计数据
+     * 包括总动态数、各种状态动态数、总浏览量、今日浏览量、总用户数、活跃用户数等
+     * @return 统计数据Map
      */
     Map<String, Object> getBasicStatistics();
+
+    /**
+     * 获取指定日期范围内的浏览量趋势数据
+     * @param startDate 开始日期 (YYYY-MM-DD)
+     * @param endDate 结束日期 (YYYY-MM-DD)
+     * @return 每日浏览量列表，例如 [{date: "2023-01-01", views: 100}, ...]
+     */
+    List<Map<String, Object>> getViewTrend(LocalDate startDate, LocalDate endDate); // 使用 LocalDate
+
+    /**
+     * 获取热门动态列表（管理员视角，可选择性包含所有状态或指定状态）
+     * @param limit 返回数量限制
+     * @param status 动态状态，null表示所有状态，否则根据状态码过滤
+     * @return 热门动态列表
+     */
+    List<NewsVO> getHotNews(Integer limit, Integer status); // 可以增加状态参数，更灵活
 }
