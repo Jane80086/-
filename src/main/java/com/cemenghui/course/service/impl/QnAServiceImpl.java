@@ -29,11 +29,10 @@ public class QnAServiceImpl implements QnAService {
      */
     @Override
     @Transactional
-    public Question askQuestion(Long courseId, Long userId, String content) {
-        Question question = new Question();
-        question.setCourseId(courseId);
-        question.setUserId(userId);
-        question.setQuestion(content);
+    public Question askQuestion(Question question) {
+        if (question.getCreatedAt() == null) {
+            question.setCreatedAt(java.time.LocalDateTime.now());
+        }
         questionDao.insert(question);
         return question;
     }

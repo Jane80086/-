@@ -109,7 +109,8 @@ CREATE TABLE featured_courses (
     featured_order INTEGER DEFAULT 0,
     start_date DATE,
     end_date DATE,
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted int DEFAULT 0
 );
 
 -- 新增课程评论表
@@ -203,4 +204,6 @@ INSERT INTO questions (course_id, user_id, question, ai_answer) VALUES
 -- 插入评论
 INSERT INTO reviews (course_id, user_id, rating, content, status) VALUES
 (1, 3, 5, '非常棒的课程，讲解很详细', 'APPROVED'),
-(2, 3, 4, '内容很实用，推荐学习', 'APPROVED'); 
+(2, 3, 4, '内容很实用，推荐学习', 'APPROVED');
+
+ALTER TABLE "user" ADD CONSTRAINT uq_username UNIQUE (username); 

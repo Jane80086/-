@@ -33,10 +33,7 @@ public class SecurityConfig {
             .and()
             // 配置请求授权
             .authorizeRequests()
-                .antMatchers("/api/auth/**", "/api/public/**").permitAll()
-                .antMatchers("/api/admin/**").hasRole("ADMIN")
-                .antMatchers("/api/enterprise/**").hasRole("ENTERPRISE")
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             .and()
             // 添加JWT过滤器
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

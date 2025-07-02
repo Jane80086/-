@@ -26,6 +26,10 @@ public class FeaturedCourseServiceImpl implements FeaturedCourseService {
      */
     @Override
     public boolean promoteToFeatured(Long courseId, int priority) {
+        // 检查课程是否存在
+        if (featuredCourseDao.selectById(courseId) == null) {
+            return false;
+        }
         FeaturedCourse featuredCourse = new FeaturedCourse();
         featuredCourse.setCourseId(courseId);
         featuredCourse.setPriority(priority);
@@ -41,6 +45,10 @@ public class FeaturedCourseServiceImpl implements FeaturedCourseService {
      */
     @Override
     public boolean removeFromFeatured(Long courseId) {
+        // 检查课程是否存在
+        if (featuredCourseDao.selectById(courseId) == null) {
+            return false;
+        }
         LambdaQueryWrapper<FeaturedCourse> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FeaturedCourse::getCourseId, courseId);
         featuredCourseDao.delete(wrapper);

@@ -4,9 +4,12 @@ import com.cemenghui.course.common.Result;
 import com.cemenghui.course.entity.FeaturedCourse;
 import com.cemenghui.course.service.FeaturedCourseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/featured")
@@ -32,18 +35,42 @@ public class FeaturedCourseController {
      * 设置课程推荐
      */
     @PostMapping("/{courseId}/promote")
-    public Result promoteToFeatured(
-            @PathVariable Long courseId,
-            @RequestParam(defaultValue = "1") int priority) {
+    public ResponseEntity<Map<String, Object>> promoteToFeatured(@PathVariable Long courseId, @RequestParam int priority) {
+        Map<String, Object> result = new HashMap<>();
+        if (courseId == null || courseId <= 0) {
+            System.out.println("[DEBUG] 课程ID非法: " + courseId);
+            result.put("code", -1);
+            result.put("msg", "失败: 课程ID非法");
+            result.put("data", null);
+            return ResponseEntity.ok(result);
+        }
+        if (priority < 0) {
+            System.out.println("[DEBUG] priority非法: " + priority);
+            result.put("code", -1);
+            result.put("msg", "失败: priority非法");
+            result.put("data", null);
+            return ResponseEntity.ok(result);
+        }
         try {
             boolean success = featuredCourseService.promoteToFeatured(courseId, priority);
             if (success) {
-                return Result.success("课程推荐设置成功", null);
+                result.put("code", 0);
+                result.put("msg", "课程推荐设置成功");
+                result.put("data", null);
+                return ResponseEntity.ok(result);
             } else {
-                return Result.fail("课程推荐设置失败");
+                System.out.println("[DEBUG] 课程推荐设置失败: " + courseId);
+                result.put("code", -1);
+                result.put("msg", "课程推荐设置失败");
+                result.put("data", null);
+                return ResponseEntity.ok(result);
             }
         } catch (Exception e) {
-            return Result.fail("设置推荐失败: " + e.getMessage());
+            System.out.println("[DEBUG] 设置推荐异常: " + e.getMessage());
+            result.put("code", -1);
+            result.put("msg", "设置推荐失败: " + e.getMessage());
+            result.put("data", null);
+            return ResponseEntity.ok(result);
         }
     }
 
@@ -51,16 +78,35 @@ public class FeaturedCourseController {
      * 取消课程推荐
      */
     @DeleteMapping("/{courseId}")
-    public Result removeFromFeatured(@PathVariable Long courseId) {
+    public ResponseEntity<Map<String, Object>> removeFromFeatured(@PathVariable Long courseId) {
+        Map<String, Object> result = new HashMap<>();
+        if (courseId == null || courseId <= 0) {
+            System.out.println("[DEBUG] 课程ID非法: " + courseId);
+            result.put("code", -1);
+            result.put("msg", "失败: 课程ID非法");
+            result.put("data", null);
+            return ResponseEntity.ok(result);
+        }
         try {
             boolean success = featuredCourseService.removeFromFeatured(courseId);
             if (success) {
-                return Result.success("取消推荐成功", null);
+                result.put("code", 0);
+                result.put("msg", "取消推荐成功");
+                result.put("data", null);
+                return ResponseEntity.ok(result);
             } else {
-                return Result.fail("取消推荐失败");
+                System.out.println("[DEBUG] 取消推荐失败: " + courseId);
+                result.put("code", -1);
+                result.put("msg", "取消推荐失败");
+                result.put("data", null);
+                return ResponseEntity.ok(result);
             }
         } catch (Exception e) {
-            return Result.fail("取消推荐失败: " + e.getMessage());
+            System.out.println("[DEBUG] 取消推荐异常: " + e.getMessage());
+            result.put("code", -1);
+            result.put("msg", "取消推荐失败: " + e.getMessage());
+            result.put("data", null);
+            return ResponseEntity.ok(result);
         }
     }
 

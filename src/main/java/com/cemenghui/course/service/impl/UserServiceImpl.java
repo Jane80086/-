@@ -12,12 +12,14 @@ import java.util.ArrayList;
 import com.cemenghui.course.common.AdminUser;
 import com.cemenghui.course.common.EnterpriseUser;
 import com.cemenghui.course.common.NormalUser;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.cemenghui.course.service.UserService;
 
 /**
  * 用户服务
  */
 @Service
-public class UserServiceImpl {
+public class UserServiceImpl implements UserService {
     @Autowired
     private UserDao userDao;
 
@@ -235,5 +237,19 @@ public class UserServiceImpl {
     protected void onUserLogin(Long id) {
         // 记录用户登录行为
         System.out.println("用户 " + id + " 登录了系统");
+    }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("username", username);
+        return userDao.selectCount(wrapper) > 0;
+    }
+
+    @Override
+    public void deleteByUsername(String username) {
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("username", username);
+        userDao.delete(wrapper);
     }
 } 
