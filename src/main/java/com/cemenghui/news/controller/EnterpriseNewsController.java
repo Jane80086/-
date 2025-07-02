@@ -6,12 +6,11 @@ import com.cemenghui.news.dto.PageRequest;
 import com.cemenghui.news.dto.NewsVO;
 import com.cemenghui.news.dto.PageResult;
 import com.cemenghui.news.service.NewsService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/enterprise/news")

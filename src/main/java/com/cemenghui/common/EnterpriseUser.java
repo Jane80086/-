@@ -18,6 +18,12 @@ public class EnterpriseUser extends User {
     
     @TableField("contact_person")
     private String contactPerson;
+
+    @TableField("contact_phone")
+    protected String contactPhone;//新增字段
+
+    @TableField("company_address")
+    protected String companyAddress;//新增字段
     
     public EnterpriseUser() {
         this.setUserType("ENTERPRISE");

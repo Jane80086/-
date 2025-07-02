@@ -51,7 +51,6 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
-    @Transactional
     public NewsVO getNewsDetail(Long newsId) {
         News news = newsMapper.selectById(newsId);
         if (news == null || news.getIsDeleted() == 1) {

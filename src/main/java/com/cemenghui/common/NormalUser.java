@@ -11,13 +11,16 @@ import java.time.LocalDateTime;
 public class NormalUser extends User {
     
     @TableField("nickname")
-    private String nickname;
+    private String nickname;//对应real_name
     
     @TableField("avatar")
     private String avatar;
     
     @TableField("learning_level")
     private String learningLevel = "BEGINNER";
+
+    @TableField("bio")
+    protected String bio;//新增字段
     
     public NormalUser() {
         this.setUserType("NORMAL");
