@@ -21,13 +21,13 @@ public class QnAController {
      * 提交问题
      */
     @PostMapping("/ask")
-    public Result askQuestion(
-            @RequestParam Long courseId,
-            @RequestParam String content,
-            @RequestParam(defaultValue = "1") Long userId) {
+    public Result askQuestion(@RequestBody Question question) {
         try {
-            Question question = qnaService.askQuestion(courseId, userId, content);
-            return Result.success("问题提交成功", question);
+            if (question.getCreatedAt() == null) {
+                question.setCreatedAt(java.time.LocalDateTime.now());
+            }
+            Question saved = qnaService.askQuestion(question);
+            return Result.success("问题提交成功", saved);
         } catch (Exception e) {
             return Result.fail("问题提交失败: " + e.getMessage());
         }

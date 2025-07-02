@@ -16,7 +16,7 @@ public interface QnAService {
      * @param content 问题内容
      * @return 新增问题
      */
-    Question askQuestion(Long courseId, Long userId, String content);
+    Question askQuestion(Question question);
 
     /**
      * 获取问答列表
