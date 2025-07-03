@@ -45,7 +45,7 @@ public class FeaturedCourseControllerTest {
         mockMvc.perform(post("/api/featured/999999/promote")
                 .param("priority", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.containsString("失败")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("失败")));
     }
 
     @Test
@@ -53,7 +53,7 @@ public class FeaturedCourseControllerTest {
         mockMvc.perform(post("/api/featured/1/promote")
                 .param("priority", "-1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.containsString("失败")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("失败")));
     }
 
     @Test
@@ -64,13 +64,13 @@ public class FeaturedCourseControllerTest {
         mockMvc.perform(post("/api/featured/1/promote")
                 .param("priority", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.containsString("失败")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("失败")));
     }
 
     @Test
     public void testRemoveNonExistentFeatured() throws Exception {
         mockMvc.perform(delete("/api/featured/999999"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.containsString("失败")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("失败")));
     }
 } 

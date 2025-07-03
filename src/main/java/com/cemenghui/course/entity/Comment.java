@@ -28,8 +28,4 @@ public class Comment implements Serializable {
 
     @TableField("status")
     private String status = "NORMAL"; // NORMAL/REVIEWED/REJECTED
-
-    @TableLogic
-    @TableField("deleted")
-    private Integer deleted = 0;
 } 

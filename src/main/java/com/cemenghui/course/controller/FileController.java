@@ -5,6 +5,7 @@ import com.cemenghui.course.service.impl.MinioServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -207,6 +208,55 @@ public class FileController {
             return Result.success(status);
         } catch (Exception e) {
             return Result.fail("MinIO连接失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 视频流播放接口，支持<video>标签直接播放，支持断点续传
+     */
+    @GetMapping("/stream")
+    public ResponseEntity<InputStreamResource> streamVideo(@RequestParam("objectName") String objectName, @RequestHeader(value = "Range", required = false) String rangeHeader) {
+        try {
+            // 获取视频文件总长度
+            long fileSize = minioServiceImpl.getFileSize(objectName);
+            InputStream inputStream;
+            long start = 0, end = fileSize - 1;
+            boolean isPartial = false;
+
+            if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+                // 解析Range头
+                String[] ranges = rangeHeader.replace("bytes=", "").split("-");
+                try {
+                    start = Long.parseLong(ranges[0]);
+                    if (ranges.length > 1 && !ranges[1].isEmpty()) {
+                        end = Long.parseLong(ranges[1]);
+                    }
+                } catch (NumberFormatException ignored) {}
+                if (end >= fileSize) end = fileSize - 1;
+                if (start > end) start = 0;
+                isPartial = true;
+            }
+
+            inputStream = minioServiceImpl.downloadFile(objectName, start, end);
+            InputStreamResource resource = new InputStreamResource(inputStream);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "video/mp4");
+            headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
+            if (isPartial) {
+                headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, end, fileSize));
+                headers.setContentLength(end - start + 1);
+                return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                        .headers(headers)
+                        .body(resource);
+            } else {
+                headers.setContentLength(fileSize);
+                return ResponseEntity.ok()
+                        .headers(headers)
+                        .body(resource);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 } 

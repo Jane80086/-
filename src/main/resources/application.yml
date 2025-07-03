@@ -66,3 +66,10 @@ mcp:
   server:
     url: http://127.0.0.1:6277
     auth-token: b78780b7f43d9d961b61bdc38227f01e2038491264231081120c505f6f90c8d8
+
+# Dify AI 配置
+# 请填写你的 Dify API Key 和 Base URL
+# 例如：
+dify:
+  api-key: "your-dify-api-key"
+  base-url: "https://api.dify.ai/v1"
