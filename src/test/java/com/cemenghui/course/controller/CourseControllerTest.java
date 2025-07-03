@@ -82,4 +82,22 @@ public class CourseControllerTest {
         mockMvc.perform(get("/api/course/trends"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    public void testUnpublishCourseNotFound() throws Exception {
+        mockMvc.perform(put("/api/course/999999/unpublish"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testSubmitForReviewNotFound() throws Exception {
+        mockMvc.perform(post("/api/course/999999/submit"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testGetMyCourses() throws Exception {
+        mockMvc.perform(get("/api/course/my"))
+                .andExpect(status().isOk());
+    }
 } 

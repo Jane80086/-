@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Service
 public class AIServiceImpl implements AIService {
-    private AIClient aiClient;
+    private AIClient aiClient = new AIClient();
     private List<String> trendKeyWords = new ArrayList<>();
 
     /**

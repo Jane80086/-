@@ -157,4 +157,17 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
     protected void onCourseSubmitted(Long courseId) {
         // 通知审核模块，可扩展事件发布
     }
+
+    /**
+     * 下架课程
+     * @param courseId 课程ID
+     * @return 是否下架成功
+     */
+    public boolean unpublishCourse(Long courseId) {
+        Course course = courseDao.selectById(courseId);
+        if (course == null) return false;
+        course.setStatus("UNPUBLISHED");
+        courseDao.updateById(course);
+        return true;
+    }
 }

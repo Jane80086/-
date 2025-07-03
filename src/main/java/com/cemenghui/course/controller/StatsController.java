@@ -22,6 +22,50 @@ public class StatsController {
     private CourseHistoryService courseHistoryService;
 
     /**
+     * 获取统计数据概览
+     */
+    @GetMapping("/overview")
+    public Result getStatsOverview() {
+        try {
+            Map<String, Object> stats = new HashMap<>();
+            
+            // 获取课程总数
+            List<Course> allCourses = courseService.listCourses();
+            stats.put("totalCourses", allCourses != null ? allCourses.size() : 0);
+            
+            // 模拟其他统计数据
+            stats.put("totalUsers", 1250);
+            stats.put("totalViews", 15680);
+            stats.put("avgRating", 4.6);
+            stats.put("activeUsers", 890);
+            stats.put("newCoursesThisMonth", 15);
+            
+            return Result.success(stats);
+        } catch (Exception e) {
+            return Result.fail("获取统计数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取图表数据
+     */
+    @GetMapping("/chart")
+    public Result getChartData() {
+        try {
+            Map<String, Object> chartData = new HashMap<>();
+            
+            // 模拟图表数据
+            chartData.put("courseGrowth", List.of(10, 15, 20, 25, 30, 35));
+            chartData.put("userGrowth", List.of(100, 150, 200, 250, 300, 350));
+            chartData.put("revenueData", List.of(1000, 1500, 2000, 2500, 3000, 3500));
+            
+            return Result.success(chartData);
+        } catch (Exception e) {
+            return Result.fail("获取图表数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 获取仪表板数据
      */
     @GetMapping("/dashboard")

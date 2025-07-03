@@ -1,6 +1,7 @@
 package com.cemenghui.course.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -34,8 +35,8 @@ public class Course implements Serializable {
     @TableField("duration")
     private Integer duration = 0;
 
-    // @TableField("course_level")
-    // private String courseLevel = "BEGINNER";
+    @TableField("course_level")
+    private String level = "BEGINNER";
 
     @TableField("category")
     private String category;
@@ -61,14 +62,14 @@ public class Course implements Serializable {
     @TableField("favorite_count")
     private Integer favoriteCount = 0;
 
-    @TableLogic
-    @TableField("deleted")
-    private Integer deleted = 0;
+    // 无参构造函数
+    public Course() {}
 
     /**
      * 播放该课程内容
      * @throws Exception 可能抛出的异常
      */
+    @JsonIgnore
     public void play() throws Exception {
         // 播放逻辑
     }
@@ -80,6 +81,7 @@ public class Course implements Serializable {
      * @param coverImage 封面
      * @throws IllegalArgumentException 参数不合法时抛出
      */
+    @JsonIgnore
     public void edit(String title, String description, String coverImage) throws IllegalArgumentException {
         if (title == null || title.isEmpty()) {
             throw new IllegalArgumentException("标题不能为空");
@@ -95,6 +97,7 @@ public class Course implements Serializable {
      * 提交课程以供管理员审核
      * @throws Exception 可能抛出的异常
      */
+    @JsonIgnore
     public void submitForReview() throws Exception {
         this.status = "PENDING";
         this.updatedTime = LocalDateTime.now();
@@ -106,6 +109,7 @@ public class Course implements Serializable {
      * 课程创建成功事件
      * @param courseId 课程ID
      */
+    @JsonIgnore
     public void onCourseCreated(Long courseId) {
         // 新课程入库，记录创建行为
     }
@@ -114,6 +118,7 @@ public class Course implements Serializable {
      * 课程编辑事件
      * @param courseId 课程ID
      */
+    @JsonIgnore
     protected void onCourseEdited(Long courseId) {
         // 更新记录，触发通知
     }
@@ -122,6 +127,7 @@ public class Course implements Serializable {
      * 课程提交审核事件
      * @param courseId 课程ID
      */
+    @JsonIgnore
     protected void onCourseSubmitted(Long courseId) {
         // 启动审核流程
     }
