@@ -4,4 +4,4 @@
   </el-card>
 </template>
 <script setup>
-</script> 
+</script>
