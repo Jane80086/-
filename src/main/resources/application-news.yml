@@ -1,0 +1,113 @@
+spring:
+  application:
+    name: news-system
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      enabled: true
+  datasource:
+    url: jdbc:kingbase8://localhost:54321/cemenghui?characterEncoding=UTF-8&useUnicode=true
+    username: system
+    password: 123456
+    driver-class-name: com.kingbase8.Driver
+    hikari:
+      # 连接池配置
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      # 连接测试
+      connection-test-query: SELECT 1
+      validation-timeout: 5000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+# MyBatis Plus配置（新闻系统使用）
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 缓存配置
+    cache-enabled: true
+    # 延迟加载
+    lazy-loading-enabled: true
+    aggressive-lazy-loading: false
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  # 映射文件位置
+  mapper-locations: classpath*:/mapper/*Mapper.xml
+
+# JWT配置
+jwt:
+  secret: news_jwt_secret_key_please_change
+  expiration: 86400000 # 1天，单位毫秒
+
+# 服务器配置
+server:
+  port: 8082  # 使用不同的端口
+  # 连接超时配置
+  tomcat:
+    connection-timeout: 30000
+  # 请求超时配置
+  servlet:
+    async:
+      request-timeout: 30000
+  # 压缩配置
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: news-files
+
+# 应用自定义配置
+app:
+  # JWT配置
+  jwt:
+    secret: news-secret-key-here-make-it-long-and-secure
+    expiration: 86400000 # 24小时
+  # 文件上传配置
+  upload:
+    max-size: 10MB
+    allowed-types: jpg,jpeg,png,gif,pdf,doc,docx
+  # 缓存配置
+  cache:
+    ttl: 3600 # 1小时
+    max-size: 1000
+  # 安全配置
+  security:
+    password-min-length: 6
+    password-max-length: 20
+    session-timeout: 1800 # 30分钟
+
+# 日志配置
+logging:
+  level:
+    com.cemenghui.news: DEBUG
+    org.springframework.jdbc: DEBUG
+    com.zaxxer.hikari: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/news-system.log
+    max-size: 100MB
+    max-history: 30
