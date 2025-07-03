@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/course_manager" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/course_manager/dify" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/course_manager/python-sdk" vcs="Git" />
   </component>
 </project>
