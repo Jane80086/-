@@ -25,5 +25,38 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="0@localhost" uuid="6e00fb65-edf8-4d20-bdbc-3a0de455ba93">
+      <driver-ref>redis</driver-ref>
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <remarks>$PROJECT_DIR$/src/main/resources/application-meeting.yml</remarks>
+      <jdbc-driver>jdbc.RedisDriver</jdbc-driver>
+      <jdbc-url>jdbc:redis://localhost:6379/0</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="test@localhost" uuid="036913f4-c459-405e-9c84-c5c63ffa5804">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/src/main/resources/application-meeting.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/test?currentSchema=public</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="cemenghui@localhost" uuid="d9a5cc1b-f7c1-4836-a4f9-b96ac16d96b3">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/src/main/resources/application-news.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/cemenghui?characterEncoding=UTF-8&amp;useUnicode=true</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

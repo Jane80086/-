@@ -42,4 +42,11 @@ public interface CourseManagerService {
      * @return 优化后的课程
      */
     Course optimizeCourseInfo(Course course) throws AIException;
+
+    /**
+     * 下架课程
+     * @param courseId 课程ID
+     * @return 是否下架成功
+     */
+    boolean unpublishCourse(Long courseId);
 } 

@@ -98,6 +98,59 @@ public class MinioServiceImpl {
     }
 
     /**
+     * 获取文件大小
+     * @param objectName 文件对象名
+     * @return 文件大小（字节），不存在返回0
+     */
+    public long getFileSize(String objectName) {
+        try {
+            StatObjectResponse stat = minioClient.statObject(
+                StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .build()
+            );
+            return stat.size();
+        } catch (io.minio.errors.ErrorResponseException e) {
+            if (e.errorResponse().code().equals("NoSuchKey")) {
+                return 0L;
+            }
+            throw new RuntimeException("获取文件大小失败: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("获取文件大小失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 分片下载文件，支持断点续传
+     * @param objectName 文件对象名
+     * @param start 起始字节
+     * @param end 结束字节（包含）
+     * @return 输入流
+     */
+    public InputStream downloadFile(String objectName, long start, long end) {
+        try {
+            long fileSize = getFileSize(objectName);
+            if (fileSize == 0) {
+                throw new RuntimeException("文件不存在: " + objectName);
+            }
+            if (start < 0) start = 0;
+            if (end >= fileSize) end = fileSize - 1;
+            if (start > end) start = 0;
+            return minioClient.getObject(
+                GetObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .offset(start)
+                    .length(end - start + 1)
+                    .build()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("分片下载失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 删除文件
      */
     public void deleteFile(String objectName) {
