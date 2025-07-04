@@ -15,8 +15,8 @@
         <processorPath useClasspath="false">
           <entry name="$USER_HOME$/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
         </processorPath>
-        <module name="main-app" />
         <module name="news" />
+        <module name="main-app" />
         <module name="system" />
         <module name="course (1)" />
         <module name="course_manager" />
