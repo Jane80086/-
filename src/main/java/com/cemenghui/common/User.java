@@ -1,36 +1,16 @@
-package com.cemenghui.common;
+private String userType;
+private String id;
+private String phone;
+private String email;
+private String password;
 
-import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
-import java.time.LocalDateTime;
-
-@TableName("users")
-@Data
-public class User {
-    @TableId(value = "id",type = IdType.AUTO)
-    private Long id;
-    
-    @TableField("username")
-    private String username;
-    
-    @TableField("password")
-    private String password;
-    
-    @TableField("email")
-    private String email;
-    
-    @TableField("phone")
-    private String phone;
-    
-    @TableField("user_type")
-    private String userType;
-    
-    @TableField("status")
-    private Integer status = 1;
-    
-    @TableField("created_time")
-    private LocalDateTime createdTime = LocalDateTime.now();
-    
-    @TableField("updated_time")
-    private LocalDateTime updatedTime = LocalDateTime.now();
-} 
+public String getUserType() { return userType; }
+public void setUserType(String userType) { this.userType = userType; }
+public String getId() { return id; }
+public void setId(String id) { this.id = id; }
+public String getPhone() { return phone; }
+public void setPhone(String phone) { this.phone = phone; }
+public String getEmail() { return email; }
+public void setEmail(String email) { this.email = email; }
+public String getPassword() { return password; }
+public void setPassword(String password) { this.password = password; } 
