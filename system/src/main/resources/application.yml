@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: system
+
+jwt:
+  secret: IzO09+6pSqwRtam00lc+y+/UH1BoSrOJsK8Eo4PCvrg=
+  access-expire: 86400000
+  refresh-expire: 604800000
