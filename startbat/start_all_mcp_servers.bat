@@ -52,4 +52,4 @@ echo - 问答MCP服务器: http://localhost:6279
 echo - 课程优化MCP服务器: http://localhost:6281
 echo.
 echo 按任意键退出...
-pause >nul 
+pause 

@@ -1,4 +1,5 @@
 @echo off
+chcp 65001
 echo ========================================
 echo 课程管理系统 - 集成启动脚本
 echo ========================================
@@ -17,11 +18,15 @@ start "MCP Server" cmd /k "call start_mcp_server.py"
 
 echo.
 echo 4. 启动 Spring Boot 应用...
-start "Spring Boot" cmd /k "mvn spring-boot:run"
+REM 启动各服务
+start "Course" cmd /k "cd .. && mvn spring-boot:run -Dspring-boot.run.mainClass=com.cemenghui.course.CourseApplication"
+start "Meeting" cmd /k "cd .. && mvn spring-boot:run -Dspring-boot.run.mainClass=com.cemenghui.meeting.DemoApplication"
+start "News" cmd /k "cd .. && mvn spring-boot:run -Dspring-boot.run.mainClass=com.cemenghui.news.NewsApplication"
+start "System" cmd /k "cd .. && mvn spring-boot:run -Dspring-boot.run.mainClass=com.cemenghui.system.SystemApplication"
 
 echo.
 echo 等待服务启动...
-timeout /t 30 /nobreak > nul
+timeout /t 30
 
 echo.
 echo ========================================
@@ -42,4 +47,4 @@ echo - 文件管理: http://localhost:8080/api/file
 echo - MCP AI: http://localhost:8080/api/mcp
 echo.
 echo 按任意键退出...
-pause > nul 
+pause

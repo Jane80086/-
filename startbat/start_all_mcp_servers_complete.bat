@@ -68,4 +68,4 @@ echo - 课程优化MCP服务器: http://localhost:6281
 echo - 课程推荐MCP服务器: http://localhost:6282
 echo.
 echo 按任意键退出...
-pause >nul 
+pause 

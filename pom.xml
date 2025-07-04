@@ -9,10 +9,18 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.cemenghui</groupId>
-	<artifactId>course</artifactId>
+	<artifactId>course_manager</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>course</name>
-	<description>course</description>
+	<packaging>pom</packaging>
+	<modules>
+		<module>course</module>
+		<module>meeting</module>
+		<module>news</module>
+		<module>system</module>
+		<module>main-app</module>
+	</modules>
+	<name>course-manager</name>
+	<description>Course Management System</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -58,13 +66,7 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.kingbase</groupId>
-			<artifactId>kingbase8</artifactId>
-			<version>${kingbase.version}</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/kingbase8-8.6.0.jar</systemPath>
-		</dependency>
+		<!-- 人大金仓数据库驱动 - 从子模块继承 -->
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-boot-starter</artifactId>
@@ -132,6 +134,24 @@
 			<artifactId>springdoc-openapi-ui</artifactId>
 			<version>1.7.0</version>
 		</dependency>
+		<!-- Apache POI for Excel 操作 -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.3</version>
+		</dependency>
+		<!-- MySQL Driver -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.33</version>
+		</dependency>
+		<!-- Apache POI core -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+			<version>5.2.3</version>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
@@ -172,7 +192,6 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>com.cemenghui.course.CourseApplication</mainClass>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

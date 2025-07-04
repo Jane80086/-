@@ -21,4 +21,4 @@ python simple_mcp_server.py
 echo.
 echo 主MCP服务器已停止
 echo 按任意键退出...
-pause >nul 
+pause 

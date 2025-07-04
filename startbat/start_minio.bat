@@ -16,4 +16,6 @@ echo.
 
 "D:\Microsoft\minio.exe" server minio-data --console-address ":9001"
 
+timeout /t 30
+
 pause 

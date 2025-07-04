@@ -73,4 +73,4 @@ cd ..
 rmdir /s /q temp
 
 echo 按任意键退出...
-pause >nul 
+pause 

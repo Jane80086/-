@@ -30,4 +30,4 @@ if %errorlevel% equ 0 (
 
 echo.
 echo 按任意键继续...
-pause > nul 
+pause 

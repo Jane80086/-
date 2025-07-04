@@ -32,6 +32,12 @@
       <remarks>$PROJECT_DIR$/src/main/resources/application-meeting.yml</remarks>
       <jdbc-driver>jdbc.RedisDriver</jdbc-driver>
       <jdbc-url>jdbc:redis://localhost:6379/0</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.host.port" />
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+        <property name="com.intellij.clouds.kubernetes.db.resource.type" value="Deployment" />
+        <property name="com.intellij.clouds.kubernetes.db.container.port" />
+      </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
     <data-source source="LOCAL" name="test@localhost" uuid="036913f4-c459-405e-9c84-c5c63ffa5804">
@@ -53,6 +59,78 @@
       <remarks>$PROJECT_DIR$/src/main/resources/application-news.yml</remarks>
       <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
       <jdbc-url>jdbc:kingbase8://localhost:54321/cemenghui?characterEncoding=UTF-8&amp;useUnicode=true</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="system_management@localhost" uuid="069baa55-57e9-4061-b291-71133e651179">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/news/src/main/resources/application-system.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/system_management?characterEncoding=UTF-8&amp;useUnicode=true</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="news_management@localhost" uuid="f2ef5edb-ed66-4665-860a-b5e41ed2d415">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/meeting/src/main/resources/application-news.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/news_management?characterEncoding=UTF-8&amp;useUnicode=true</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="system_management@localhost" uuid="3da7cf46-f649-4f7b-8eb1-dcd7f4cbec97">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/meeting/src/main/resources/application-system.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/system_management?characterEncoding=UTF-8&amp;useUnicode=true</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="system_management@localhost" uuid="36941b46-4a4c-418d-8b3a-cb092243900d">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/system/src/main/resources/application-system.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/system_management?characterEncoding=UTF-8&amp;useUnicode=true</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="news_management@localhost" uuid="037900a3-1c07-4900-a849-aaa099215a0a">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/news/src/main/resources/application-news.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/news_management?characterEncoding=UTF-8&amp;useUnicode=true</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="course_manager@localhost" uuid="0690806f-794e-4856-ae4a-d63e25d9bd73">
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <configured-by-url>true</configured-by-url>
+      <remarks>$PROJECT_DIR$/main-app/src/main/resources/application-dev.yml</remarks>
+      <jdbc-driver>com.kingbase8.Driver</jdbc-driver>
+      <jdbc-url>jdbc:kingbase8://localhost:54321/course_manager</jdbc-url>
       <jdbc-additional-properties>
         <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
       </jdbc-additional-properties>

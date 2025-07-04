@@ -21,4 +21,4 @@ python mcp_video_optimizer_server.py
 echo.
 echo 视频优化MCP服务器已停止
 echo 按任意键退出...
-pause >nul 
+pause 
