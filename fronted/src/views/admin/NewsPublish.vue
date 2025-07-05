@@ -1,10 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getNewsDetail, editNews } from '@/api/news'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { adminPublishNews } from '@/api/news' // 假设这里有一个新的 adminPublishNews API
 import { ElMessage } from 'element-plus'
 
-const route = useRoute()
 const router = useRouter()
 
 const newsForm = ref({
@@ -17,7 +16,6 @@ const newsForm = ref({
 
 const formRef = ref()
 const loading = ref(false)
-const submitLoading = ref(false)
 
 const rules = {
   title: [
@@ -36,63 +34,38 @@ const rules = {
   ]
 }
 
-const loadNewsDetail = async () => {
-  loading.value = true
-  try {
-    const newsId = route.params.id
-    const data = await getNewsDetail(newsId)
-    newsForm.value = {
-      title: data.title,
-      image: data.image || '',
-      content: data.content,
-      summary: data.summary,
-      author: data.author
-    }
-  } catch (error) {
-    ElMessage.error('加载动态详情失败')
-    router.back()
-  } finally {
-    loading.value = false
-  }
-}
-
 const handleSubmit = async () => {
   if (!formRef.value) return
 
   try {
     await formRef.value.validate()
-    submitLoading.value = true
+    loading.value = true
 
-    const newsId = route.params.id
-    await editNews(newsId, newsForm.value)
-    ElMessage.success('编辑成功')
-    router.push('/enterprise/my-news')
+    // 调用管理员发布动态的API，假设这个API会直接将动态设置为已发布状态
+    await adminPublishNews(newsForm.value)
+    ElMessage.success('动态发布成功！') // 提示发布成功，无需审核
+    router.push('/admin/news-manage') // 发布后跳转到动态管理页面
   } catch (error) {
     if (error.message) {
       ElMessage.error(error.message)
+    } else {
+      ElMessage.error('发布失败，请检查网络或表单内容')
     }
   } finally {
-    submitLoading.value = false
+    loading.value = false
   }
 }
 
-const goBack = () => {
-  router.back()
+const handleReset = () => {
+  formRef.value.resetFields()
 }
-
-onMounted(() => {
-  loadNewsDetail()
-})
 </script>
 
 <template>
-  <div class="news-edit" v-loading="loading">
+  <div class="news-publish">
     <el-card>
       <template #header>
-        <div class="header-actions">
-          <el-button @click="goBack" :icon="'ArrowLeft'">返回</el-button>
-          <span>编辑动态</span>
-        </div>
+        <span>发布动态 (管理员)</span>
       </template>
 
       <el-form
@@ -155,10 +128,10 @@ onMounted(() => {
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
-            保存修改
+          <el-button type="primary" @click="handleSubmit" :loading="loading">
+            发布动态
           </el-button>
-          <el-button @click="goBack">取消</el-button>
+          <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -166,13 +139,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.news-edit {
+.news-publish {
   padding: 20px;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 </style>
