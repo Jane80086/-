@@ -14,32 +14,39 @@ public class News {
     @TableField("title")
     private String title;
 
+    @TableField("image")
+    private String image;
+
     @TableField("content")
     private String content;
 
-    @TableField("author_id")
-    private Long authorId;
+    @TableField("summary")
+    private String summary;
 
-    @TableField("author_name")
-    private String authorName;
+    @TableField("author")
+    private String author;
 
-    @TableField("category")
-    private String category;
-
-    @TableField("tags")
-    private String tags;
-
-    @TableField("image_url")
-    private String imageUrl;
+    @TableField("user_id")
+    private Long userId;
 
     @TableField("status")
-    private Integer status = 0; // 0:待审核, 1:已发布, 2:已拒绝, 3:已删除
+    private Integer status; // 0: 待审核, 1: 已发布, 2: 已拒绝
 
     @TableField("view_count")
     private Integer viewCount = 0;
 
-    @TableField("publish_time")
-    private LocalDateTime publishTime;
+    @TableLogic
+    @TableField("is_deleted")
+    private Integer isDeleted = 0;
+
+    @TableField("audit_comment")
+    private String auditComment;
+
+    @TableField("audit_user_id")
+    private Long auditUserId;
+
+    @TableField("audit_time")
+    private LocalDateTime auditTime;
 
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
@@ -47,38 +54,34 @@ public class News {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
-    @TableLogic
-    @TableField("deleted")
-    private Integer deleted = 0;
-
     // 业务方法
-    public boolean isOwner(Long userId) {
-        return this.authorId != null && this.authorId.equals(userId);
+    public boolean isOwner(Long currentUserId) {
+        return this.userId != null && this.userId.equals(currentUserId);
     }
 
     public boolean canEdit() {
-        // 根据逻辑：0:待审核, 2:已拒绝 状态允许编辑
+        // According to the new logic, only pending (0) or rejected (2) news can be edited.
         return this.status != null && (this.status == 0 || this.status == 2);
     }
 
     public boolean canDelete() {
-        // 未删除状态即可删除
-        return this.deleted == 0;
+        // Can be deleted if not already deleted.
+        return this.isDeleted == 0;
     }
 
     public void incrementViewCount() {
         this.viewCount = (this.viewCount == null ? 0 : this.viewCount) + 1;
     }
 
-    public boolean isApproved() {
-        return this.status != null && this.status == 1; // 1代表已发布
+    public boolean isPublished() {
+        return this.status != null && this.status == 1;
     }
-    
+
     public boolean isPending() {
-        return this.status != null && this.status == 0; // 0代表待审核
+        return this.status != null && this.status == 0;
     }
-    
+
     public boolean isRejected() {
-        return this.status != null && this.status == 2; // 2代表已拒绝
+        return this.status != null && this.status == 2;
     }
 }

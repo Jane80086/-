@@ -5,9 +5,8 @@ import lombok.Getter;
 @Getter
 public enum NewsStatus {
     PENDING(0, "待审核"),
-    APPROVED(1, "已通过"),
-    REJECTED(2, "已拒绝"),
-    DRAFT(3, "草稿");
+    PUBLISHED(1, "已发布"),
+    REJECTED(2, "已拒绝");
 
     private final Integer code;
     private final String desc;
@@ -18,11 +17,14 @@ public enum NewsStatus {
     }
 
     public static NewsStatus getByCode(Integer code) {
+        if (code == null) {
+            return null;
+        }
         for (NewsStatus status : values()) {
             if (status.getCode().equals(code)) {
                 return status;
             }
         }
-        return PENDING;
+        return null; // Return null if no match found
     }
 }

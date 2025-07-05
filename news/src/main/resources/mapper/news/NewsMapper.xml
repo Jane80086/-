@@ -1,35 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
 <mapper namespace="com.cemenghui.news.mapper.NewsMapper">
 
-    <resultMap id="newsResultMap" type="com.cemenghui.news.entity.News">
-        <!-- 基础字段映射，仅映射news表中存在的字段 -->
-        <id property="id" column="id"/>
-        <result property="title" column="title"/>
-        <result property="author" column="author"/>
-        <result property="summary" column="summary"/>
-        <result property="content" column="content"/>
-        <result property="image" column="image"/>
-        <result property="status" column="status"/>
-        <result property="viewCount" column="view_count"/>
-        <result property="userId" column="user_id"/>
-        <result property="deleted" column="deleted"/>
-        <result property="createTime" column="create_time"/>
-        <result property="updateTime" column="update_time"/>
-    </resultMap>
-
-    <select id="findByCondition" resultMap="newsResultMap">
+    <select id="findByCondition" resultType="com.cemenghui.news.entity.News">
         SELECT * FROM news
         <where>
-            deleted = 0
+            is_deleted = 0
             <if test="request.keyword != null and request.keyword != ''">
                 AND (
                 title LIKE CONCAT('%', #{request.keyword}, '%') OR
                 author LIKE CONCAT('%', #{request.keyword}, '%') OR
-                summary LIKE CONCAT('%', #{request.keyword}, '%') OR
-                image LIKE CONCAT('%', #{request.keyword}, '%')
+                summary LIKE CONCAT('%', #{request.keyword}, '%')
                 )
             </if>
             <if test="status != null">
@@ -45,49 +27,47 @@
         ORDER BY create_time DESC
     </select>
 
-    <select id="findByUserId" resultMap="newsResultMap">
+    <select id="findByUserId" resultType="com.cemenghui.news.entity.News">
         SELECT * FROM news
         WHERE user_id = #{userId}
-          AND deleted = 0
+          AND is_deleted = 0
         ORDER BY create_time DESC
     </select>
 
-    <select id="findPendingNews" resultMap="newsResultMap">
+    <select id="findPendingNews" resultType="com.cemenghui.news.entity.News">
         SELECT * FROM news
         WHERE status = 0
-          AND deleted = 0
+          AND is_deleted = 0
         ORDER BY create_time ASC
     </select>
 
-    <!-- getAdminBasicStatistics 统计所有需要的指标 -->
     <select id="getAdminBasicStatistics" resultType="map">
         SELECT
-        (SELECT COUNT(*) FROM news WHERE deleted = 0) AS totalNews,
-        (SELECT COUNT(*) FROM news WHERE status = #{pendingStatus} AND deleted = 0) AS pendingNews,
-        (SELECT COUNT(*) FROM news WHERE status = #{approvedStatus} AND deleted = 0) AS publishedNews,
-        (SELECT COUNT(*) FROM news WHERE status = #{rejectedStatus} AND deleted = 0) AS rejectedNews,
-        (SELECT COUNT(*) FROM news WHERE status = #{draftStatus} AND deleted = 0) AS draftNews,
-        (SELECT SUM(view_count) FROM news WHERE deleted = 0) AS totalViews,
-        (SELECT COUNT(id) FROM user_view_logs WHERE resource_type = 'NEWS' AND DATE(view_time) = CURDATE()) AS todayViews,
-        (SELECT COUNT(DISTINCT id) FROM users WHERE status = 1) AS totalUsers,
-        (SELECT COUNT(DISTINCT user_id) FROM user_operation_logs WHERE resource_type = 'NEWS' AND operation_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)) AS activeUsers
+                (SELECT COUNT(*) FROM news WHERE is_deleted = 0) AS totalNews,
+                (SELECT COUNT(*) FROM news WHERE status = #{pendingStatus} AND is_deleted = 0) AS pendingNews,
+                (SELECT COUNT(*) FROM news WHERE status = #{publishedStatus} AND is_deleted = 0) AS publishedNews,
+                (SELECT COUNT(*) FROM news WHERE status = #{rejectedStatus} AND is_deleted = 0) AS rejectedNews,
+                (SELECT SUM(view_count) FROM news WHERE is_deleted = 0) AS totalViews,
+                (SELECT COUNT(id) FROM user_view_logs WHERE resource_type = 'NEWS' AND DATE(view_time) = CURDATE()) AS todayViews,
+                (SELECT COUNT(DISTINCT id) FROM users WHERE status = 1) AS totalUsers,
+                (SELECT COUNT(DISTINCT user_id) FROM user_operation_logs WHERE resource_type = 'NEWS' AND operation_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)) AS activeUsers
         FROM DUAL
     </select>
 
     <select id="countByStatus" resultType="java.lang.Long">
         SELECT COUNT(*) FROM news
         <where>
-            deleted = 0
+            is_deleted = 0
             <if test="status != null">
                 AND status = #{status}
             </if>
         </where>
     </select>
 
-    <select id="findPopularNews" resultMap="newsResultMap">
+    <select id="findPopularNews" resultType="com.cemenghui.news.entity.News">
         SELECT * FROM news
         <where>
-            deleted = 0
+            is_deleted = 0
             <if test="status != null">
                 AND status = #{status}
             </if>
@@ -96,7 +76,6 @@
         LIMIT #{limit}
     </select>
 
-    <!-- 新增 getViewTrend 查询 -->
     <select id="getViewTrend" resultType="java.util.Map">
         SELECT
             DATE_FORMAT(view_time, '%Y-%m-%d') AS date,
@@ -107,12 +86,11 @@
         ORDER BY date ASC
     </select>
 
-    <!-- 新增 getHotNews 查询，仅选择id, title, view_count -->
-    <select id="getHotNews" resultMap="newsResultMap">
-        SELECT id, title, view_count
+    <select id="getHotNews" resultType="com.cemenghui.news.entity.News">
+        SELECT id, title, view_count, status, create_time, author
         FROM news
         <where>
-            deleted = 0
+            is_deleted = 0
             <if test="status != null">
                 AND status = #{status}
             </if>
