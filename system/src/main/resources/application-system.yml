@@ -33,6 +33,15 @@ spring:
       connection-test-query: SELECT 1
       validation-timeout: 5000
       pool-name: SystemHikariCP
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
   security:
     user:
       name: admin

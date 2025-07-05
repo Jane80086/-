@@ -25,16 +25,11 @@ public class UserServiceImpl implements UserService {
      * @param username 用户名
      * @return 用户对象（可选）
      */
-    public Optional<User> findByUsername(String username) {
-        try {
-            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(User::getUsername, username);
-            User user = userDao.selectOne(wrapper);
-            return Optional.ofNullable(user);
-        } catch (Exception e) {
-            System.err.println("根据用户名查找用户失败: " + e.getMessage());
-            return Optional.empty();
-        }
+    @Override
+    public User findByUsername(String username) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getUsername, username);
+        return userDao.selectOne(wrapper);
     }
 
     /**
@@ -406,5 +401,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findSystemUsers() {
         return findByUserType("SYSTEM");
+    }
+
+    @Override
+    public String getAvatarById(Long id) {
+        User user = userDao.selectById(id);
+        return user != null ? user.getAvatar() : null;
     }
 } 
