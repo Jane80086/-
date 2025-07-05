@@ -1,45 +1,6 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8080/api';
+import request from './index'
 
 class FileService {
-    constructor() {
-        this.axiosInstance = axios.create({
-            baseURL: API_BASE_URL,
-            timeout: 10000,
-        });
-
-        // 请求拦截器：添加认证token
-        this.axiosInstance.interceptors.request.use(
-            (config) => {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
-                return config;
-            },
-            (error) => {
-                return Promise.reject(error);
-            }
-        );
-
-        // 响应拦截器：处理错误
-        this.axiosInstance.interceptors.response.use(
-            (response) => {
-                return response.data;
-            },
-            (error) => {
-                console.error('文件服务请求失败:', error);
-                if (error.response?.status === 401) {
-                    // Token过期，跳转到登录页
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
-                }
-                return Promise.reject(error);
-            }
-        );
-    }
-
     /**
      * 获取单个文件的预签名URL
      * @param {string} objectName - 文件对象名称
@@ -47,7 +8,7 @@ class FileService {
      */
     async getPresignedUrl(objectName) {
         try {
-            const response = await this.axiosInstance.get(`/file/presigned-url/${encodeURIComponent(objectName)}`);
+            const response = await request.get(`/api/file/presigned-url/${encodeURIComponent(objectName)}`);
             if (response.code === 200) {
                 return response.data;
             } else {
@@ -66,7 +27,7 @@ class FileService {
      */
     async getBatchPresignedUrls(objectNames) {
         try {
-            const response = await this.axiosInstance.post('/file/presigned-urls', objectNames);
+            const response = await request.post('/api/file/presigned-urls', objectNames);
             if (response.code === 200) {
                 return response.data;
             } else {
@@ -85,7 +46,7 @@ class FileService {
      */
     async checkFileExists(objectName) {
         try {
-            const response = await this.axiosInstance.get(`/file/exists/${encodeURIComponent(objectName)}`);
+            const response = await request.get(`/api/file/exists/${encodeURIComponent(objectName)}`);
             if (response.code === 200) {
                 return response.data;
             } else {
@@ -104,7 +65,7 @@ class FileService {
      */
     async deleteFile(objectName) {
         try {
-            const response = await this.axiosInstance.delete(`/file/${encodeURIComponent(objectName)}`);
+            const response = await request.delete(`/api/file/${encodeURIComponent(objectName)}`);
             if (response.code === 200) {
                 return response.data;
             } else {
@@ -187,6 +148,25 @@ class FileService {
 
         return result;
     }
+
+    /**
+     * 上传文件
+     * @param {File} file - 要上传的文件
+     * @param {string} type - 文件类型，默认为'course'
+     * @returns {Promise<Object>} 上传结果
+     */
+    async uploadFile(file, type = 'course') {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', type);
+        
+        return request.post('/api/file/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    }
 }
 
-export default new FileService(); 
+export const fileAPI = new FileService();
+export default fileAPI; 
