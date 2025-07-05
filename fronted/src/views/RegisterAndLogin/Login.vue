@@ -72,15 +72,15 @@
 
 <script>
 import { ref, reactive, onMounted, nextTick } from 'vue'
-import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '@/api'
+import { useUserStore } from '@/store/user'
 
 export default {
   name: 'Login',
   setup() {
-    const store = useStore()
+    const userStore = useUserStore()
     const router = useRouter()
     const loginFormRef = ref(null)
     const loginForm = reactive({
@@ -88,10 +88,8 @@ export default {
       password: '',
       verificationCode: ''
     })
-    
     const verificationCodeUrl = ref('/api/auth/captcha?' + Date.now())
     const loading = ref(false)
-    
     const loginRules = {
       account: [
         { required: true, message: '请输入账号', trigger: 'blur' }
@@ -104,34 +102,34 @@ export default {
         { required: true, message: '请输入验证码', trigger: 'blur' }
       ]
     }
-    
     const refreshCaptcha = () => {
       verificationCodeUrl.value = '/api/auth/captcha?' + Date.now();
     }
-    
     const handleLogin = async () => {
       if (loading.value) return
       if (!loginFormRef.value) return
       try {
         await loginFormRef.value.validate()
         loading.value = true
-
-        const response = await store.dispatch('login', loginForm)
-        // 先判断接口是否真的成功
+        // 这里请替换为你实际的登录API调用
+        const response = await api.login(loginForm)
         if (response.data && response.data.success) {
-          ElMessage.success('登录成功') // 只有真的成功才弹
+          ElMessage.success('登录成功')
           const user = response.data.user
           const token = response.data.token
-          if (token) store.commit('SET_TOKEN', token)
-          if (user) store.commit('SET_USER', user)
+          console.log('登录成功后user:', user)
+          console.log('登录成功后token:', token)
+          if (token) localStorage.setItem('token', token)
+          if (user) userStore.setUser(user)
           await nextTick()
-          if (user && String(user.account).startsWith('0000')) {
-            router.push('/dashboard/users')
+          if (user.role === 'admin') {
+            router.push('/admin/dashboard')
+          } else if (user.role === 'enterprise') {
+            router.push('/enterprise/home')
           } else {
-            router.push('/profile')
+            router.push('/user/home')
           }
         } else {
-          // 登录失败，弹出后端返回的错误信息
           ElMessage.error(response.data.message || '登录失败')
           refreshCaptcha()
           return
@@ -143,11 +141,9 @@ export default {
         loading.value = false
       }
     }
-    
     onMounted(() => {
       refreshCaptcha()
     })
-    
     return {
       loginFormRef,
       loginForm,
@@ -202,7 +198,7 @@ export default {
   display: flex;
   gap: 10px;
   align-items: center;
-}role
+}
 
 .verificationCode-image {
   height: 40px;

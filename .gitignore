@@ -31,3 +31,4 @@ build/
 
 ### VS Code ###
 ../新建文件夹/.vscode/
+node_modules
