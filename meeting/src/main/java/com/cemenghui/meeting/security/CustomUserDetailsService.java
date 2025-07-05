@@ -1,6 +1,6 @@
 package com.cemenghui.meeting.security;
 
-import com.cemenghui.meeting.bean.User;
+import com.cemenghui.entity.User;
 import com.cemenghui.meeting.dao.UserDao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

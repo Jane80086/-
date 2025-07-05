@@ -12,30 +12,39 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("meeting_review_record")
+@TableName("meeting_review_records")
 public class MeetingReviewRecord {
     
     @TableId(type = IdType.AUTO)
     private Long id;
     
     @TableField("meeting_id")
-    private Long meetingId; // 对应 meeting_id
+    private Long meetingId;
     
     @TableField("meeting_name")
-    private String meetingName; // 对应 meeting_name
+    private String meetingName;
     
-    @TableField("creator")
-    private String creator; // 对应 creator
+    @TableField("creator_id")
+    private Long creatorId;
     
-    @TableField("reviewer")
-    private String reviewer; // 对应 reviewer
+    @TableField("creator_name")
+    private String creatorName;
+    
+    @TableField("reviewer_id")
+    private Long reviewerId;
+    
+    @TableField("reviewer_name")
+    private String reviewerName;
     
     @TableField("status")
-    private Integer status; // 对应 status
+    private Integer status;
     
     @TableField("review_comment")
-    private String reviewComment; // 对应 review_comment
+    private String reviewComment;
     
     @TableField("review_time")
-    private LocalDateTime reviewTime; // 对应 review_time
+    private LocalDateTime reviewTime;
+    
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
 } 

@@ -1,17 +1,36 @@
 package com.cemenghui.system.entity;
 
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import java.time.LocalDateTime;
 
+@Data
+@TableName("system_third_party_account")
 public class ThirdPartyAccount {
 
-    // 第三方平台标识
+    @TableId(type = IdType.AUTO)
+    private Long id;
+
+    @TableField("third_party_id")
     private String thirdPartyId;
 
-    // 开放平台标识（如微信 openid 等 ）
+    @TableField("open_id")
     private String openId;
 
-    // 所属平台（如 "wechat"、"qq" 等 ）
+    @TableField("platform")
     private String platform;
+
+    @TableField("account")
+    private String account;
+
+    @TableField("user_id")
+    private Long userId; // 关联main-app users表
+
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 
     // 绑定方法
     public void bind() {
@@ -24,8 +43,6 @@ public class ThirdPartyAccount {
         // 编写通过第三方账号登录的逻辑，比如校验第三方凭证等
         System.out.println("通过第三方账号登录中");
     }
-
-    private String account;
 
     public String getThirdPartyId() {
         return thirdPartyId;

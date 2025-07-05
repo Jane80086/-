@@ -1,6 +1,6 @@
 package com.cemenghui.system.service;
 
-import com.cemenghui.system.entity.User;
+import com.cemenghui.entity.User;
 import com.cemenghui.system.dto.LoginResponseDTO; // 改用DTO
 
 /**

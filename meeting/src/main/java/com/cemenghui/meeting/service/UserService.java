@@ -1,7 +1,7 @@
 package com.cemenghui.meeting.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.cemenghui.meeting.bean.User;
+import com.cemenghui.entity.User;
 import com.cemenghui.meeting.bean.UserLoginRequest;
 import com.cemenghui.meeting.bean.UserRegisterRequest;
 import com.cemenghui.meeting.dao.UserDao;
@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -37,16 +38,17 @@ public class UserService {
         }
         
         // 创建用户对象
-        User user = User.builder()
-            .username(request.getUsername())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .realName(request.getRealName())
-            .email(request.getEmail())
-            .phone(request.getPhone())
-            .userType(request.getUserType())
-            .status(1) // 默认启用
-            .deleted(0) // 默认未删除
-            .build();
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRealName(request.getRealName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setUserType(request.getUserType());
+        user.setStatus(1); // 默认启用
+        user.setDeleted(0); // 默认未删除
+        user.setCreateTime(LocalDateTime.now());
+        user.setUpdateTime(LocalDateTime.now());
         
         // 插入用户
         userDao.insert(user);

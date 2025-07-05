@@ -29,38 +29,45 @@ public class Course implements Serializable {
     @TableField("instructor_id")
     private Long instructorId;
 
+    @TableField("instructor_name")
+    private String instructorName;
+
     @TableField("price")
     private BigDecimal price = BigDecimal.ZERO;
 
     @TableField("duration")
     private Integer duration = 0;
 
-    @TableField("course_level")
+    @TableField("level")
     private String level = "BEGINNER";
 
     @TableField("category")
     private String category;
 
     @TableField("status")
-    private String status = "DRAFT";
+    private Integer status = 0;
 
-    @TableField("cover_image")
-    private String coverImage;
+    @TableField("image_url")
+    private String imageUrl;
 
     @TableField("video_url")
     private String videoUrl;
 
-    @TableField(value = "created_time", fill = FieldFill.INSERT)
-    private LocalDateTime createdTime;
+    @TableField("view_count")
+    private Integer viewCount = 0;
 
-    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedTime;
+    @TableField("rating")
+    private BigDecimal rating = BigDecimal.ZERO;
 
-    @TableField("like_count")
-    private Integer likeCount = 0;
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
 
-    @TableField("favorite_count")
-    private Integer favoriteCount = 0;
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted = 0;
 
     // 无参构造函数
     public Course() {}
@@ -78,18 +85,18 @@ public class Course implements Serializable {
      * 编辑课程基本信息
      * @param title 标题
      * @param description 描述
-     * @param coverImage 封面
+     * @param imageUrl 图片URL
      * @throws IllegalArgumentException 参数不合法时抛出
      */
     @JsonIgnore
-    public void edit(String title, String description, String coverImage) throws IllegalArgumentException {
+    public void edit(String title, String description, String imageUrl) throws IllegalArgumentException {
         if (title == null || title.isEmpty()) {
             throw new IllegalArgumentException("标题不能为空");
         }
         this.title = title;
         this.description = description;
-        this.coverImage = coverImage;
-        this.updatedTime = LocalDateTime.now();
+        this.imageUrl = imageUrl;
+        this.updateTime = LocalDateTime.now();
         onCourseEdited(this.id);
     }
 
@@ -99,8 +106,8 @@ public class Course implements Serializable {
      */
     @JsonIgnore
     public void submitForReview() throws Exception {
-        this.status = "PENDING";
-        this.updatedTime = LocalDateTime.now();
+        this.status = 0; // 待审核
+        this.updateTime = LocalDateTime.now();
         onCourseSubmitted(this.id);
     }
 
@@ -136,8 +143,8 @@ public class Course implements Serializable {
     public String getDescription() {
         return this.description;
     }
-    public String getCoverImage() {
-        return this.coverImage;
+    public String getImageUrl() {
+        return this.imageUrl;
     }
     public String getTitle() {
         return this.title;

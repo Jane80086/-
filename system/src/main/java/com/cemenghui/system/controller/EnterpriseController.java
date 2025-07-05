@@ -4,6 +4,7 @@ import com.cemenghui.system.entity.Enterprise;
 import com.cemenghui.system.service.EnterpriseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class EnterpriseController {
         }
         // 设置创建时间
         if (enterprise.getCreateTime() == null) {
-            enterprise.setCreateTime(java.time.LocalDateTime.now().toString());
+            enterprise.setCreateTime(LocalDateTime.now());
         }
         return enterpriseService.createEnterprise(enterprise);
     }

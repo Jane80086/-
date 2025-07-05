@@ -1,6 +1,7 @@
 package com.cemenghui.meeting.controller;
 
-import com.cemenghui.meeting.bean.*;
+import com.cemenghui.meeting.bean.ApiResponse;
+import com.cemenghui.entity.User;
 import com.cemenghui.meeting.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

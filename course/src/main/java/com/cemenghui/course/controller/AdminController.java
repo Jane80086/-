@@ -1,10 +1,7 @@
 package com.cemenghui.course.controller;
 
 import com.cemenghui.course.common.Result;
-import com.cemenghui.course.common.User;
-import com.cemenghui.course.common.AdminUser;
-import com.cemenghui.course.common.EnterpriseUser;
-import com.cemenghui.course.common.NormalUser;
+import com.cemenghui.entity.User;
 import com.cemenghui.course.entity.Course;
 import com.cemenghui.course.service.CourseService;
 import com.cemenghui.course.service.QnAService;
@@ -73,7 +70,7 @@ public class AdminController {
     @GetMapping("/users/type/{userType}")
     public Result getUsersByType(@PathVariable String userType) {
         try {
-            List<User> users = userService.findByUserType(null); // 暂时返回所有用户
+            List<User> users = userService.findByUserType(userType);
             return Result.success(users);
         } catch (Exception e) {
             return Result.fail("根据类型获取用户失败: " + e.getMessage());

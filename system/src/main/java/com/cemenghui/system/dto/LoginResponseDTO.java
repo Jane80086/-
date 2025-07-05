@@ -1,6 +1,6 @@
 package com.cemenghui.system.dto;
 
-import com.cemenghui.system.entity.User;
+import com.cemenghui.entity.User;
 import lombok.Data;
 
 @Data

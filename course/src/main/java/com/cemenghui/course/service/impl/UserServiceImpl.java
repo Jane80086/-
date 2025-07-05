@@ -3,17 +3,14 @@ package com.cemenghui.course.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.cemenghui.course.dao.UserDao;
-import com.cemenghui.course.common.User;
-import com.cemenghui.course.entity.UserType;
+import com.cemenghui.dao.UserDao;
+import com.cemenghui.entity.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.ArrayList;
-import com.cemenghui.course.common.AdminUser;
-import com.cemenghui.course.common.EnterpriseUser;
-import com.cemenghui.course.common.NormalUser;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cemenghui.course.service.UserService;
+import java.time.LocalDateTime;
 
 /**
  * 用户服务
@@ -45,22 +42,10 @@ public class UserServiceImpl implements UserService {
      * @param userType 用户类型
      * @return 用户列表
      */
-    public List<User> findByUserType(UserType userType) {
+    public List<User> findByUserType(String userType) {
         try {
             LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-            switch (userType) {
-                case ADMIN:
-                    wrapper.eq(User::getUserType, "ADMIN");
-                    break;
-                case ENTERPRISE:
-                    wrapper.eq(User::getUserType, "ENTERPRISE");
-                    break;
-                case NORMAL:
-                    wrapper.eq(User::getUserType, "NORMAL");
-                    break;
-                default:
-                    return getAllUsers();
-            }
+            wrapper.eq(User::getUserType, userType);
             return userDao.selectList(wrapper);
         } catch (Exception e) {
             System.err.println("根据用户类型查找用户失败: " + e.getMessage());
@@ -93,6 +78,11 @@ public class UserServiceImpl implements UserService {
             System.err.println("根据ID查找用户失败: " + e.getMessage());
             return null;
         }
+    }
+
+    @Override
+    public User findById(Long id) {
+        return getById(id);
     }
 
     /**
@@ -203,31 +193,34 @@ public class UserServiceImpl implements UserService {
         List<User> mockUsers = new ArrayList<>();
         
         // 添加管理员用户
-        AdminUser admin1 = new AdminUser();
+        User admin1 = new User();
         admin1.setId(1L);
         admin1.setUsername("admin");
         admin1.setEmail("admin@example.com");
+        admin1.setUserType("ADMIN");
         mockUsers.add(admin1);
         
         // 添加企业用户
-        EnterpriseUser enterprise1 = new EnterpriseUser();
+        User enterprise1 = new User();
         enterprise1.setId(2L);
         enterprise1.setUsername("enterprise1");
         enterprise1.setEmail("enterprise1@example.com");
-        enterprise1.setCompanyName("示例企业");
+        enterprise1.setUserType("ENTERPRISE");
         mockUsers.add(enterprise1);
         
         // 添加普通用户
-        NormalUser normal1 = new NormalUser();
+        User normal1 = new User();
         normal1.setId(3L);
         normal1.setUsername("user1");
         normal1.setEmail("user1@example.com");
+        normal1.setUserType("NORMAL");
         mockUsers.add(normal1);
         
-        NormalUser normal2 = new NormalUser();
+        User normal2 = new User();
         normal2.setId(4L);
         normal2.setUsername("user2");
         normal2.setEmail("user2@example.com");
+        normal2.setUserType("NORMAL");
         mockUsers.add(normal2);
         
         return mockUsers;
@@ -251,5 +244,167 @@ public class UserServiceImpl implements UserService {
         QueryWrapper<User> wrapper = new QueryWrapper<>();
         wrapper.eq("username", username);
         userDao.delete(wrapper);
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        try {
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getEmail, email);
+            return userDao.selectOne(wrapper);
+        } catch (Exception e) {
+            System.err.println("根据邮箱查找用户失败: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public User findByPhone(String phone) {
+        try {
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getPhone, phone);
+            return userDao.selectOne(wrapper);
+        } catch (Exception e) {
+            System.err.println("根据手机号查找用户失败: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<User> findByEnterpriseId(String enterpriseId) {
+        try {
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getEnterpriseId, enterpriseId);
+            return userDao.selectList(wrapper);
+        } catch (Exception e) {
+            System.err.println("根据企业ID查找用户失败: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<User> findEnabledUsers() {
+        try {
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getStatus, 1);
+            return userDao.selectList(wrapper);
+        } catch (Exception e) {
+            System.err.println("查找启用用户失败: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<User> findDisabledUsers() {
+        try {
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getStatus, 0);
+            return userDao.selectList(wrapper);
+        } catch (Exception e) {
+            System.err.println("查找禁用用户失败: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public User createUser(User user) {
+        return saveUser(user);
+    }
+
+    @Override
+    public boolean enableUser(Long id) {
+        try {
+            User user = userDao.selectById(id);
+            if (user != null) {
+                user.setStatus(1);
+                user.setUpdateTime(LocalDateTime.now());
+                userDao.updateById(user);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            System.err.println("启用用户失败: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean disableUser(Long id) {
+        try {
+            User user = userDao.selectById(id);
+            if (user != null) {
+                user.setStatus(0);
+                user.setUpdateTime(LocalDateTime.now());
+                userDao.updateById(user);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            System.err.println("禁用用户失败: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public User validateLogin(String username, String password) {
+        try {
+            User user = findByUsername(username);
+            if (user != null && password.equals(user.getPassword())) {
+                return user;
+            }
+            return null;
+        } catch (Exception e) {
+            System.err.println("验证登录失败: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public boolean isUsernameExists(String username) {
+        return existsByUsername(username);
+    }
+
+    @Override
+    public boolean isEmailExists(String email) {
+        try {
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getEmail, email);
+            return userDao.selectCount(wrapper) > 0;
+        } catch (Exception e) {
+            System.err.println("检查邮箱是否存在失败: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isPhoneExists(String phone) {
+        try {
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(User::getPhone, phone);
+            return userDao.selectCount(wrapper) > 0;
+        } catch (Exception e) {
+            System.err.println("检查手机号是否存在失败: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public List<User> findAdminUsers() {
+        return findByUserType("ADMIN");
+    }
+
+    @Override
+    public List<User> findEnterpriseUsers() {
+        return findByUserType("ENTERPRISE");
+    }
+
+    @Override
+    public List<User> findNormalUsers() {
+        return findByUserType("NORMAL");
+    }
+
+    @Override
+    public List<User> findSystemUsers() {
+        return findByUserType("SYSTEM");
     }
 } 

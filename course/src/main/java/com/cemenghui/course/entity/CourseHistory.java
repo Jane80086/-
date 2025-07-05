@@ -7,34 +7,37 @@ import java.time.LocalDateTime;
 
 /**
  * 课程观看历史实体
+ * 保留原有功能，但映射到新的history_records表
  */
-@TableName("course_history")
+@TableName("history_records")
 @Data
 public class CourseHistory implements Serializable {
    private static final long serialVersionUID = 1L;
 
-   @TableId(value = "course_history_id", type = IdType.AUTO)
-   private Long courseHistoryId;
+   @TableId(type = IdType.AUTO)
+   private Long id;
    
-   @TableField("course_id")
+   @TableField("resource_type")
+   private String resourceType = "COURSE";
+   
+   @TableField("resource_id")
    private Long courseId;
+   
+   @TableField("action")
+   private String action = "VIEW";
    
    @TableField("user_id")
    private Long userId;
    
-   @TableField(value = "viewed_at", fill = FieldFill.INSERT)
+   @TableField("record_time")
    private LocalDateTime viewedAt;
 
-   @TableLogic
-   @TableField("deleted")
-   private Integer deleted = 0;
-
    public Long getCourseHistoryId(){
-       return courseHistoryId;
+       return id;
    }
 
    public void setCourseHistoryId(Long courseHistoryId){
-       this.courseHistoryId = courseHistoryId;
+       this.id = courseHistoryId;
    }
 
    public Long getUserId(){
@@ -52,16 +55,21 @@ public class CourseHistory implements Serializable {
    public void setViewedAt(LocalDateTime time){
        this.viewedAt = time;
    }
-/**
-@param userId
- @param courseId
- */
-protected void recordCourseHistory(Long userId,Long courseId){
 
-}
+   /**
+    * @param userId
+    * @param courseId
+    */
+   protected void recordCourseHistory(Long userId, Long courseId){
+       this.userId = userId;
+       this.courseId = courseId;
+       this.resourceType = "COURSE";
+       this.action = "VIEW";
+       this.viewedAt = LocalDateTime.now();
+   }
 
-/**
- *@param userId 用户ID
- **/
-protected void cleanHistory(Long userId,Long courseId){}
+   /**
+    * @param userId 用户ID
+    */
+   protected void cleanHistory(Long userId, Long courseId){}
 }

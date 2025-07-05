@@ -1,6 +1,6 @@
 package com.cemenghui.system.controller;
 
-import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.entity.User;
 import com.cemenghui.system.service.UserManagementService;
 import com.cemenghui.common.JWTUtil;
 import com.cemenghui.system.vo.ResultVO;
@@ -17,16 +17,16 @@ public class ProfileController {
     private JWTUtil jwtUtil;
 
     @GetMapping("/current")
-    public ResultVO<EnterpriseUser> getCurrentUser(@RequestHeader("Authorization") String token) {
+    public ResultVO<User> getCurrentUser(@RequestHeader("Authorization") String token) {
         String account = jwtUtil.getAccountFromToken(token);
-        EnterpriseUser user = userService.getUserByAccount(account);
+        User user = userService.getUserByAccount(account);
         return ResultVO.success(user);
     }
 
     @PutMapping("/current")
-    public ResultVO<Boolean> updateCurrentUser(@RequestBody EnterpriseUser user, @RequestHeader("Authorization") String token) {
+    public ResultVO<Boolean> updateCurrentUser(@RequestBody User user, @RequestHeader("Authorization") String token) {
         String account = jwtUtil.getAccountFromToken(token);
-        user.setAccount(account);
+        user.setUsername(account);
         boolean result = userService.updateUserByAccount(user);
         return ResultVO.success(result);
     }

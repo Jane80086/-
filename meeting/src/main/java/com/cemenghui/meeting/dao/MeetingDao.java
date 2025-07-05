@@ -6,8 +6,10 @@ import com.cemenghui.meeting.bean.MeetingReviewRecord;
 
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+@Mapper
 public interface MeetingDao extends BaseMapper<Meeting> {
     
     @Insert("INSERT INTO meeting_info (meeting_name, start_time, end_time, creator, meeting_content, image_url, status, create_time, update_time) " +
@@ -152,4 +154,40 @@ public interface MeetingDao extends BaseMapper<Meeting> {
     // 查询指定创建人创建的已删除会议
     @Select("SELECT * FROM meeting_info WHERE status = 3 AND creator = #{creator} ORDER BY create_time DESC")
     List<Meeting> findDeletedMeetingsByCreator(String creator);
+
+    /**
+     * 根据创建者ID查找会议
+     */
+    @Select("SELECT * FROM meetings WHERE creator_id = #{creatorId} AND deleted = 0 ORDER BY create_time DESC")
+    List<Meeting> findByCreatorId(@Param("creatorId") Long creatorId);
+    
+    /**
+     * 根据时间范围查找会议
+     */
+    @Select("SELECT * FROM meetings WHERE start_time BETWEEN #{startTime} AND #{endTime} AND deleted = 0 ORDER BY start_time ASC")
+    List<Meeting> findByTimeRange(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+    
+    /**
+     * 查找已通过的会议
+     */
+    @Select("SELECT * FROM meetings WHERE status = 1 AND deleted = 0 ORDER BY start_time ASC")
+    List<Meeting> findApprovedMeetings();
+    
+    /**
+     * 根据会议名称模糊查询
+     */
+    @Select("SELECT * FROM meetings WHERE meeting_name LIKE CONCAT('%', #{keyword}, '%') AND deleted = 0 ORDER BY create_time DESC")
+    List<Meeting> findByKeyword(@Param("keyword") String keyword);
+    
+    /**
+     * 统计用户的会议数量
+     */
+    @Select("SELECT COUNT(*) FROM meetings WHERE creator_id = #{creatorId} AND deleted = 0")
+    Long countByCreatorId(@Param("creatorId") Long creatorId);
+    
+    /**
+     * 统计待审核会议数量
+     */
+    @Select("SELECT COUNT(*) FROM meetings WHERE status = 0 AND deleted = 0")
+    Long countPendingMeetings();
 } 

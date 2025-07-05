@@ -19,8 +19,6 @@ public class NewsVO {
     private Boolean canEdit;
     private Boolean canDelete;
     private Boolean isOwner;
-    private String auditComment;
-    private LocalDateTime auditTime;
 
     public String getFormattedCreateTime() {
         if (createTime == null) return "";
@@ -31,9 +29,9 @@ public class NewsVO {
         if (status == null) return "未知";
         switch (status) {
             case 0: return "待审核";
-            case 1: return "已通过";
+            case 1: return "已发布";
             case 2: return "已拒绝";
-            case 3: return "草稿";
+            case 3: return "已删除";
             default: return "未知";
         }
     }

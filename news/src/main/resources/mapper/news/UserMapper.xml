@@ -3,9 +3,10 @@
 <mapper namespace="com.cemenghui.news.mapper.UserMapper">
 
     <!-- 分页查询用户，支持条件筛选 -->
-    <select id="findUsersByCondition" resultType="com.wakeup.pojo.User">
+    <select id="findUsersByCondition" resultType="com.cemenghui.entity.User">
         SELECT * FROM users
         <where>
+            deleted = 0
             <if test="username != null and username != ''">
                 AND username LIKE CONCAT('%', #{username}, '%')
             </if>
@@ -16,7 +17,7 @@
                 AND status = #{status}
             </if>
         </where>
-        ORDER BY created_time DESC
+        ORDER BY create_time DESC
     </select>
 
 </mapper>

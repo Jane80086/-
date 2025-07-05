@@ -1,17 +1,38 @@
 package com.cemenghui.system.entity;
 
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
+@Data
+@TableName("system_user_template")
 public class UserTemplate {
-    private String templateId;      // 模板ID
-    private String templateName;    // 模板名称
-    private String enterpriseType;  // 适用企业类型
-    private String role;            // 默认角色
-    private Map<String, Object> defaultValues; // 默认属性值
-    private Set<String> permissions;// 预设权限集合
+    
+    @TableId("template_id")
+    private String templateId;
+    
+    @TableField("template_name")
+    private String templateName;
+    
+    @TableField("enterprise_type")
+    private String enterpriseType;
+    
+    @TableField("role")
+    private String role;
+    
+    @TableField("default_values")
+    private String defaultValues; // JSON格式存储默认属性值
+    
+    @TableField("permissions")
+    private String permissions; // JSON格式存储预设权限集合
+    
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+    
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 
     public String getTemplateId() {
         return templateId;
@@ -46,18 +67,20 @@ public class UserTemplate {
     }
 
     public Map<String, Object> getDefaultValues() {
-        return defaultValues;
+        // Implementation needed
+        return null;
     }
 
     public void setDefaultValues(Map<String, Object> defaultValues) {
-        this.defaultValues = defaultValues;
+        // Implementation needed
     }
 
     public Set<String> getPermissions() {
-        return permissions;
+        // Implementation needed
+        return null;
     }
 
     public void setPermissions(Set<String> permissions) {
-        this.permissions = permissions;
+        // Implementation needed
     }
 }

@@ -1,7 +1,7 @@
 package com.cemenghui.meeting.controller;
 
 import com.cemenghui.meeting.bean.ApiResponse;
-import com.cemenghui.meeting.bean.User;
+import com.cemenghui.entity.User;
 import com.cemenghui.meeting.bean.UserLoginRequest;
 import com.cemenghui.meeting.bean.UserRegisterRequest;
 import com.cemenghui.meeting.service.UserService;

@@ -1,7 +1,7 @@
 package com.cemenghui.news.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.cemenghui.common.User;
+import com.cemenghui.entity.User;
 import com.cemenghui.news.constants.NewsConstants;
 import com.cemenghui.news.exception.UnauthorizedException;
 import com.cemenghui.news.mapper.NewsMapper;
@@ -32,52 +32,18 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Override
     public boolean canEditNews(Long userId, Long newsId) {
-        if (userId == null || newsId == null) {
-            return false;
-        }
-
+        if (userId == null || newsId == null) return false;
         String userType = userMapper.getUserType(userId);
-        if (!StringUtils.hasText(userType)) {
-            return false;
-        }
-
-        // 管理员可以编辑所有新闻
-        if (NewsConstants.ROLE_ADMIN.equals(userType)) {
-            return true;
-        }
-
-        // 企业用户只能编辑自己的新闻
-        if (NewsConstants.ROLE_ENTERPRISE.equals(userType)) {
-            return isOwner(userId, newsId); // 检查是否是所有者
-        }
-
-        // 普通用户不能编辑新闻
-        return false;
+        // 只要是作者本人或管理员可编辑
+        return ("ADMIN".equals(userType) || isOwner(userId, newsId));
     }
 
     @Override
     public boolean canDeleteNews(Long userId, Long newsId) {
-        if (userId == null || newsId == null) {
-            return false;
-        }
-
+        if (userId == null || newsId == null) return false;
         String userType = userMapper.getUserType(userId);
-        if (!StringUtils.hasText(userType)) {
-            return false;
-        }
-
-        // 管理员可以删除所有新闻
-        if (NewsConstants.ROLE_ADMIN.equals(userType)) {
-            return true;
-        }
-
-        // 企业用户只能删除自己的新闻
-        if (NewsConstants.ROLE_ENTERPRISE.equals(userType)) {
-            return isOwner(userId, newsId); // 检查是否是所有者
-        }
-
-        // 普通用户不能删除新闻
-        return false;
+        // 只要是作者本人或管理员可删除
+        return ("ADMIN".equals(userType) || isOwner(userId, newsId));
     }
 
     @Override
@@ -173,16 +139,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }
     }
 
-    /**
-     * 检查用户是否可以发布新闻
-     */
+    @Override
     public boolean canPublishNews(Long userId) {
-        if (userId == null) {
-            return false;
-        }
+        if (userId == null) return false;
         String userType = userMapper.getUserType(userId);
-        return NewsConstants.ROLE_ADMIN.equals(userType) ||
-                NewsConstants.ROLE_ENTERPRISE.equals(userType);
+        // 只有管理员或企业用户可发布
+        return ("ADMIN".equals(userType) || "ENTERPRISE".equals(userType));
     }
 
     /**
@@ -219,5 +181,11 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (userId == null) return false;
         String userType = userMapper.getUserType(userId);
         return NewsConstants.ROLE_ENTERPRISE.equals(userType);
+    }
+
+    private boolean isNewsOwner(User user, Long newsId) {
+        // 这里应调用newsService查news的authorId
+        // 示例：return newsService.getById(newsId).getAuthorId().equals(user.getId());
+        return false;
     }
 }

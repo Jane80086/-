@@ -1,5 +1,7 @@
 package com.cemenghui.news.service;
 
+import com.cemenghui.entity.User;
+
 public interface AuthorizationService {
 
     boolean isOwner(Long userId, Long newsId);

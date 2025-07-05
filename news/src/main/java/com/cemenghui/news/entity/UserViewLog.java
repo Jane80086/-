@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @TableName("user_view_log")
 public class UserViewLog {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     @TableField("user_id")
@@ -17,15 +17,12 @@ public class UserViewLog {
     @TableField("news_id")
     private Long newsId;
 
-    @TableField("ip_address")
-    private String ipAddress;
+    @TableField("view_time")
+    private LocalDateTime viewTime;
+
+    @TableField("ip")
+    private String ip;
 
     @TableField("user_agent")
     private String userAgent;
-
-    @TableField("session_id")
-    private String sessionId;
-
-    @TableField(value = "view_time", fill = FieldFill.INSERT)
-    private LocalDateTime viewTime;
 }

@@ -41,9 +41,9 @@ public interface NewsMapper extends BaseMapper<News> {
     void updateViewCount(@Param("newsId") Long newsId);
 
     /**
-     * 软删除新闻 (仅限新闻所有者，管理员删除请直接更新is_deleted字段)
+     * 软删除新闻 (仅限新闻所有者，管理员删除请直接更新deleted字段)
      */
-    @Update("UPDATE news SET is_deleted = 1, deleted_time = NOW() WHERE id = #{newsId} AND user_id = #{userId}")
+    @Update("UPDATE news SET deleted = 1 WHERE id = #{newsId} AND user_id = #{userId}")
     int softDelete(@Param("newsId") Long newsId, @Param("userId") Long userId);
 
     /**
@@ -54,9 +54,8 @@ public interface NewsMapper extends BaseMapper<News> {
     /**
      * 更新审核状态
      */
-    @Update("UPDATE news SET status = #{status}, audit_comment = #{comment}, audit_user_id = #{auditUserId}, audit_time = NOW() WHERE id = #{newsId}")
-    int updateAuditStatus(@Param("newsId") Long newsId, @Param("status") Integer status,
-                          @Param("comment") String comment, @Param("auditUserId") Long auditUserId);
+    @Update("UPDATE news SET status = #{status} WHERE id = #{newsId}")
+    int updateAuditStatus(@Param("newsId") Long newsId, @Param("status") Integer status);
 
     /**
      * 根据状态统计新闻数量 (可以统计所有状态，传入null)
@@ -71,7 +70,7 @@ public interface NewsMapper extends BaseMapper<News> {
     /**
      * 检查新闻是否属于指定用户
      */
-    @Select("SELECT COUNT(*) > 0 FROM news WHERE id = #{newsId} AND user_id = #{userId} AND is_deleted = 0")
+    @Select("SELECT COUNT(*) > 0 FROM news WHERE id = #{newsId} AND user_id = #{userId} AND deleted = 0")
     boolean existsByIdAndUserId(@Param("newsId") Long newsId, @Param("userId") Long userId);
 
     /**

@@ -65,7 +65,7 @@ public class NewsServiceImpl implements NewsService {
     @Override
     public NewsVO getNewsDetail(Long newsId) {
         News news = newsMapper.selectById(newsId);
-        if (news == null || news.getIsDeleted() == 1) {
+        if (news == null || news.getDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
 
@@ -94,12 +94,12 @@ public class NewsServiceImpl implements NewsService {
 
         News news = new News();
         BeanUtils.copyProperties(newsRequest, news);
-        news.setUserId(currentUserId);
+        news.setAuthorId(currentUserId);
         news.setStatus(NewsStatus.PENDING.getCode());
         news.setCreateTime(LocalDateTime.now());
         news.setUpdateTime(LocalDateTime.now());
         news.setViewCount(0);
-        news.setIsDeleted(0);
+        news.setDeleted(0);
 
         int result = newsMapper.insert(news);
         if (result > 0) {
@@ -118,12 +118,12 @@ public class NewsServiceImpl implements NewsService {
 
         News news = new News();
         BeanUtils.copyProperties(newsRequest, news);
-        news.setUserId(currentUserId);
+        news.setAuthorId(currentUserId);
         news.setStatus(NewsStatus.APPROVED.getCode());
         news.setCreateTime(LocalDateTime.now());
         news.setUpdateTime(LocalDateTime.now());
         news.setViewCount(0);
-        news.setIsDeleted(0);
+        news.setDeleted(0);
 
         int result = newsMapper.insert(news);
         if (result > 0) {
@@ -161,7 +161,7 @@ public class NewsServiceImpl implements NewsService {
         }
 
         News existingNews = newsMapper.selectById(newsId);
-        if (existingNews == null || existingNews.getIsDeleted() == 1) {
+        if (existingNews == null || existingNews.getDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
 
@@ -175,7 +175,7 @@ public class NewsServiceImpl implements NewsService {
         News oldNews = new News();
         BeanUtils.copyProperties(existingNews, oldNews);
 
-        BeanUtils.copyProperties(newsRequest, existingNews, "id", "userId", "createTime", "viewCount", "status");
+        BeanUtils.copyProperties(newsRequest, existingNews, "id", "authorId", "createTime", "viewCount", "status");
         existingNews.setUpdateTime(LocalDateTime.now());
 
         int result = newsMapper.updateById(existingNews);
@@ -201,7 +201,7 @@ public class NewsServiceImpl implements NewsService {
         }
 
         News news = newsMapper.selectById(newsId);
-        if (news == null || news.getIsDeleted() == 1) {
+        if (news == null || news.getDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
 
@@ -236,7 +236,7 @@ public class NewsServiceImpl implements NewsService {
         authorizationService.checkAdminPermission(currentUserId);
 
         News news = newsMapper.selectById(newsId);
-        if (news == null || news.getIsDeleted() == 1) {
+        if (news == null || news.getDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
 
@@ -244,8 +244,7 @@ public class NewsServiceImpl implements NewsService {
             throw new BusinessException("只能审核待审核状态的新闻");
         }
 
-        int result = newsMapper.updateAuditStatus(newsId, auditRequest.getStatus(),
-                auditRequest.getComment(), currentUserId);
+        int result = newsMapper.updateAuditStatus(newsId, auditRequest.getStatus());
 
         if (result > 0) {
             String statusText = NewsStatus.getByCode(auditRequest.getStatus()).getDesc();
@@ -264,14 +263,14 @@ public class NewsServiceImpl implements NewsService {
         authorizationService.checkAdminPermission(currentUserId);
 
         News existingNews = newsMapper.selectById(newsId);
-        if (existingNews == null || existingNews.getIsDeleted() == 1) {
+        if (existingNews == null || existingNews.getDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
 
         News oldNews = new News();
         BeanUtils.copyProperties(existingNews, oldNews);
 
-        BeanUtils.copyProperties(newsRequest, existingNews, "id", "userId", "createTime", "viewCount");
+        BeanUtils.copyProperties(newsRequest, existingNews, "id", "authorId", "createTime", "viewCount");
         existingNews.setUpdateTime(LocalDateTime.now());
 
         int result = newsMapper.updateById(existingNews);
@@ -308,12 +307,11 @@ public class NewsServiceImpl implements NewsService {
         authorizationService.checkAdminPermission(currentUserId);
 
         News news = newsMapper.selectById(newsId);
-        if (news == null || news.getIsDeleted() == 1) {
+        if (news == null || news.getDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
 
-        news.setIsDeleted(1);
-        news.setDeletedTime(LocalDateTime.now());
+        news.setDeleted(1);
         int result = newsMapper.updateById(news);
 
         if (result > 0) {

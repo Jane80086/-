@@ -1,6 +1,5 @@
 package com.cemenghui.course.entity;
 
-import com.cemenghui.course.entity.ReviewStatus;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.io.Serializable;
@@ -8,40 +7,53 @@ import java.time.LocalDateTime;
 
 /**
  * 课程审核实体
+ * 保留原有功能，但映射到新的audit_records表
  */
-@TableName("review")
+@TableName("audit_records")
 @Data
 public class Review implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "review_id", type = IdType.AUTO)
-    private Long reviewId;
+    @TableId(type = IdType.AUTO)
+    private Long id;
 
-    @TableField("course_id")
+    @TableField("resource_type")
+    private String resourceType = "COURSE";
+    
+    @TableField("resource_id")
     private Long courseId;
+    
+    @TableField("resource_name")
+    private String resourceName = "课程审核";
+    
+    @TableField("action")
+    private String action = "APPROVE";
     
     @TableField("reviewer_id")
     private Long reviewerId;
     
+    @TableField("reviewer_name")
+    private String reviewerName;
+    
     @TableField("status")
-    private ReviewStatus status = ReviewStatus.PENDING;
+    private String status = "PENDING";
     
     @TableField("comment")
     private String comment;
     
-    @TableField(value = "reviewed_at", fill = FieldFill.INSERT_UPDATE)
+    @TableField("audit_time")
     private LocalDateTime reviewedAt;
-
-    @TableLogic
-    @TableField("deleted")
-    private Integer deleted = 0;
+    
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
 
     /**
      * 审核通过该课程
      * @throws Exception 可能抛出的异常
      */
     public void approve() throws Exception {
-        this.status = ReviewStatus.APPROVED;
+        this.status = "APPROVED";
+        this.action = "APPROVE";
         this.reviewedAt = LocalDateTime.now();
         onCourseApproved(this.courseId);
     }
@@ -52,7 +64,8 @@ public class Review implements Serializable {
      * @throws Exception 可能抛出的异常
      */
     public void reject(String reason) throws Exception {
-        this.status = ReviewStatus.REJECTED;
+        this.status = "REJECTED";
+        this.action = "REJECT";
         this.comment = reason;
         this.reviewedAt = LocalDateTime.now();
         onCourseRejected(this.courseId, reason);

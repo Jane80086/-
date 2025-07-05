@@ -130,7 +130,7 @@ public class PermissionUtil {
         
         // 企业用户可以查看自己创建的会议和已通过的会议
         if (isEnterpriseUser(username)) {
-            boolean result = username.equals(meeting.getCreator()) || meeting.getStatus() == 1;
+            boolean result = username.equals(meeting.getCreatorName()) || meeting.getStatus() == 1;
             if (!result) {
                 log.info("canViewMeeting: 企业用户 {} 无权查看会议 {}", username, meeting.getId());
             }

@@ -12,49 +12,61 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("meeting_info")
+@TableName("meetings")
 public class Meeting {
     
     @TableId(type = IdType.AUTO)
     private Long id;
     
     @TableField("meeting_name")
-    private String meetingName; // 对应 meeting_name
+    private String meetingName;
     
     @TableField("start_time")
-    private LocalDateTime startTime; // 对应 start_time
+    private LocalDateTime startTime;
     
     @TableField("end_time")
-    private LocalDateTime endTime; // 对应 end_time
+    private LocalDateTime endTime;
     
-    @TableField("creator")
-    private String creator; // 对应 creator
+    @TableField("creator_id")
+    private Long creatorId;
+    
+    @TableField("creator_name")
+    private String creatorName;
     
     @TableField("meeting_content")
-    private String meetingContent; // 对应 meeting_content
+    private String meetingContent;
     
     @TableField("status")
-    private Integer status; // 0: 待审核, 1: 已通过, 2: 已拒绝, 3: 已删除
+    private Integer status = 0; // 0: 待审核, 1: 已通过, 2: 已拒绝, 3: 已删除
     
-    @TableField("reviewer")
-    private String reviewer; // 审核人
+    @TableField("reviewer_id")
+    private Long reviewerId;
+    
+    @TableField("reviewer_name")
+    private String reviewerName;
     
     @TableField("review_time")
-    private LocalDateTime reviewTime; // 审核时间，对应 review_time
+    private LocalDateTime reviewTime;
     
     @TableField("review_comment")
-    private String reviewComment; // 审核意见，对应 review_comment
-    
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime; // 对应 create_time
-    
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime; // 对应 update_time
+    private String reviewComment;
     
     @TableField("image_url")
-    private String imageUrl; // 会议图片URL
+    private String imageUrl;
+    
+    @TableField("location")
+    private String location;
+    
+    @TableField("participants")
+    private String participants;
+    
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+    
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
     
     @TableLogic
     @TableField("deleted")
-    private Integer deleted; // 逻辑删除字段
+    private Integer deleted = 0;
 } 

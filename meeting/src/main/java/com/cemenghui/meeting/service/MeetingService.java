@@ -57,7 +57,7 @@ public class MeetingService {
             }
             
             // 设置创建人
-            meeting.setCreator(username);
+            meeting.setCreatorName(username);
             
             // 设置初始状态：管理员创建的会议直接通过，企业用户创建的会议需要审核
             if (permissionUtil.isAdmin(username)) {
@@ -140,7 +140,7 @@ public class MeetingService {
             }
             
             // 权限验证
-            if (!permissionUtil.canEditMeeting(username, originalMeeting.getCreator())) {
+            if (!permissionUtil.canEditMeeting(username, originalMeeting.getCreatorName())) {
                 throw new SecurityException("您没有权限编辑此会议");
             }
             
@@ -196,7 +196,7 @@ public class MeetingService {
             }
             
             // 权限验证
-            if (!permissionUtil.canDeleteMeeting(username, meeting.getCreator())) {
+            if (!permissionUtil.canDeleteMeeting(username, meeting.getCreatorName())) {
                 throw new SecurityException("您没有权限删除此会议");
             }
             
@@ -251,7 +251,7 @@ public class MeetingService {
             
             // 更新会议状态
             meeting.setStatus(request.getStatus());
-            meeting.setReviewer(reviewer);
+            meeting.setReviewerName(reviewer);
             meeting.setReviewTime(LocalDateTime.now());
             meeting.setReviewComment(request.getReviewComment());
             meeting.setUpdateTime(LocalDateTime.now());
@@ -265,8 +265,8 @@ public class MeetingService {
             MeetingReviewRecord record = new MeetingReviewRecord();
             record.setMeetingId(request.getMeetingId());
             record.setMeetingName(meeting.getMeetingName());
-            record.setCreator(meeting.getCreator());
-            record.setReviewer(reviewer);
+            record.setCreatorName(meeting.getCreatorName());
+            record.setReviewerName(reviewer);
             record.setStatus(request.getStatus());
             record.setReviewComment(request.getReviewComment());
             record.setReviewTime(LocalDateTime.now());
@@ -312,13 +312,13 @@ public class MeetingService {
             // 根据用户权限设置查询条件
             if (permissionUtil.isAdmin(username)) {
                 // 管理员只能看到自己审核的会议和未审核的会议
-                wrapper.and(w -> w.eq(Meeting::getReviewer, username).or().eq(Meeting::getStatus, 0));
+                wrapper.and(w -> w.eq(Meeting::getReviewerName, username).or().eq(Meeting::getStatus, 0));
                 if (query.getStatus() != null) {
                     wrapper.eq(Meeting::getStatus, query.getStatus());
                 }
             } else if (permissionUtil.isEnterpriseUser(username)) {
                 // 企业用户可以查看自己的会议和已通过的会议
-                wrapper.and(w -> w.eq(Meeting::getCreator, username).or().eq(Meeting::getStatus, 1));
+                wrapper.and(w -> w.eq(Meeting::getCreatorName, username).or().eq(Meeting::getStatus, 1));
             } else {
                 // 普通用户只能查看已通过的会议
                 wrapper.eq(Meeting::getStatus, 1);
@@ -330,7 +330,7 @@ public class MeetingService {
             }
             
             if (query.getCreator() != null && !query.getCreator().trim().isEmpty()) {
-                wrapper.like(Meeting::getCreator, query.getCreator());
+                wrapper.like(Meeting::getCreatorName, query.getCreator());
             }
             
             if (query.getStartDate() != null) {
