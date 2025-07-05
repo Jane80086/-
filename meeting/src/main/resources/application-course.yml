@@ -15,7 +15,7 @@ spring:
     time-zone: GMT+8
     modules-to-install: com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
   datasource:
-    url: jdbc:kingbase8://localhost:54321/course_management?characterEncoding=UTF-8&useUnicode=true
+    url: jdbc:kingbase8://localhost:54321/course_manager?characterEncoding=UTF-8&useUnicode=true
     username: SYSTEM
     password: 123456
     driver-class-name: com.kingbase8.Driver
