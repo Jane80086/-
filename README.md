@@ -1,121 +1,201 @@
-# 注册、登录、用户管理模块
+# 课程管理系统说明文档
 
+---
 
-## 技术栈
+## 一、项目简介
+
+本系统为多模块课程管理平台，包含注册、登录、用户管理、课程、新闻、会议、系统等子模块，前后端分离，支持统一用户体系和金仓数据库。
+
+---
+
+## 二、技术栈
 - 后端：Java 11+, Spring Boot, MyBatis, Maven
 - 前端：Vue 3, Element Plus, Vite
-- 数据库：MySQL 5.7+
+- 数据库：KingbaseES（金仓数据库）
 
 ---
 
-## 环境依赖
+## 三、环境依赖
 - JDK 11 及以上
 - Node.js 16+、npm/yarn
-- MySQL 5.7+
+- KingbaseES（金仓数据库）
 
 ---
 
-## API Key 配置（如OpenAI）
-- 在 `src/main/resources/application.properties` 配置 `openai.api.key=sk-xxxx...`
+## 四、数据库设置与初始化
 
----
+### 1. 创建数据库
 
-## 端口说明
-- 后端默认端口：8083
-- 前端默认端口：5173
-- 如需修改，分别在 `application.properties` 和 `frontend/vite.config.js` 配置
-
----
-
-## 协作规范
-- 采用 feature 分支开发，PR合并主分支，避免直接push main。
-- 依赖、配置、数据库脚本、API文档需同步更新。
-- 敏感信息（如API Key、密码）请勿提交到仓库。
-- 代码格式统一，建议使用eslint/prettier、IDE格式化。
-- 重要业务逻辑、接口参数请加注释。
-
----
-
-## 目录结构
-```
-├── src/                  # 后端Java源码
-├── frontend/             # 前端Vue源码
-├── target/               # 后端编译产物
-├── README.md             # 项目说明
-├── pom.xml               # Maven依赖
-└── ...
+建议使用金仓数据库管理工具，或执行：
+```sql
+CREATE DATABASE course_manager;
 ```
 
+### 2. 导入数据库结构
+
+1. 连接到`course_manager`数据库
+2. 执行`course_manager_kingbase_complete.sql`脚本
+
+### 3. 启动步骤
+
+1. 创建数据库
+2. 导入表结构
+3. 运行`mvn clean compile`编译项目
+4. 启动后端服务
+
+### 4. 注意事项
+- 确保金仓数据库服务已启动
+- 数据库连接参数正确（host: localhost, port: 54321）
+- 用户权限足够
+
 ---
 
-## 项目架构图
+## 五、数据库表结构分析与优化
 
+### 1. 优化目标
+- 减少表数量（11→6）
+- 统一用户、审核、日志、历史记录表
+- 提高可维护性和扩展性
+
+### 2. 优化前后对比
+| 模块 | 优化前 | 优化后 |
+|------|--------|--------|
+| 用户 | user_info, admin_user, enterprise_user, system_user | users, enterprise |
+| 审核 | course_review_history, meeting_review_record, review | audit_records |
+| 日志 | user_view_log, user_operation_log | user_view_logs, user_operation_logs |
+| 历史 | course_history, user_modify_history | history_records |
+
+### 3. 统一表结构示例
+
+#### users 表
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    real_name VARCHAR(100),
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    user_type VARCHAR(20) NOT NULL, -- ADMIN, ENTERPRISE, NORMAL, SYSTEM
+    status INTEGER DEFAULT 1,
+    department VARCHAR(100),
+    nickname VARCHAR(100),
+    is_remembered BOOLEAN DEFAULT FALSE,
+    enterprise_id VARCHAR(64),
+    dynamic_code VARCHAR(20),
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted INTEGER DEFAULT 0
+);
 ```
-测盟汇系统架构
-┌───────────────────────────────────────────────────┐
-│                     前端层 (Vue 3)                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
-│  │  用户界面层   │  │  组件库     │  │  状态管理   │ │
-│  │ (页面路由)    │  │ (Element Plus)│  │ (Pinia)    │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘ │
-├───────────────────────────────────────────────────┤
-│                    接口层 (API)                    │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
-│  │  RESTful API │  │  JWT认证    │  │  接口文档   │ │
-│  │ (Controller) │  │ (Security)  │  │ (Swagger)   │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘ │
-├───────────────────────────────────────────────────┤
-│                    服务层 (Spring Boot)            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
-│  │  业务逻辑层   │  │  数据访问层   │  │  AI集成层    │ │
-│  │ (Service)    │  │ (MyBatis)    │  │ (OpenAI等)   │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘ │
-├───────────────────────────────────────────────────┤
-│                    数据层 (MySQL)                   │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
-│  │  用户表      │  │  企业表      │  │  操作记录表   │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘ │
-└───────────────────────────────────────────────────┘
+
+#### audit_records 表
+```sql
+CREATE TABLE audit_records (
+    id SERIAL PRIMARY KEY,
+    resource_type VARCHAR(50) NOT NULL, -- COURSE, MEETING, NEWS, USER
+    resource_id BIGINT NOT NULL,
+    resource_name VARCHAR(255),
+    action VARCHAR(50) NOT NULL, -- APPROVE, REJECT, MODIFY, DELETE
+    reviewer_id BIGINT NOT NULL,
+    reviewer_name VARCHAR(100),
+    status VARCHAR(20) NOT NULL, -- PENDING, APPROVED, REJECTED
+    comment TEXT,
+    old_value TEXT,
+    new_value TEXT,
+    audit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### user_view_logs 表
+```sql
+CREATE TABLE user_view_logs (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT,
+    resource_type VARCHAR(50) NOT NULL, -- COURSE, NEWS, MEETING
+    resource_id BIGINT NOT NULL,
+    resource_title VARCHAR(255),
+    ip_address VARCHAR(50),
+    user_agent VARCHAR(500),
+    session_id VARCHAR(100),
+    view_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### user_operation_logs 表
+```sql
+CREATE TABLE user_operation_logs (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    operation_type VARCHAR(50) NOT NULL, -- CREATE, UPDATE, DELETE, PUBLISH, AUDIT
+    resource_type VARCHAR(50) NOT NULL, -- COURSE, NEWS, MEETING, USER
+    resource_id BIGINT NOT NULL,
+    resource_title VARCHAR(255),
+    operation_desc VARCHAR(500),
+    old_value TEXT,
+    new_value TEXT,
+    ip_address VARCHAR(50),
+    operation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    operation_result INTEGER DEFAULT 1
+);
+```
+
+#### history_records 表
+```sql
+CREATE TABLE history_records (
+    id SERIAL PRIMARY KEY,
+    resource_type VARCHAR(50) NOT NULL, -- COURSE, USER, ENTERPRISE
+    resource_id BIGINT NOT NULL,
+    action VARCHAR(50) NOT NULL, -- VIEW, MODIFY, DELETE
+    user_id BIGINT,
+    old_value TEXT,
+    new_value TEXT,
+    record_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ---
 
-## 功能模块细节
+## 六、数据库优化实施指南
 
-### 1. AI助手模块
-- **智能问答**：支持自然语言提问，基于OpenAI API实现语义理解（如"查看本月企业报表趋势"）。
-- **个性化欢迎语**：根据用户登录时间、历史操作生成动态问候。
-- **报表解读**：自动分析数据库中的企业数据报表，生成文字总结。
+### 1. 备份与测试
+- 备份原有数据库
+- 在测试环境验证新表结构和迁移脚本
 
-### 2. 用户管理权限说明
+### 2. 数据迁移
+- 按照分析报告中的迁移SQL，将旧表数据迁移到新表
+- 验证迁移后数据完整性
 
-| 角色       | 权限描述                          |
-|------------|-----------------------------------|
-| 超级管理员 | 全系统功能操作、用户/企业管理      |
-| 企业管理员 | 管理所属企业数据、查看下属用户操作 |
-| 普通用户   | 个人中心操作、基础数据查询        |
+### 3. 功能测试
+- 验证用户、课程、会议、新闻等主要功能
+- 检查审核、日志、历史记录等功能
 
----
-
-## 接口文档说明
-
-- **接口文档地址**：`http://localhost:8083/swagger-ui/index.html`
-- **常用接口示例**：
-  - 登录：`POST /api/auth/login`，请求体：`{username: "admin", password: "123456"}`
-  - 用户列表：`GET /api/user/list`，需携带JWT Token（`Authorization: Bearer xxx`）
+### 4. 生产部署
+- 停止应用，备份生产库，执行迁移，重启应用
 
 ---
 
-## 五、开发工具推荐
+## 七、常见问题与解决方案
 
-| 工具类型       | 推荐工具                | 用途说明                          |
-|----------------|-------------------------|-----------------------------------|
-| 后端开发       | IDEA 2023+              | Java代码开发、调试                |
-| 前端开发       | VS Code                 | Vue开发、插件扩展（如Volar）      |
-| 接口测试       | Postman / Apifox        | API调试、自动化测试              |
-| 数据库管理     | Navicat / DataGrip      | MySQL数据可视化管理              |
-| 代码规范检查   | SonarLint               | 代码质量检测、漏洞扫描            |
+### 1. 数据库不存在
+- 检查数据库是否已创建，连接参数是否正确
+
+### 2. 方言或驱动错误
+- 确认JPA配置和依赖已正确设置为Kingbase/PostgreSQL
+
+### 3. 迁移后数据缺失
+- 检查迁移脚本执行日志，核对数据量
 
 ---
+
+## 八、附录
+
+- 详细表结构、索引、视图、存储过程请见 `course_manager_kingbase_complete.sql`
+- 如需回滚，使用备份文件恢复
+
+---
+
+> 本文档整合了所有数据库相关说明、分析、实施和常见问题，作为唯一权威说明文档。
 
 
