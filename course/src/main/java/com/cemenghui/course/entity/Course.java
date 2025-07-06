@@ -59,6 +59,12 @@ public class Course implements Serializable {
     @TableField("rating")
     private BigDecimal rating = BigDecimal.ZERO;
 
+    @TableField("like_count")
+    private Integer likeCount = 0;
+
+    @TableField("favorite_count")
+    private Integer favoriteCount = 0;
+
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 

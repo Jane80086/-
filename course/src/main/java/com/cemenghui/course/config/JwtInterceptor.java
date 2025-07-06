@@ -17,19 +17,10 @@ public class JwtInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String token = request.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Missing or invalid Authorization header");
-            return false;
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+            return jwtUtil.validateToken(token);
         }
-        token = token.substring(7); // 去掉"Bearer "前缀
-        if (!jwtUtil.validateToken(token)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Invalid or expired token");
-            return false;
-        }
-        String username = jwtUtil.getUsernameFromToken(token);
-        request.setAttribute("username", username);
-        return true;
+        return false;
     }
 } 

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/search")
@@ -49,8 +50,9 @@ public class SearchController {
      * 获取搜索建议
      */
     @GetMapping("/suggestions")
-    public Result getSearchSuggestions(@RequestParam String query) {
+    public Result getSearchSuggestions(@RequestParam(required = false) String q) {
         try {
+            String query = q != null ? q : "";
             // 这里可以实现搜索建议逻辑
             // 简化实现，返回一些示例建议
             List<String> suggestions = List.of(
@@ -81,15 +83,25 @@ public class SearchController {
     }
 
     /**
-     * 高级搜索
+     * 高级搜索 - 支持GET和POST请求
      */
     @GetMapping("/advanced")
+    @PostMapping("/advanced")
     public Result advancedSearch(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String level,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestBody(required = false) Map<String, Object> searchParams) {
         try {
+            // 如果使用POST请求，从请求体中获取参数
+            if (searchParams != null) {
+                keyword = (String) searchParams.get("keyword");
+                category = (String) searchParams.get("category");
+                level = (String) searchParams.get("level");
+                status = (String) searchParams.get("status");
+            }
+            
             // 这里可以实现高级搜索逻辑
             // 简化实现，使用基础搜索
             List<Course> courses = courseService.searchCourses(keyword != null ? keyword : "");

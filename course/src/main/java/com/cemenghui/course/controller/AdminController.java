@@ -83,7 +83,7 @@ public class AdminController {
     @GetMapping("/user/{id}")
     public Result getUserById(@PathVariable Long id) {
         try {
-            User user = userService.getById(id);
+            User user = userService.findById(id);
             if (user != null) {
                 return Result.success(user);
             } else {
@@ -138,6 +138,20 @@ public class AdminController {
             return Result.success(courses);
         } catch (Exception e) {
             return Result.fail("获取课程列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取待审核课程
+     */
+    @GetMapping("/courses/pending")
+    public Result getPendingCourses() {
+        try {
+            // 获取状态为待审核的课程
+            List<Course> pendingCourses = courseService.getPendingCourses();
+            return Result.success(pendingCourses);
+        } catch (Exception e) {
+            return Result.fail("获取待审核课程失败: " + e.getMessage());
         }
     }
 

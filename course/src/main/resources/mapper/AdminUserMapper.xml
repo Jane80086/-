@@ -5,18 +5,18 @@
 <mapper namespace="com.cemenghui.course.dao.UserDao">
 
     <!-- 管理员查询结果映射 -->
-    <resultMap id="BaseResultMap" type="com.cemenghui.course.common.AdminUser">
+    <resultMap id="BaseResultMap" type="com.cemenghui.entity.User">
         <id column="id" property="id" jdbcType="BIGINT"/>
-        <result column="account" property="account" jdbcType="VARCHAR"/>
+        <result column="username" property="username" jdbcType="VARCHAR"/>
         <result column="password" property="password" jdbcType="VARCHAR"/>
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
-        <result column="admin_level" property="adminLevel" jdbcType="VARCHAR"/>
-        <result column="permissions" property="permissions" jdbcType="VARCHAR"/>
+        <result column="user_type" property="userType" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
     </resultMap>
 
     <!-- 根据账号查询管理员 -->
     <select id="findByAccount" resultMap="BaseResultMap">
-        SELECT * FROM admin_user WHERE account = #{account}
+        SELECT * FROM users WHERE username = #{account} AND user_type = 'ADMIN'
     </select>
 
     <!-- 记录管理员登录时间 -->

@@ -97,14 +97,16 @@ public class FileController {
     @PostMapping("/upload")
     public Result uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("folder") String folder) {
+            @RequestParam(value = "folder", required = false) String folder) {
         try {
-            String fileUrl = minioServiceImpl.uploadFile(file, folder);
+            // 如果没有指定folder，使用默认文件夹
+            String targetFolder = folder != null ? folder : "general";
+            String fileUrl = minioServiceImpl.uploadFile(file, targetFolder);
             Map<String, Object> result = new HashMap<>();
             result.put("fileUrl", fileUrl);
             result.put("fileName", file.getOriginalFilename());
             result.put("fileSize", file.getSize());
-            result.put("folder", folder);
+            result.put("folder", targetFolder);
             return Result.success("文件上传成功", result);
         } catch (Exception e) {
             return Result.fail("文件上传失败: " + e.getMessage());
@@ -152,9 +154,11 @@ public class FileController {
      * 获取文件列表
      */
     @GetMapping("/list")
-    public Result listFiles(@RequestParam("folder") String folder) {
+    public Result listFiles(@RequestParam(value = "folder", required = false) String folder) {
         try {
-            List<String> files = minioServiceImpl.listFiles(folder);
+            // 如果没有指定folder，列出所有文件
+            String targetFolder = folder != null ? folder : "";
+            List<String> files = minioServiceImpl.listFiles(targetFolder);
             return Result.success(files);
         } catch (Exception e) {
             return Result.fail("获取文件列表失败: " + e.getMessage());

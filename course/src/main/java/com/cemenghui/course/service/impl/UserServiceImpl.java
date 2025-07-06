@@ -3,7 +3,7 @@ package com.cemenghui.course.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.cemenghui.dao.UserDao;
+import com.cemenghui.course.dao.UserDao;
 import com.cemenghui.entity.User;
 import java.util.List;
 import java.util.Optional;
@@ -26,10 +26,11 @@ public class UserServiceImpl implements UserService {
      * @return 用户对象（可选）
      */
     @Override
-    public User findByUsername(String username) {
+    public Optional<User> findByUsername(String username) {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername, username);
-        return userDao.selectOne(wrapper);
+        User user = userDao.selectOne(wrapper);
+        return Optional.ofNullable(user);
     }
 
     /**
@@ -37,6 +38,7 @@ public class UserServiceImpl implements UserService {
      * @param userType 用户类型
      * @return 用户列表
      */
+    @Override
     public List<User> findByUserType(String userType) {
         try {
             LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
@@ -52,6 +54,7 @@ public class UserServiceImpl implements UserService {
      * 获取所有用户
      * @return 用户列表
      */
+    @Override
     public List<User> getAllUsers() {
         try {
             return userDao.selectList(null);
@@ -66,7 +69,8 @@ public class UserServiceImpl implements UserService {
      * @param id 用户ID
      * @return 用户对象或null
      */
-    public User getById(Long id) {
+    @Override
+    public User findById(Long id) {
         try {
         return userDao.selectById(id);
         } catch (Exception e) {
@@ -75,16 +79,14 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    @Override
-    public User findById(Long id) {
-        return getById(id);
-    }
+
 
     /**
      * 保存用户
      * @param user 用户对象
      * @return 保存后的用户对象
      */
+    @Override
     public User saveUser(User user) {
         try {
             userDao.insert(user);
@@ -100,6 +102,7 @@ public class UserServiceImpl implements UserService {
      * @param id 用户ID
      * @return 是否删除成功
      */
+    @Override
     public boolean deleteUser(Long id) {
         try {
             userDao.deleteById(id);
@@ -115,6 +118,7 @@ public class UserServiceImpl implements UserService {
      * @param user 用户对象
      * @return 更新后的用户对象
      */
+    @Override
     public User updateUser(User user) {
         try {
             if (user.getId() != null && userDao.selectById(user.getId()) != null) {
@@ -133,6 +137,7 @@ public class UserServiceImpl implements UserService {
      * @param id 用户ID
      * @return 是否存在
      */
+    @Override
     public boolean existsById(Long id) {
         try {
             return userDao.selectById(id) != null;
@@ -146,6 +151,7 @@ public class UserServiceImpl implements UserService {
      * 获取用户总数
      * @return 用户总数
      */
+    @Override
     public long count() {
         try {
             return userDao.selectCount(null);
@@ -161,6 +167,7 @@ public class UserServiceImpl implements UserService {
      * @param size 每页大小
      * @return 用户列表
      */
+    @Override
     public List<User> getUsersByPage(int page, int size) {
         try {
             // 这里应该使用Spring Data的分页功能
@@ -343,7 +350,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User validateLogin(String username, String password) {
         try {
-            User user = findByUsername(username);
+            User user = findByUsername(username).orElse(null);
             if (user != null && password.equals(user.getPassword())) {
                 return user;
             }
@@ -407,5 +414,21 @@ public class UserServiceImpl implements UserService {
     public String getAvatarById(Long id) {
         User user = userDao.selectById(id);
         return user != null ? user.getAvatar() : null;
+    }
+
+    /**
+     * 根据用户ID获取昵称
+     * @param id 用户ID
+     * @return 用户昵称
+     */
+    @Override
+    public String getNicknameById(Long id) {
+        try {
+            User user = userDao.selectById(id);
+            return user != null ? user.getNickname() : null;
+        } catch (Exception e) {
+            System.err.println("根据ID获取用户昵称失败: " + e.getMessage());
+            return null;
+        }
     }
 } 

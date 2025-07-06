@@ -21,6 +21,34 @@ public class AIController {
     @Value("${dify.base-url}")
     private String difyBaseUrl;
 
+    /**
+     * AI聊天接口
+     */
+    @PostMapping("/chat")
+    public ResponseEntity<Result> chat(@RequestBody Map<String, Object> request) {
+        try {
+            String message = (String) request.get("message");
+            String sessionId = (String) request.get("sessionId");
+            
+            if (message == null || message.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Result.fail("消息不能为空"));
+            }
+            
+            String response = callDify(message);
+            Map<String, Object> result = new HashMap<>();
+            result.put("response", response);
+            result.put("sessionId", sessionId);
+            result.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(Result.success("AI回复成功", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Result.fail("AI聊天失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * AI优化接口
+     */
     @PostMapping("/optimize")
     public ResponseEntity<Result> optimize(@RequestBody Map<String, Object> request) {
         String title = (String) request.get("title");
@@ -33,6 +61,24 @@ public class AIController {
             return ResponseEntity.ok(Result.success("AI优化成功", result));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Result.fail("AI优化失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 获取AI状态
+     */
+    @GetMapping("/status")
+    public ResponseEntity<Result> getStatus() {
+        try {
+            Map<String, Object> status = new HashMap<>();
+            status.put("status", "available");
+            status.put("model", "gpt-3.5-turbo");
+            status.put("provider", "Dify");
+            status.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(Result.success(status));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Result.fail("获取AI状态失败: " + e.getMessage()));
         }
     }
 

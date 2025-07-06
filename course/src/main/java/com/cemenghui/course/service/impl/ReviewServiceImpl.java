@@ -5,6 +5,7 @@ import com.cemenghui.course.dao.CourseDao;
 import com.cemenghui.course.dao.ReviewDao;
 import com.cemenghui.course.entity.Review;
 import com.cemenghui.course.entity.Course;
+import com.cemenghui.course.entity.ReviewStatus;
 import com.cemenghui.course.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,13 +33,13 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = new Review();
         review.setCourseId(courseId);
         review.setReviewerId(reviewerId);
-        review.setStatus(com.cemenghui.course.entity.ReviewStatus.APPROVED);
+        review.setStatus(ReviewStatus.APPROVED.name());
         reviewDao.insert(review);
         
         // 更新课程状态
         Course course = courseDao.selectById(courseId);
         if (course != null) {
-            course.setStatus("PUBLISHED");
+            course.setStatus(1); // 1表示已发布
             courseDao.updateById(course);
         }
         
@@ -56,14 +57,14 @@ public class ReviewServiceImpl implements ReviewService {
     public Review rejectCourse(Long courseId, String reason) {
         Review review = new Review();
         review.setCourseId(courseId);
-        review.setStatus(com.cemenghui.course.entity.ReviewStatus.REJECTED);
+        review.setStatus(ReviewStatus.REJECTED.name());
         review.setComment(reason);
         reviewDao.insert(review);
         
         // 更新课程状态
         Course course = courseDao.selectById(courseId);
         if (course != null) {
-            course.setStatus("REJECTED");
+            course.setStatus(2); // 2表示已拒绝
             courseDao.updateById(course);
         }
         

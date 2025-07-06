@@ -46,7 +46,7 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
         if (course == null) {
             throw new NotFoundException("课程未找到: " + id);
         }
-        course.edit(updated.getTitle(), updated.getDescription(), updated.getCoverImage());
+        course.edit(updated.getTitle(), updated.getDescription(), updated.getImageUrl());
         courseDao.updateById(course);
         return course;
     }
@@ -166,7 +166,7 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
     public boolean unpublishCourse(Long courseId) {
         Course course = courseDao.selectById(courseId);
         if (course == null) return false;
-        course.setStatus("UNPUBLISHED");
+        course.setStatus(0); // 0表示下架状态
         courseDao.updateById(course);
         return true;
     }

@@ -81,4 +81,10 @@ public interface CourseService {
      * 管理员审核拒绝课程
      */
     boolean rejectCourse(Long courseId, Long adminId, String reason);
+
+    /**
+     * 获取待审核课程
+     * @return 待审核课程列表
+     */
+    List<Course> getPendingCourses();
 } 

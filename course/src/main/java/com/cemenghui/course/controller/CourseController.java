@@ -4,6 +4,7 @@ import com.cemenghui.course.common.Result;
 import com.cemenghui.course.entity.Course;
 import com.cemenghui.course.service.CourseService;
 import com.cemenghui.course.service.CourseHistoryService;
+import com.cemenghui.course.service.CourseOptimizationService;
 import com.cemenghui.course.service.impl.CourseManagerServiceImpl;
 import com.cemenghui.course.service.NotFoundException;
 import com.cemenghui.course.dao.CourseReviewHistoryDao;
@@ -45,6 +46,9 @@ public class CourseController {
 
     @Autowired
     private CourseReviewHistoryDao reviewHistoryDao;
+    
+    @Autowired
+    private CourseOptimizationService courseOptimizationService;
 
     /**
      * 创建新课程
@@ -52,11 +56,40 @@ public class CourseController {
     @PostMapping("/create")
     public ResponseEntity<Result> createCourse(@RequestBody @Valid Course course) {
         try {
+            // AI优化课程标题和简介
+            if (course.getTitle() != null && course.getDescription() != null) {
+                Map<String, String> optimizedInfo = courseOptimizationService.optimizeCourseInfo(
+                    course.getTitle(), 
+                    course.getDescription(), 
+                    course.getCategory()
+                );
+                
+                // 使用优化后的标题和简介
+                course.setTitle(optimizedInfo.get("optimized_title"));
+                course.setDescription(optimizedInfo.get("optimized_description"));
+            }
+            
             Course createdCourse = courseManagerService.createCourse(course);
-            return ResponseEntity.ok(Result.success("课程创建成功", createdCourse));
+            return ResponseEntity.ok(Result.success("课程创建成功（已AI优化）", createdCourse));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("课程创建失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * AI优化课程信息（预览）
+     */
+    @PostMapping("/optimize-preview")
+    public ResponseEntity<Result> optimizeCoursePreview(
+            @RequestParam String title,
+            @RequestParam String description,
+            @RequestParam(required = false) String category) {
+        try {
+            Map<String, String> optimizedInfo = courseOptimizationService.optimizeCourseInfo(title, description, category);
+            return ResponseEntity.ok(Result.success("AI优化预览", optimizedInfo));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Result.fail("AI优化失败: " + e.getMessage()));
         }
     }
 
@@ -138,45 +171,39 @@ public class CourseController {
         course1.setId(1L);
         course1.setTitle("Java基础教程");
         course1.setDescription("Java编程基础入门课程，适合零基础学习者");
-        course1.setCoverImage("https://via.placeholder.com/300x200");
+        course1.setImageUrl("https://via.placeholder.com/300x200");
         course1.setVideoUrl("https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4");
         course1.setDuration(120);
         course1.setPrice(new BigDecimal("0.0"));
         course1.setInstructorId(1L);
         course1.setCategory("编程开发");
-        course1.setStatus("已发布");
-        course1.setLikeCount(1250);
-        course1.setFavoriteCount(890);
+        course1.setStatus(1); // 1表示已发布
         courses.add(course1);
 
         Course course2 = new Course();
         course2.setId(2L);
         course2.setTitle("Spring Boot实战");
         course2.setDescription("Spring Boot框架开发实战课程");
-        course2.setCoverImage("https://via.placeholder.com/300x200");
+        course2.setImageUrl("https://via.placeholder.com/300x200");
         course2.setVideoUrl("https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4");
         course2.setDuration(180);
         course2.setPrice(new BigDecimal("99.0"));
         course2.setInstructorId(2L);
         course2.setCategory("框架开发");
-        course2.setStatus("已发布");
-        course2.setLikeCount(890);
-        course2.setFavoriteCount(650);
+        course2.setStatus(1); // 1表示已发布
         courses.add(course2);
 
         Course course3 = new Course();
         course3.setId(3L);
         course3.setTitle("Vue.js前端开发");
         course3.setDescription("Vue.js前端框架开发教程");
-        course3.setCoverImage("https://via.placeholder.com/300x200");
+        course3.setImageUrl("https://via.placeholder.com/300x200");
         course3.setVideoUrl("https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4");
         course3.setDuration(150);
         course3.setPrice(new BigDecimal("79.0"));
         course3.setInstructorId(3L);
         course3.setCategory("前端开发");
-        course3.setStatus("已发布");
-        course3.setLikeCount(1100);
-        course3.setFavoriteCount(750);
+        course3.setStatus(1); // 1表示已发布
         courses.add(course3);
         return courses;
     }
