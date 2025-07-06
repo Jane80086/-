@@ -1,12 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getNewsDetail, editNews } from '@/api/news'
+// 修正：引入 adminEditNews 以匹配管理员权限
+import { getNewsDetail, adminEditNews } from '@/api/news'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
-
 const newsForm = ref({
   title: '',
   image: '',
@@ -14,25 +14,23 @@ const newsForm = ref({
   summary: '',
   author: ''
 })
-
 const formRef = ref()
 const loading = ref(false)
 const submitLoading = ref(false)
-
 const rules = {
   title: [
-    { required: true, message: '请输入标题', trigger: 'blur' },
-    { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
+    {required: true, message: '请输入标题', trigger: 'blur'},
+    {min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur'}
   ],
   content: [
-    { required: true, message: '请输入内容', trigger: 'blur' }
+    {required: true, message: '请输入内容', trigger: 'blur'}
   ],
   summary: [
-    { required: true, message: '请输入简介', trigger: 'blur' },
-    { max: 200, message: '简介不能超过200个字符', trigger: 'blur' }
+    {required: true, message: '请输入简介', trigger: 'blur'},
+    {max: 200, message: '简介不能超过200个字符', trigger: 'blur'}
   ],
   author: [
-    { required: true, message: '请输入作者', trigger: 'blur' }
+    {required: true, message: '请输入作者', trigger: 'blur'}
   ]
 }
 
@@ -58,18 +56,20 @@ const loadNewsDetail = async () => {
 
 const handleSubmit = async () => {
   if (!formRef.value) return
-
   try {
     await formRef.value.validate()
     submitLoading.value = true
-
     const newsId = route.params.id
-    await editNews(newsId, newsForm.value)
+    // 修正：调用 adminEditNews 接口
+    await adminEditNews(newsId, newsForm.value)
     ElMessage.success('编辑成功')
-    router.push('/enterprise/my-news')
+    // 修正：跳转到管理员动态管理页面
+    router.push('/admin/news-manage')
   } catch (error) {
-    if (error.message) {
+    if (error && error.message) {
       ElMessage.error(error.message)
+    } else {
+      ElMessage.error('编辑失败')
     }
   } finally {
     submitLoading.value = false
@@ -84,7 +84,6 @@ onMounted(() => {
   loadNewsDetail()
 })
 </script>
-
 <template>
   <div class="news-edit" v-loading="loading">
     <el-card>
@@ -94,7 +93,6 @@ onMounted(() => {
           <span>编辑动态</span>
         </div>
       </template>
-
       <el-form
           ref="formRef"
           :model="newsForm"
@@ -110,7 +108,6 @@ onMounted(() => {
               show-word-limit
           />
         </el-form-item>
-
         <el-form-item label="作者" prop="author">
           <el-input
               v-model="newsForm.author"
@@ -118,7 +115,6 @@ onMounted(() => {
               maxlength="50"
           />
         </el-form-item>
-
         <el-form-item label="图片链接" prop="image">
           <el-input
               v-model="newsForm.image"
@@ -133,7 +129,6 @@ onMounted(() => {
             />
           </div>
         </el-form-item>
-
         <el-form-item label="简介" prop="summary">
           <el-input
               v-model="newsForm.summary"
@@ -144,7 +139,6 @@ onMounted(() => {
               show-word-limit
           />
         </el-form-item>
-
         <el-form-item label="内容" prop="content">
           <el-input
               v-model="newsForm.content"
@@ -153,7 +147,6 @@ onMounted(() => {
               placeholder="请输入动态内容"
           />
         </el-form-item>
-
         <el-form-item>
           <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
             保存修改
@@ -164,12 +157,10 @@ onMounted(() => {
     </el-card>
   </div>
 </template>
-
 <style scoped>
 .news-edit {
   padding: 20px;
 }
-
 .header-actions {
   display: flex;
   align-items: center;
