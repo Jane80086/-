@@ -7,8 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import com.cemenghui.common.JWTUtil;
 
-@SpringBootApplication
-@MapperScan("com.cemenghui.system.repository")
+//@SpringBootApplication
+@MapperScan(basePackages = {
+        "com.cemenghui.dao",             // UserDao 所在包
+        "com.cemenghui.system.repository" // EnterpriseMapper 所在包
+})
+@SpringBootApplication(scanBasePackages = "com.cemenghui") // 扫描整个项目根包
 public class SystemApplication implements CommandLineRunner {
 
     @Autowired
