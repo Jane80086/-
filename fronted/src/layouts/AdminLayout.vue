@@ -90,7 +90,7 @@ const secondaryMenu = [
 const getActiveSecondary = (path) => {
   if (path.includes('/dashboard') || path.includes('/home') || path.includes('/users') || path.includes('/roles')) {
     return 'home'
-  } else if (path.includes('/news') || path.includes('/courses')) {
+  } else if (path.includes('/news') || path.includes('/courses') || path.includes('/course-search') || path.includes('/my-courses') || path.includes('/course/') ) {
     return 'content'
   } else if (path.includes('/meeting') || path.includes('/meetings')) {
     return 'meeting'
@@ -117,7 +117,8 @@ const adminMenu = {
     { label: '角色权限', path: '/admin/roles', icon: UserFilled },
   ],
   content: [
-    { label: '动态审核', path: '/admin/news', icon: Document },
+    { label: '课程搜索', path: '/admin/course-search', icon: Document },
+    { label: '我的课程', path: '/admin/my-courses', icon: Collection },
     { label: '课程审核', path: '/admin/courses', icon: Collection },
   ],
   meeting: [
@@ -168,7 +169,9 @@ const handleMenuSelect = (index) => {
   font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Arial', sans-serif;
 }
 .secondary-sidebar {
-  width: 64px;
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
   background: #fff;
   border-right: 1px solid #E3E8EE;
   display: flex;
@@ -195,6 +198,9 @@ const handleMenuSelect = (index) => {
   color: #6D8BA6;
 }
 .primary-sidebar {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
   background: #F7F9FA;
   color: #2D3A4B;
   display: flex;
@@ -284,5 +290,17 @@ const handleMenuSelect = (index) => {
 .main-content {
   background: #F7F9FA;
   padding: 20px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+</style> 
+}
+.main-content {
+  background: #F7F9FA;
+  padding: 20px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 </style> 

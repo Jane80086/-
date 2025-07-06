@@ -3,6 +3,7 @@ package com.cemenghui.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
@@ -77,14 +78,11 @@ public class User {
         NORMAL("普通用户"),
         SYSTEM("系统用户");
         
+        @Getter
         private final String description;
         
         UserType(String description) {
             this.description = description;
-        }
-        
-        public String getDescription() {
-            return description;
         }
     }
     
@@ -93,26 +91,22 @@ public class User {
         DISABLED(0, "禁用"),
         ENABLED(1, "启用");
         
+        @Getter
         private final Integer code;
+        
+        @Getter
         private final String description;
         
         Status(Integer code, String description) {
             this.code = code;
             this.description = description;
         }
-        
-        public Integer getCode() {
-            return code;
-        }
-        
-        public String getDescription() {
-            return description;
-        }
     }
     
     /**
      * 判断是否为管理员
      */
+    @SuppressWarnings("unused")
     public boolean isAdmin() {
         return UserType.ADMIN.name().equals(this.userType);
     }
@@ -120,6 +114,7 @@ public class User {
     /**
      * 判断是否为企业用户
      */
+    @SuppressWarnings("unused")
     public boolean isEnterprise() {
         return UserType.ENTERPRISE.name().equals(this.userType);
     }
@@ -127,6 +122,7 @@ public class User {
     /**
      * 判断是否为普通用户
      */
+    @SuppressWarnings("unused")
     public boolean isNormal() {
         return UserType.NORMAL.name().equals(this.userType);
     }
@@ -134,6 +130,7 @@ public class User {
     /**
      * 判断是否为系统用户
      */
+    @SuppressWarnings("unused")
     public boolean isSystem() {
         return UserType.SYSTEM.name().equals(this.userType);
     }
@@ -141,6 +138,7 @@ public class User {
     /**
      * 判断用户是否启用
      */
+    @SuppressWarnings("unused")
     public boolean isEnabled() {
         return Status.ENABLED.getCode().equals(this.status);
     }
@@ -148,6 +146,7 @@ public class User {
     /**
      * 判断用户是否禁用
      */
+    @SuppressWarnings("unused")
     public boolean isDisabled() {
         return Status.DISABLED.getCode().equals(this.status);
     }

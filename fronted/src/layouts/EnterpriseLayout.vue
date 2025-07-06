@@ -12,7 +12,7 @@
       </div>
     </aside>
     <!-- Primary sidebar -->
-    <el-aside width="220px" class="primary-sidebar">
+    <el-aside width="220px !important" class="primary-sidebar">
       <div class="logo">测盟汇 - 企业版</div>
       <el-input v-model="search" placeholder="搜索菜单" class="menu-search" clearable />
       <el-menu
@@ -80,24 +80,29 @@ const user = computed(() => userStore.user)
 
 // Secondary sidebar menu
 const secondaryMenu = [
-  { key: 'home', icon: HomeFilled, label: '首页' },
-  { key: 'content', icon: Document, label: '内容' },
+  { key: 'content', icon: Document, label: '行业动态' },
+  { key: 'home', icon: HomeFilled, label: '课程管理' },
   { key: 'meeting', icon: Calendar, label: '会议管理' },
   { key: 'more', icon: MoreFilled, label: '更多' },
 ]
 
 // 根据当前路由设置 activeSecondary
 const getActiveSecondary = (path) => {
-  if (path.includes('/home') || path.includes('/my-courses')) {
-    return 'home'
-  } else if (path.includes('/news')) {
+  if (path.includes('/news')) {
     return 'content'
+  } else if (
+    path.includes('/home') ||
+    path.includes('/my-courses') ||
+    path.includes('/courses') ||
+    path.includes('/course-manage')
+  ) {
+    return 'home'
   } else if (path.includes('/meeting')) {
     return 'meeting'
   } else if (path.includes('/settings')) {
     return 'more'
   }
-  return 'home'
+  return 'content'
 }
 
 const activeSecondary = ref(getActiveSecondary(route.path))
@@ -112,8 +117,8 @@ watch(() => route.path, (newPath) => {
 // 企业用户专用菜单
 const enterpriseMenu = {
   home: [
-    { label: '企业首页', path: '/enterprise/home', icon: HomeFilled },
-    { label: '我的课程', path: '/enterprise/my-courses', icon: Collection },
+    { label: '课程搜索', path: '/enterprise/courses', icon: Collection },
+    { label: '我的课程', path: '/enterprise/my-courses', icon: HomeFilled },
   ],
   content: [
     { label: '我的动态', path: '/enterprise/news', icon: Document },
@@ -164,6 +169,9 @@ const handleMenuSelect = (index) => {
 .enterprise-layout {
   background: #F7F9FA;
   font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Arial', sans-serif;
+  display: flex !important;
+  flex-direction: row !important;
+  min-width: 0 !important;
 }
 .secondary-sidebar {
   width: 64px;
@@ -175,6 +183,9 @@ const handleMenuSelect = (index) => {
   padding-top: 16px;
   box-shadow: 2px 0 8px #E3E8EE22;
   z-index: 2;
+  flex: 0 0 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
 }
 .icon-btn {
   width: 48px;
@@ -201,6 +212,11 @@ const handleMenuSelect = (index) => {
   border-right: 1px solid #E3E8EE;
   min-height: 100vh;
   z-index: 1;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  box-sizing: border-box;
+  flex: 0 0 220px !important;
 }
 .logo {
   display: flex;
@@ -256,6 +272,7 @@ const handleMenuSelect = (index) => {
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
   border-top: 1px solid #F3F2F0;
+  min-width: 0 !important;
 }
 .header-title {
   font-size: 20px;
@@ -279,8 +296,43 @@ const handleMenuSelect = (index) => {
   font-weight: 500;
   cursor: pointer;
 }
+.el-container {
+  min-width: 0 !important;
+}
+.el-main {
+  min-width: 0 !important;
+}
 .main-content {
   background: #F7F9FA;
   padding: 20px;
+  width: 100%;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+</style> 
+}
+.avatar {
+  border: 2px solid #A3BCE2;
+}
+.role-tag {
+  font-weight: bold;
+}
+.el-dropdown-link {
+  color: #2D3A4B;
+  font-weight: 500;
+  cursor: pointer;
+}
+.el-container {
+  min-width: 0 !important;
+}
+.el-main {
+  min-width: 0 !important;
+}
+.main-content {
+  background: #F7F9FA;
+  padding: 20px;
+  width: 100%;
+  min-width: 0 !important;
+  box-sizing: border-box;
 }
 </style> 

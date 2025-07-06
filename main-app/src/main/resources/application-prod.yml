@@ -49,3 +49,7 @@ news:
     driver-class-name: com.kingbase8.Driver
   redis:
     database: 3
+
+jwt:
+  secret: cemenghui-secret-key
+  expiration: 86400000

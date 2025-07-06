@@ -63,7 +63,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
-import { HomeFilled, Document, Collection, Calendar, UserFilled, DataAnalysis, MoreFilled } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { HomeFilled, Document, Collection, Calendar, UserFilled, DataAnalysis, MoreFilled, Reading } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -90,7 +91,7 @@ const secondaryMenu = [
 const getActiveSecondary = (path) => {
   if (path.includes('/home') || path.includes('/news')) {
     return 'home'
-  } else if (path.includes('/course')) {
+  } else if (path.includes('/course') || path.includes('/my-courses')) {
     return 'content'
   } else if (path.includes('/meeting')) {
     return 'meeting'
@@ -116,7 +117,8 @@ const userMenu = {
     { label: '行业动态', path: '/user/news', icon: Document },
   ],
   content: [
-    { label: '课程管理', path: '/user/course', icon: Collection },
+    { label: '课程搜索', path: '/user/course', icon: Collection },
+    { label: '我的课程', path: '/user/my-courses', icon: Reading },
   ],
   meeting: [
     { label: '会议管理', path: '/user/meeting', icon: Calendar },
@@ -156,7 +158,15 @@ const handleMenuSelect = (index) => {
   }
   
   // 执行路由跳转
-  router.push(index)
+  try {
+    router.push(index).catch(err => {
+      console.error('路由跳转失败:', err)
+      ElMessage.error('页面跳转失败，请稍后重试')
+    })
+  } catch (error) {
+    console.error('路由跳转异常:', error)
+    ElMessage.error('页面跳转异常，请稍后重试')
+  }
 }
 </script>
 
@@ -164,6 +174,9 @@ const handleMenuSelect = (index) => {
 .user-layout {
   background: #F7F9FA;
   font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Arial', sans-serif;
+  display: flex !important;
+  flex-direction: row !important;
+  min-width: 0 !important;
 }
 .secondary-sidebar {
   width: 64px;
@@ -175,6 +188,9 @@ const handleMenuSelect = (index) => {
   padding-top: 16px;
   box-shadow: 2px 0 8px #E3E8EE22;
   z-index: 2;
+  flex: 0 0 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
 }
 .icon-btn {
   width: 48px;
@@ -201,6 +217,11 @@ const handleMenuSelect = (index) => {
   border-right: 1px solid #E3E8EE;
   min-height: 100vh;
   z-index: 1;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  box-sizing: border-box;
+  flex: 0 0 220px !important;
 }
 .logo {
   display: flex;
@@ -256,6 +277,7 @@ const handleMenuSelect = (index) => {
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
   border-top: 1px solid #F3F2F0;
+  min-width: 0 !important;
 }
 .header-title {
   font-size: 20px;
@@ -279,8 +301,48 @@ const handleMenuSelect = (index) => {
   font-weight: 500;
   cursor: pointer;
 }
+.el-container {
+  min-width: 0 !important;
+}
+.el-main {
+  min-width: 0 !important;
+}
 .main-content {
   background: #F7F9FA;
   padding: 20px;
+  width: 100%;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+</style> 
+}
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.avatar {
+  border: 2px solid #B7AFA3;
+}
+.role-tag {
+  font-weight: bold;
+}
+.el-dropdown-link {
+  color: #2D3A4B;
+  font-weight: 500;
+  cursor: pointer;
+}
+.el-container {
+  min-width: 0 !important;
+}
+.el-main {
+  min-width: 0 !important;
+}
+.main-content {
+  background: #F7F9FA;
+  padding: 20px;
+  width: 100%;
+  min-width: 0 !important;
+  box-sizing: border-box;
 }
 </style> 

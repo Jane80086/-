@@ -3,6 +3,6 @@ spring:
     active: system
 
 jwt:
-  secret: IzO09+6pSqwRtam00lc+y+/UH1BoSrOJsK8Eo4PCvrg=
+  secret: cemenghui-secret-key
   access-expire: 86400000
   refresh-expire: 604800000

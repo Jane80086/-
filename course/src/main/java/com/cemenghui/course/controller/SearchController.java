@@ -101,7 +101,6 @@ public class SearchController {
                 level = (String) searchParams.get("level");
                 status = (String) searchParams.get("status");
             }
-            
             // 这里可以实现高级搜索逻辑
             // 简化实现，使用基础搜索
             List<Course> courses = courseService.searchCourses(keyword != null ? keyword : "");

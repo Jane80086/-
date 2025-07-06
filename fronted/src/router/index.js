@@ -12,11 +12,12 @@ import CourseEdit from '../views/CourseEdit.vue'
 import CourseCreate from '../views/CourseCreate.vue'
 import CoursePlayer from '../views/CoursePlayer.vue'
 import AIRecommend from '../views/AIRecommend.vue'
-import MyCourses from '../views/MyCourses.vue'
+// import MyCourses from '../views/MyCourses.vue' // 不再需要这个导入
 import CourseCreateNormal from '../views/CourseCreateNormal.vue'
 import CourseCreateEnterprise from '../views/CourseCreateEnterprise.vue'
 import CourseManageAdmin from '../views/CourseManageAdmin.vue'
 import Placeholder from '../views/Placeholder.vue'
+import CourseSearch from '../views/enterprise/CourseSearch.vue'
 
 const routes = [
   { path: '/', redirect: (to) => {
@@ -89,6 +90,8 @@ const routes = [
       { path: 'news/:id', component: () => import('@/views/user/NewsDetail.vue') },
       { path: 'course', component: () => import('@/views/user/CourseList.vue') },
       { path: 'course/:id', component: () => import('@/views/user/CourseDetail.vue') },
+      { path: 'course/:id/play', component: () => import('@/views/user/CoursePlay.vue') },
+      { path: 'my-courses', component: () => import('@/views/user/MyCourses.vue') },
       { path: 'meeting', component: () => import('@/views/user/MeetingDetailView.vue') },
       { path: 'meeting/:id', component: () => import('@/views/user/MeetingDetailView.vue') },
       { path: 'meeting/stats', component: () => import('@/views/user/ReviewView.vue') },
@@ -109,11 +112,14 @@ const routes = [
       { path: 'news/:id', component: () => import('@/views/enterprise/NewsDetail.vue') },
       { path: 'course', component: () => import('@/views/enterprise/CourseList.vue') },
       { path: 'course/:id', component: () => import('@/views/enterprise/CourseDetail.vue') },
+      { path: 'course/:id/play', component: () => import('@/views/user/CoursePlay.vue') },
       { path: 'my-courses', component: () => import('@/views/enterprise/MyCourses.vue') },
+      { path: 'courses', component: CourseSearch },
       { path: 'meeting', component: () => import('@/views/enterprise/MeetingDetailView.vue') },
       { path: 'meeting/:id', component: () => import('@/views/enterprise/MeetingDetailView.vue') },
       { path: 'meeting-stats', component: () => import('@/views/enterprise/ReviewView.vue') },
       { path: 'settings', component: () => import('@/views/enterprise/Settings.vue') },
+      { path: 'course-search', component: () => import('@/views/enterprise/CourseSearch.vue') },
       // 其他enterprise页面可继续添加
     ]
   },
@@ -131,11 +137,14 @@ const routes = [
       { path: 'courses', component: () => import('@/views/admin/CourseAudit.vue') },
       { path: 'course', component: () => import('@/views/admin/CourseList.vue') },
       { path: 'course/:id', component: () => import('@/views/admin/CourseDetail.vue') },
+      { path: 'course/:id/play', component: () => import('@/views/admin/CoursePlay.vue') },
       { path: 'meetings', component: () => import('@/views/admin/MeetingAudit.vue') },
       { path: 'meeting', component: () => import('@/views/admin/MeetingDetailView.vue') },
       { path: 'meeting/:id', component: () => import('@/views/admin/MeetingDetailView.vue') },
       { path: 'meeting-stats', component: () => import('@/views/admin/ReviewView.vue') },
       { path: 'settings', component: () => import('@/views/admin/Settings.vue') },
+      { path: 'course-search', component: () => import('@/views/admin/CourseSearch.vue') },
+      { path: 'my-courses', component: () => import('@/views/admin/MyCourses.vue') },
       // 其他admin页面可继续添加
     ]
   },
@@ -149,7 +158,7 @@ const routes = [
   { path: '/course/:id/edit', name: 'CourseEdit', component: CourseEdit },
   { path: '/create', name: 'CourseCreate', component: CourseCreate },
   { path: '/ai-recommend', name: 'AIRecommend', component: AIRecommend },
-  { path: '/my-courses', name: 'MyCourses', component: MyCourses },
+  // { path: '/my-courses', name: 'MyCourses', component: MyCourses }, // 注释掉通用路由，避免冲突
   { path: '/create-normal', name: 'CourseCreateNormal', component: CourseCreateNormal },
   { path: '/create-enterprise', name: 'CourseCreateEnterprise', component: CourseCreateEnterprise },
   { path: '/manage-admin', name: 'CourseManageAdmin', component: CourseManageAdmin },
@@ -161,7 +170,6 @@ const routes = [
   
   // 企业用户功能路由
   { path: '/enterprise/training', component: Placeholder },
-  { path: '/enterprise/courses', component: Placeholder },
   { path: '/enterprise/create-course', component: Placeholder },
   { path: '/enterprise/analytics', component: Placeholder },
   { path: '/enterprise/reports', component: Placeholder },
@@ -207,6 +215,14 @@ router.beforeEach((to, from, next) => {
   
   // 只在访问 / 时做角色跳转，其他页面允许直接访问
   if (to.path === '/') {
+    if (role === 'admin') return next('/admin/dashboard')
+    if (role === 'enterprise') return next('/enterprise/home')
+    return next('/user/home')
+  }
+  next()
+})
+
+export default router 
     if (role === 'admin') return next('/admin/dashboard')
     if (role === 'enterprise') return next('/enterprise/home')
     return next('/user/home')

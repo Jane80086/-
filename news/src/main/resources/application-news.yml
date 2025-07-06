@@ -48,7 +48,7 @@ mybatis-plus:
   type-aliases-package: com.cemenghui.news.entity
 
 jwt:
-  secret: your_jwt_secret_key_please_change
+  secret: cemenghui-secret-key
   expiration: 86400000
 
 minio:

@@ -61,7 +61,7 @@ mybatis-plus:
   type-aliases-package: com.cemenghui.system.entity
 
 jwt:
-  secret: IzO09+6pSqwRtam00lc+y+/UH1BoSrOJsK8Eo4PCvrg=
+  secret: cemenghui-secret-key
   expiration: 86400000
   access-expire: 86400000
   refresh-expire: 604800000

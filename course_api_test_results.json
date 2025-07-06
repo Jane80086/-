@@ -1,0 +1,210 @@
+[
+  {
+    "test_name": "健康检查",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:56",
+    "status_code": 200,
+    "response": "{\"code\":-1,\"msg\":\"系统异常: Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; nested exception is java.lang.NumberFormatException: For input string: \\\"health\\\"\"}",
+    "error": null
+  },
+  {
+    "test_name": "获取课程列表",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:56",
+    "status_code": 200,
+    "response": "{\"code\":\"0\",\"msg\":\"使用模拟数据\",\"data\":[{\"id\":1,\"title\":\"Java基础教程\",\"description\":\"Java编程基础入门课程，适合零基础学习者\",\"instructorId\":1,\"price\":0.0,\"duration\":120,\"level\":\"BEGINNER\",\"category\":\"编程开发\",\"status\":1,\"imageUrl\":\"https://via.placeholder.com/300x200\",\"videoUrl\":\"https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4\",\"viewCount\":0,\"rating\":0,\"likeCount\":0,\"favoriteCount\":0,\"deleted\":0},{\"id\":2,\"title\":\"Spring Boot实战\",\"description\":\"Spring Boot框架开发实战课程\",\"instructorId\":2,\"price\":99.0,\"duration\":180,\"level\":\"BEGINNER\",\"category\":\"框架开发\",\"status\":1,\"imageUrl\":\"https://via.placeholder.com/300x200\",\"videoUrl\":\"https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4\",\"viewCount\":0,\"rating\":0,\"likeCount\":0,\"favoriteCount\":0,\"deleted\":0},{\"id\":3,\"title\":\"Vue.js前端开发\",\"description\":\"Vue.js前端框架开发教程\",\"instructorId\":3,\"price\":79.0,\"duration\":150,\"level\":\"BEGINNER\",\"category\":\"前端开发\",\"status\":1,\"imageUrl\":\"https://via.placeholder.com/300x200\",\"videoUrl\":\"https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4\",\"viewCount\":0,\"rating\":0,\"likeCount\":0,\"favoriteCount\":0,\"deleted\":0}]}",
+    "error": null
+  },
+  {
+    "test_name": "获取课程详情 (ID: 1)",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:56",
+    "status_code": 200,
+    "response": "{\"code\":\"0\",\"msg\":\"操作成功\"}",
+    "error": null
+  },
+  {
+    "test_name": "课程搜索",
+    "success": false,
+    "timestamp": "2025-07-06 12:42:56",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "创建课程",
+    "success": false,
+    "timestamp": "2025-07-06 12:42:57",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "AI课程优化预览",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":\"0\",\"msg\":\"AI优化预览\",\"data\":{\"optimized_description\":\"原始课程描述\",\"optimized_title\":\"原始课程标题\"}}",
+    "error": null
+  },
+  {
+    "test_name": "用户登录",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":\"-1\",\"msg\":\"用户名或密码错误\"}",
+    "error": null
+  },
+  {
+    "test_name": "用户注册",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":-1,\"msg\":\"系统异常: Validation failed for argument [0] in public com.cemenghui.course.common.Result com.cemenghui.course.controller.UserController.register(com.cemenghui.entity.User): [Field error in object 'user' on field 'userType': rejected value [null]; codes [NotBlank.user.userType,NotBlank.userType,NotBlank.java.lang.String,NotBlank]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [user.userType,userType]; arguments []; default message [userType]]; default message [用户类型不能为空]] \"}",
+    "error": null
+  },
+  {
+    "test_name": "获取待审核课程",
+    "success": false,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "课程审核",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "文件上传",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":-1,\"msg\":\"系统异常: Required request parameter 'folder' for method parameter type String is not present\"}",
+    "error": null
+  },
+  {
+    "test_name": "获取文件列表",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":-1,\"msg\":\"系统异常: Required request parameter 'folder' for method parameter type String is not present\"}",
+    "error": null
+  },
+  {
+    "test_name": "高级搜索",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":-1,\"msg\":\"系统异常: Request method 'POST' not supported\"}",
+    "error": null
+  },
+  {
+    "test_name": "搜索建议",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":-1,\"msg\":\"系统异常: Required request parameter 'query' for method parameter type String is not present\"}",
+    "error": null
+  },
+  {
+    "test_name": "课程统计",
+    "success": false,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "用户统计",
+    "success": false,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "获取问答列表",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":-1,\"msg\":\"系统异常: Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; nested exception is java.lang.NumberFormatException: For input string: \\\"list\\\"\"}",
+    "error": null
+  },
+  {
+    "test_name": "提交问题",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":\"0\",\"msg\":\"问题提交成功\",\"data\":{\"id\":1,\"courseId\":1,\"userId\":1,\"question\":\"这是一个测试问题\",\"likeCount\":0,\"reportCount\":0,\"createdAt\":\"2025-07-06T12:42:58.5375462\",\"deleted\":0}}",
+    "error": null
+  },
+  {
+    "test_name": "AI聊天",
+    "success": false,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "AI推荐",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "获取推荐课程",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":\"0\",\"msg\":\"操作成功\"}",
+    "error": null
+  },
+  {
+    "test_name": "获取热门课程",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": 200,
+    "response": "{\"code\":-1,\"msg\":\"系统异常: Request method 'GET' not supported\"}",
+    "error": null
+  },
+  {
+    "test_name": "个性化推荐",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "课程优化",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "AI问答",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  },
+  {
+    "test_name": "获取用户课程",
+    "success": true,
+    "timestamp": "2025-07-06 12:42:58",
+    "status_code": null,
+    "response": null,
+    "error": null
+  }
+]

@@ -2,6 +2,8 @@ package com.cemenghui.service.impl;
 
 import com.cemenghui.dao.UserDao;
 import com.cemenghui.entity.User;
+import com.cemenghui.entity.User.Status;
+import com.cemenghui.entity.User.UserType;
 import com.cemenghui.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -116,7 +118,7 @@ public class UserServiceImpl implements UserService {
             return false;
         }
         
-        user.setStatus(User.Status.ENABLED.getCode());
+        user.setStatus(Status.ENABLED.getCode());
         user.setUpdateTime(LocalDateTime.now());
         userDao.updateById(user);
         log.info("启用用户成功: {}", user.getUsername());
@@ -131,7 +133,7 @@ public class UserServiceImpl implements UserService {
             return false;
         }
         
-        user.setStatus(User.Status.DISABLED.getCode());
+        user.setStatus(Status.DISABLED.getCode());
         user.setUpdateTime(LocalDateTime.now());
         userDao.updateById(user);
         log.info("禁用用户成功: {}", user.getUsername());
@@ -176,22 +178,22 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findAdminUsers() {
-        return userDao.findByUserType(User.UserType.ADMIN.name());
+        return userDao.findByUserType(UserType.ADMIN.name());
     }
     
     @Override
     public List<User> findEnterpriseUsers() {
-        return userDao.findByUserType(User.UserType.ENTERPRISE.name());
+        return userDao.findByUserType(UserType.ENTERPRISE.name());
     }
     
     @Override
     public List<User> findNormalUsers() {
-        return userDao.findByUserType(User.UserType.NORMAL.name());
+        return userDao.findByUserType(UserType.NORMAL.name());
     }
     
     @Override
     public List<User> findSystemUsers() {
-        return userDao.findByUserType(User.UserType.SYSTEM.name());
+        return userDao.findByUserType(UserType.SYSTEM.name());
     }
     
     @Override

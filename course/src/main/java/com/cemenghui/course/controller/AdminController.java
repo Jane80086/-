@@ -109,7 +109,7 @@ public class AdminController {
             return Result.success("用户已封禁", result);
         } catch (Exception e) {
             return Result.fail("封禁用户失败: " + e.getMessage());
-    }
+        }
     }
     
     @PostMapping("/user/{id}/unban")
@@ -216,20 +216,16 @@ public class AdminController {
     public Result getDashboard() {
         try {
             Map<String, Object> dashboard = new HashMap<>();
-            
             // 用户统计
             long totalUsers = userService.count();
             dashboard.put("totalUsers", totalUsers);
-            
             // 课程统计
             List<Course> courses = courseService.listCourses();
             dashboard.put("totalCourses", courses != null ? courses.size() : 0);
-            
             // 其他统计信息
             dashboard.put("totalComments", 0);
             dashboard.put("totalQuestions", 0);
             dashboard.put("pendingReviews", 0);
-            
             return Result.success(dashboard);
         } catch (Exception e) {
             return Result.fail("获取仪表板数据失败: " + e.getMessage());
