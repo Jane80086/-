@@ -48,6 +48,9 @@ public class RegisterRequestDTO {
     // 昵称
     private String nickname;
 
+    // 部门（管理员注册时可用）
+    private String department;
+
     // 手动添加getter和setter方法
     public String getEnterpriseName() {
         return enterpriseName;
@@ -143,5 +146,13 @@ public class RegisterRequestDTO {
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
     }
 }
