@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 import java.util.regex.Pattern;
 
 @Service
-public class RegisterServiceImpl implements RegisterService {
+public abstract class RegisterServiceImpl implements RegisterService {
 
     @Autowired
     private EnterpriseUserMapper enterpriseUserMapper; // 假设的用户 Mapper
@@ -126,7 +126,7 @@ public class RegisterServiceImpl implements RegisterService {
     }
 
     @Override
-    public RegistResponseDTO register(RegisterRequestDTO requestDTO, CaptchaUtil captchaUtil) {
+    public RegistResponseDTO register(RegisterRequestDTO requestDTO, boolean checkCaptcha, CaptchaUtil captchaUtil) {
         RegistResponseDTO responseDTO = new RegistResponseDTO();
 
         String account = requestDTO.getAccount() != null ? requestDTO.getAccount() : "";
@@ -170,13 +170,15 @@ public class RegisterServiceImpl implements RegisterService {
             return responseDTO;
         }
         // 验证码校验（从Redis获取）
-        String verificationCode = requestDTO.getVerificationCode();
-        String uuid = account; // 可根据实际前端传递的uuid调整
-        String storedCaptcha = redisUtil.get("captcha:" + uuid);
-        if (verificationCode == null || storedCaptcha == null || !captchaUtil.validateCaptcha(verificationCode, storedCaptcha)) {
-            responseDTO.setSuccess(false);
-            responseDTO.setMessage("验证码错误或已过期");
-            return responseDTO;
+        if (checkCaptcha) {
+            String verificationCode = requestDTO.getVerificationCode();
+            String uuid = account; // 可根据实际前端传递的uuid调整
+            String storedCaptcha = redisUtil.get("captcha:" + uuid);
+            if (verificationCode == null || storedCaptcha == null || !captchaUtil.validateCaptcha(verificationCode, storedCaptcha)) {
+                responseDTO.setSuccess(false);
+                responseDTO.setMessage("验证码错误或已过期");
+                return responseDTO;
+            }
         }
 
         // 2. 判断账号前4位，决定注册为管理员还是普通用户
