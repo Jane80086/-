@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import com.cemenghui.system.util.CaptchaUtil;
 
 @RestController
 @RequestMapping("/api/register")
@@ -19,6 +20,8 @@ public class RegisterController {
 
     @Autowired
     private RegisterService registerService;
+    @Autowired
+    private CaptchaUtil captchaUtil;
 
     /**
      * 企业用户注册接口
@@ -27,8 +30,8 @@ public class RegisterController {
      */
     @PostMapping
     public RegistResponseDTO register(@RequestBody @Valid RegisterRequestDTO requestDTO) {
-        // 调用服务层执行注册逻辑
-        return registerService.register(requestDTO);
+        // 调用服务层执行注册逻辑，默认校验验证码
+        return registerService.register(requestDTO, true, captchaUtil);
     }
 
     /**
