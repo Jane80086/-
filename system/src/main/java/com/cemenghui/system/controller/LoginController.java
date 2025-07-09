@@ -1,10 +1,10 @@
-package com.system.controller;
+package com.cemenghui.system.controller;
 
-import com.system.entity.EnterpriseUser;
-import com.system.service.UserManagementService;
-import com.system.util.CaptchaUtil;
-import com.system.dto.LoginRequestDTO;
-import com.system.dto.LoginResponseDTO;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.service.UserManagementService;
+import com.cemenghui.system.util.CaptchaUtil;
+import com.cemenghui.system.dto.LoginRequestDTO;
+import com.cemenghui.system.dto.LoginResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
