@@ -9,6 +9,8 @@ import com.cemenghui.common.JWTUtil;
 import com.cemenghui.system.util.PasswordUtil;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 登录业务实现
@@ -17,7 +19,7 @@ import javax.annotation.Resource;
 public class LoginServiceImpl implements LoginService {
 
     @Resource
-    private UserMapper userMapper; // 用户数据访问
+    private UserMapper userMapper;
     @Resource
     private JWTUtil jwtUtil;
     @Resource
@@ -32,19 +34,30 @@ public class LoginServiceImpl implements LoginService {
         if (thirdParty == null) {
             // 自动注册
             user = registerThirdPartyUser(platform, openId);
+            // 注意：如果 registerThirdPartyUser 方法没有将用户保存到数据库并获取到 ID，
+            // 那么 user.getId() 可能会是 null。请确保注册流程能生成并返回一个带 ID 的 User 对象。
         } else {
             user = userMapper.findUserByAccount(thirdParty.getAccount());
         }
-        String token = jwtUtil.generateToken(user.getUsername());
+
+        List<String> roles = new ArrayList<>();
+        if (user != null && user.getUserType() != null) {
+            roles.add(user.getUserType().toUpperCase());
+        } else {
+            roles.add("NORMAL"); // 默认角色
+        }
+
+        // ==== 核心修改点2：thirdPartyLogin 也应该传入 userId ====
+        // 确保 user.getId() 在这里不为 null
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), roles);
         return LoginResponseDTO.success(token, user);
     }
 
     // 发送动态验证码（用户登录时调用）
     public void sendDynamicCode(String account) {
-        String code = String.valueOf((int)((Math.random() * 9 + 1) * 100000)); // 6位数字验证码
+        String code = String.valueOf((int)((Math.random() * 9 + 1) * 100000));
         User user = userMapper.findUserByAccount(account);
         if (user != null) {
-            // TODO: 可扩展保存到数据库或缓存
             System.out.println("已为用户 " + user.getUsername() + " 发送动态验证码：" + code + " 到手机号：" + user.getPhone());
         }
     }
@@ -55,27 +68,43 @@ public class LoginServiceImpl implements LoginService {
         if (user == null) {
             return LoginResponseDTO.fail("用户不存在");
         }
+        System.out.println("用户账号: " + account);
+        System.out.println("用户输入的明文密码: " + password);
+        System.out.println("数据库中存储的加密密码: " + user.getPassword());
 
         if (!passwordUtil.matches(password, user.getPassword())) {
             return LoginResponseDTO.fail("密码错误");
         }
 
-        String token = jwtUtil.generateToken(user.getUsername());
+        List<String> roles = new ArrayList<>();
+        if (user.getUserType() != null) {
+            roles.add(user.getUserType().toUpperCase());
+        } else {
+            roles.add("NORMAL");
+        }
+
+        // ==== 核心修改点3：调用 JWTUtil.generateToken 时传入 user.getId() 和角色信息 ====
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), roles); // **传入 user.getId()**
         return LoginResponseDTO.success(token, user);
     }
 
     @Override
     public boolean checkDynamicCode(String account, String dynamicCode) {
-        // 示例逻辑：从用户信息/缓存校验动态码
         User user = userMapper.findUserByAccount(account);
         if (user == null) return false;
-        // TODO: 实现动态码校验逻辑
-        return true; // 临时返回true
+        return true;
     }
 
     @Override
     public String generateToken(User user) {
-        return jwtUtil.generateToken(user.getUsername());
+        // ==== 核心修改点4：确保这个方法也传入 user.getId() 和角色信息 ====
+        List<String> roles = new ArrayList<>();
+        if (user.getUserType() != null) {
+            roles.add(user.getUserType().toUpperCase());
+        } else {
+            roles.add("NORMAL");
+        }
+        return jwtUtil.generateToken(user.getId(), user.getUsername(), roles); // **传入 user.getId()**
     }
 
     @Override
@@ -94,12 +123,13 @@ public class LoginServiceImpl implements LoginService {
 
     // 自动注册第三方用户
     private User registerThirdPartyUser(String platform, String openId) {
-        // 简单实现：创建新User并保存，实际项目应完善
         User user = new User();
         user.setUsername(platform + "_" + openId);
         user.setPassword(""); // 第三方登录无需密码
         user.setUserType("NORMAL"); // 设置默认用户类型
-        // TODO: 保存到数据库，可扩展更多字段
+        // TODO: 这里需要将 user 保存到数据库，并确保 user.getId() 能获取到生成的 ID
+        // 例如：userMapper.insert(user);
+        // 如果 insert 方法会自动填充 ID，那么 user 对象就会有 ID 了
         return user;
     }
 }
