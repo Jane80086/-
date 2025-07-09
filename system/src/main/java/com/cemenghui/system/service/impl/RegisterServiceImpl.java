@@ -1,15 +1,15 @@
-package com.system.service.impl;
+package com.cemenghui.system.service.impl;
 
-import com.system.dto.RegisterRequestDTO;
-import com.system.dto.RegistResponseDTO;
-import com.system.entity.EnterpriseUser;
-import com.system.entity.Enterprise;
-import com.system.entity.AdminUser;
-import com.system.repository.EnterpriseMapper;
-import com.system.repository.EnterpriseUserMapper;
-import com.system.repository.AdminUserMapper;
-import com.system.service.RegisterService;
-import com.system.util.CaptchaUtil;
+import com.cemenghui.system.dto.RegisterRequestDTO;
+import com.cemenghui.system.dto.RegistResponseDTO;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.entity.Enterprise;
+import com.cemenghui.system.entity.AdminUser;
+import com.cemenghui.system.repository.EnterpriseMapper;
+import com.cemenghui.system.repository.EnterpriseUserMapper;
+import com.cemenghui.system.repository.AdminUserMapper;
+import com.cemenghui.system.service.RegisterService;
+import com.cemenghui.system.util.CaptchaUtil;
 import com.system.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
