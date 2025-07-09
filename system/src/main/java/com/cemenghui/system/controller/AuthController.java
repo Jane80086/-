@@ -19,10 +19,14 @@ public class AuthController {
     @Autowired
     private CaptchaUtil captchaUtil;
 
+    @Autowired
+    private RedisUtil redisUtil;
+
     @GetMapping("/captcha")
-    public void getCaptcha(HttpServletResponse response) throws IOException {
+    public void getCaptcha(HttpServletResponse response, @RequestParam("uuid") String uuid) throws IOException {
         String captcha = captchaUtil.generateCaptcha(6);
-        // TODO: 存入 session/redis 以便校验
+        // 存入 Redis，key为uuid，5分钟有效
+        redisUtil.set("captcha:" + uuid, captcha, 300);
 
         int width = 120, height = 40;
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
