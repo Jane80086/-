@@ -115,6 +115,26 @@
             <artifactId>main-app</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+              <!-- Springdoc OpenAPI 依赖，兼容Spring Boot 2.6+ -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-ui</artifactId>
+      <version>1.7.0</version>
+    </dependency>
+    <!-- JUnit5单元测试依赖 -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.9.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <!-- Redis缓存依赖 -->
+  <dependency>
+    <groupId>redis.clients</groupId>
+    <artifactId>jedis</artifactId>
+    <version>4.4.3</version>
+  </dependency>
     </dependencies>
     <build>
         <plugins>
