@@ -47,18 +47,4 @@ public class AuthController {
         ImageIO.write(image, "png", response.getOutputStream());
     }
 
-    /**
-
-     * 登录接口
-
-     */
-
-    @PostMapping("/login")
-
-    public LoginResponseDTO login(@RequestBody LoginRequestDTO request) {
-
-        return loginService.login(request.getAccount(), request.getPassword());
-
-    }
-
 }
