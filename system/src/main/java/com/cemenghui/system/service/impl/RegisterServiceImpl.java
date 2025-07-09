@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 import java.util.regex.Pattern;
 
 @Service
-public abstract class RegisterServiceImpl implements RegisterService {
+public class RegisterServiceImpl implements RegisterService {
 
     @Autowired
     private EnterpriseUserMapper enterpriseUserMapper; // 假设的用户 Mapper
@@ -224,6 +224,12 @@ public abstract class RegisterServiceImpl implements RegisterService {
             responseDTO.setMessage("注册失败：" + e.getMessage());
         }
         return responseDTO;
+    }
+
+    @Override
+    public RegistResponseDTO register(RegisterRequestDTO requestDTO, CaptchaUtil captchaUtil) {
+        // 默认走需要验证码校验的逻辑
+        return register(requestDTO, true, captchaUtil);
     }
 
     @Override
