@@ -10,7 +10,7 @@ import com.cemenghui.system.repository.EnterpriseUserMapper;
 import com.cemenghui.system.repository.AdminUserMapper;
 import com.cemenghui.system.service.RegisterService;
 import com.cemenghui.system.util.CaptchaUtil;
-import com.system.util.RedisUtil;
+import com.cemenghui.system.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
