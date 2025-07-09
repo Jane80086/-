@@ -1,24 +1,23 @@
-package com.cemenghui.system.service.impl;
+package com.system.service.impl;
 
-import com.cemenghui.entity.User;
-import com.cemenghui.system.dto.RegisterRequestDTO;
-import com.cemenghui.system.dto.RegistResponseDTO;
-import com.cemenghui.system.entity.Enterprise;
-import com.cemenghui.system.repository.EnterpriseMapper;
-import com.cemenghui.system.repository.UserMapper;
-import com.cemenghui.system.service.RegisterService;
+import com.system.dto.RegisterRequestDTO;
+import com.system.dto.RegistResponseDTO;
+import com.system.entity.EnterpriseUser;
+import com.system.entity.Enterprise;
+import com.system.repository.EnterpriseMapper;
+import com.system.repository.EnterpriseUserMapper;
+import com.system.service.RegisterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
 @Service
 public class RegisterServiceImpl implements RegisterService {
 
     @Autowired
-    private UserMapper userMapper; // 使用main-app的UserMapper
+    private EnterpriseUserMapper enterpriseUserMapper; // 假设的用户 Mapper
     @Autowired
     private EnterpriseMapper enterpriseInfoMapper; // 假设的企业信息 Mapper
 
@@ -86,23 +85,21 @@ public class RegisterServiceImpl implements RegisterService {
 
         // 2. 组装用户实体，插入数据库
         try {
-            User user = new User();
-            user.setUsername(requestDTO.getAccount() != null ? requestDTO.getAccount() : "");
+            EnterpriseUser user = new EnterpriseUser();
+            user.setUserId(java.util.UUID.randomUUID().toString().replace("-", ""));
+            user.setAccount(requestDTO.getAccount() != null ? requestDTO.getAccount() : "");
             user.setPassword(password);
             user.setRealName(requestDTO.getRealName());
             user.setPhone(requestDTO.getPhone() != null ? requestDTO.getPhone() : "");
             user.setEmail(requestDTO.getEmail() != null ? requestDTO.getEmail() : "");
             user.setEnterpriseId(enterpriseId);
             user.setNickname(requestDTO.getNickname() != null ? requestDTO.getNickname() : user.getRealName());
-            user.setUserType("ENTERPRISE"); // 设置为企业用户类型
-            user.setStatus(1); // 启用状态
-            user.setCreateTime(LocalDateTime.now());
-            user.setUpdateTime(LocalDateTime.now());
+            user.setStatus("1");
             System.out.println("注册写入数据库的用户实体：" + user);
-            // TODO: 使用main-app的UserService保存用户
+            enterpriseUserMapper.saveUser(user);
             responseDTO.setSuccess(true);
             responseDTO.setMessage("注册成功");
-            responseDTO.setUserId(user.getId() != null ? user.getId().toString() : "");
+            responseDTO.setUserId(user.getUserId());
         } catch (Exception e) {
             responseDTO.setSuccess(false);
             responseDTO.setMessage("注册失败：" + e.getMessage());
