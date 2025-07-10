@@ -1,4 +1,4 @@
-package com.cemenghui.system.entity;
+package com.system.entity;
 
 import lombok.Data;
 import javax.validation.constraints.NotBlank;

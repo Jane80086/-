@@ -1,4 +1,4 @@
-package com.cemenghui.system.config;
+package com.system.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

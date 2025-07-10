@@ -1,4 +1,4 @@
-package com.cemenghui.system.exception;
+package com.system.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

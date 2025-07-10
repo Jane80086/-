@@ -1,7 +1,7 @@
-package com.cemenghui.system.repository;
+package com.system.repository;
 
-import com.cemenghui.system.entity.AdminUser;
-import com.cemenghui.system.entity.EnterpriseUser;
+import com.system.entity.AdminUser;
+import com.system.entity.EnterpriseUser;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 

@@ -1,4 +1,4 @@
-package com.cemenghui.system.service;
+package com.system.service;
 
 import java.util.Map;
 

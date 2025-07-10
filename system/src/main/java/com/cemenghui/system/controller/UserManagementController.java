@@ -1,23 +1,21 @@
-package com.cemenghui.system.controller;
+package com.system.controller;
 
-import com.cemenghui.entity.User;
-import com.cemenghui.system.dto.UserListDTO;
-import com.cemenghui.system.dto.UserQueryDTO;
-import com.cemenghui.system.entity.UserTemplate;
-import com.cemenghui.system.service.UserManagementService;
-import com.cemenghui.common.JWTUtil;
-import com.cemenghui.system.vo.ResultVO;
+import com.system.dto.UserHistoryListDTO;
+import com.system.dto.UserHistoryQueryDTO;
+import com.system.dto.UserListDTO;
+import com.system.dto.UserQueryDTO;
+import com.system.entity.EnterpriseUser;
+import com.system.entity.UserTemplate;
+import com.system.service.UserManagementService;
+import com.system.util.JWTUtil;
+import com.system.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -52,27 +50,22 @@ public class UserManagementController {
      * 导出用户列表为Excel
      */
     @GetMapping("/export")
-    public ResponseEntity<byte[]> exportUsers() {
-        try {
-            byte[] excelData = userManagementService.exportUsersToExcel();
-            
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("attachment", "用户列表.xlsx");
-            
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(excelData);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+    public void exportUserList(UserQueryDTO query,
+                               @RequestHeader("Authorization") String token,
+                               HttpServletResponse response) throws IOException {
+        if (!isSuperAdmin(token)) {
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), "无权限访问");
+            return;
         }
+
+        userManagementService.exportUserList(query, response);
     }
 
     /**
      * 普通添加用户（不依赖模板）
      */
     @PostMapping
-    public ResponseEntity<ResultVO<String>> createUser(@Valid @RequestBody User user,
+    public ResponseEntity<ResultVO<String>> createUser(@Valid @RequestBody EnterpriseUser user,
                                                        @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
@@ -85,7 +78,7 @@ public class UserManagementController {
      * 修改用户信息
      */
     @PutMapping
-    public ResponseEntity<ResultVO<Boolean>> updateUser(@Valid @RequestBody User user,
+    public ResponseEntity<ResultVO<Boolean>> updateUser(@Valid @RequestBody EnterpriseUser user,
                                                         @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
@@ -98,7 +91,7 @@ public class UserManagementController {
      * 获取用户修改历史
      */
     @GetMapping("/{userId}/history")
-    public ResponseEntity<ResultVO<List>> getUserModifyHistory(@PathVariable Long userId,
+    public ResponseEntity<ResultVO<List>> getUserModifyHistory(@PathVariable String userId,
                                                                @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限访问"), HttpStatus.UNAUTHORIZED);
@@ -109,10 +102,39 @@ public class UserManagementController {
     }
 
     /**
+     * 分页查询用户修改历史
+     */
+    @GetMapping("/history")
+    public ResponseEntity<ResultVO<UserHistoryListDTO>> getUserModifyHistoryPaged(
+            UserHistoryQueryDTO query,
+            @RequestHeader("Authorization") String token) {
+        if (!isSuperAdmin(token)) {
+            return new ResponseEntity<>(ResultVO.unauthorized("无权限访问"), HttpStatus.UNAUTHORIZED);
+        }
+
+        UserHistoryListDTO historyList = userManagementService.getUserModifyHistoryPaged(query);
+        return new ResponseEntity<>(ResultVO.success(historyList), HttpStatus.OK);
+    }
+
+    /**
+     * 恢复用户修改历史
+     */
+    @PostMapping("/history/{historyId}/restore")
+    public ResponseEntity<ResultVO<Boolean>> restoreUserHistory(@PathVariable String historyId,
+                                                                @RequestHeader("Authorization") String token) {
+        if (!isSuperAdmin(token)) {
+            return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
+        }
+
+        boolean result = userManagementService.restoreUserHistory(historyId);
+        return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
+    }
+
+    /**
      * 分配用户权限
      */
     @PostMapping("/{userId}/permissions")
-    public ResponseEntity<ResultVO<Boolean>> assignPermissions(@PathVariable Long userId,
+    public ResponseEntity<ResultVO<Boolean>> assignPermissions(@PathVariable String userId,
                                                                @RequestBody Map<String, Set<String>> permissions,
                                                                @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
@@ -127,7 +149,7 @@ public class UserManagementController {
      * 继承角色权限
      */
     @PostMapping("/{userId}/roles/{roleName}/permissions")
-    public ResponseEntity<ResultVO<Boolean>> inheritRolePermissions(@PathVariable Long userId,
+    public ResponseEntity<ResultVO<Boolean>> inheritRolePermissions(@PathVariable String userId,
                                                                     @PathVariable String roleName,
                                                                     @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
@@ -155,7 +177,7 @@ public class UserManagementController {
      * 删除用户
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResultVO<Boolean>> deleteUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<ResultVO<Boolean>> deleteUser(@PathVariable String id, @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
@@ -167,23 +189,23 @@ public class UserManagementController {
      * 根据userId修改用户信息（适配前端RESTful风格）
      */
     @PutMapping("/{userId}")
-    public ResponseEntity<ResultVO<Boolean>> updateUserById(@PathVariable Long userId,
-                                                            @Valid @RequestBody User user,
+    public ResponseEntity<ResultVO<Boolean>> updateUserById(@PathVariable String userId,
+                                                            @Valid @RequestBody EnterpriseUser user,
                                                             @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
-        user.setId(userId); // 确保userId正确
+        user.setUserId(userId); // 确保userId正确
         boolean result = userManagementService.updateUser(user);
         return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
     }
 
     // 辅助方法：从令牌中获取用户ID
-    private Long getUserIdFromToken(String token) {
+    private String getUserIdFromToken(String token) {
         try {
             String account = jwtUtil.getAccountFromToken(token);
             // 实际项目中应通过account查询userId
-            return 1L; // 示例返回值
+            return "admin_123"; // 示例返回值
         } catch (Exception e) {
             return null;
         }

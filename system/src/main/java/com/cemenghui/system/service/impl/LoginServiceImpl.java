@@ -1,16 +1,17 @@
-package com.cemenghui.system.service.impl;
+package com.system.service.impl;
 
-import com.cemenghui.entity.User;
-import com.cemenghui.system.entity.ThirdPartyAccount;
-import com.cemenghui.system.dto.LoginResponseDTO;
-import com.cemenghui.system.service.LoginService;
-import com.cemenghui.system.repository.UserMapper;
-import com.cemenghui.common.JWTUtil;
-import com.cemenghui.system.util.PasswordUtil;
+import com.system.entity.User;
+import com.system.entity.AdminUser;
+import com.system.entity.EnterpriseUser;
+import com.system.dto.LoginResponseDTO;
+import com.system.service.LoginService;
+import com.system.repository.UserMapper;
+import com.system.repository.AdminUserMapper;
+import com.system.repository.EnterpriseUserMapper;
+import com.system.util.JWTUtil;
+import com.system.util.PasswordUtil;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 登录业务实现
@@ -19,101 +20,80 @@ import java.util.List;
 public class LoginServiceImpl implements LoginService {
 
     @Resource
-    private UserMapper userMapper;
+    private UserMapper userMapper; // 用户数据访问
+    @Resource
+    private AdminUserMapper adminUserMapper;
+    @Resource
+    private EnterpriseUserMapper enterpriseUserMapper;
     @Resource
     private JWTUtil jwtUtil;
     @Resource
     private PasswordUtil passwordUtil;
 
-    // 第三方快捷登录
-    public LoginResponseDTO thirdPartyLogin(String platform, String openId, String accessToken) {
-        // 1. 校验第三方token（略，需调用第三方API）
-        // 2. 查找或注册本地用户
-        ThirdPartyAccount thirdParty = userMapper.findThirdPartyAccount(platform, openId);
-        User user;
-        if (thirdParty == null) {
-            // 自动注册
-            user = registerThirdPartyUser(platform, openId);
-            // 注意：如果 registerThirdPartyUser 方法没有将用户保存到数据库并获取到 ID，
-            // 那么 user.getId() 可能会是 null。请确保注册流程能生成并返回一个带 ID 的 User 对象。
-        } else {
-            user = userMapper.findUserByAccount(thirdParty.getAccount());
-        }
-
-        List<String> roles = new ArrayList<>();
-        if (user != null && user.getUserType() != null) {
-            roles.add(user.getUserType().toUpperCase());
-        } else {
-            roles.add("NORMAL"); // 默认角色
-        }
-
-        // ==== 核心修改点2：thirdPartyLogin 也应该传入 userId ====
-        // 确保 user.getId() 在这里不为 null
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), roles);
-        return LoginResponseDTO.success(token, user);
-    }
-
-    // 发送动态验证码（用户登录时调用）
-    public void sendDynamicCode(String account) {
-        String code = String.valueOf((int)((Math.random() * 9 + 1) * 100000));
-        User user = userMapper.findUserByAccount(account);
-        if (user != null) {
-            System.out.println("已为用户 " + user.getUsername() + " 发送动态验证码：" + code + " 到手机号：" + user.getPhone());
-        }
-    }
-
-    @Override
-    public LoginResponseDTO login(String account, String password) {
-        User user = userMapper.findUserByAccount(account);
-        if (user == null) {
-            return LoginResponseDTO.fail("用户不存在");
-        }
-        System.out.println("用户账号: " + account);
-        System.out.println("用户输入的明文密码: " + password);
-        System.out.println("数据库中存储的加密密码: " + user.getPassword());
+    // 企业用户登录
+    public LoginResponseDTO enterpriseLogin(String account, String password, boolean rememberMe, String dynamicCode) {
+        EnterpriseUser user = enterpriseUserMapper.findByAccount(account);
+        if (user == null) return LoginResponseDTO.fail("用户不存在");
 
         if (!passwordUtil.matches(password, user.getPassword())) {
             return LoginResponseDTO.fail("密码错误");
         }
 
-        List<String> roles = new ArrayList<>();
-        if (user.getUserType() != null) {
-            roles.add(user.getUserType().toUpperCase());
-        } else {
-            roles.add("NORMAL");
+        // 校验动态验证码（假设已发送到用户手机/邮箱/APP）
+        if (!dynamicCode.equals(user.getDynamicCode())) {
+            return LoginResponseDTO.fail("动态验证码错误");
         }
 
-        // ==== 核心修改点3：调用 JWTUtil.generateToken 时传入 user.getId() 和角色信息 ====
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), roles); // **传入 user.getId()**
+        // 记住密码功能（可选：设置cookie/token或更新数据库字段）
+        if (rememberMe) {
+            user.setRemembered(true);
+            enterpriseUserMapper.update(user);
+        }
+
+        String token = jwtUtil.generateToken(user.getAccount());
         return LoginResponseDTO.success(token, user);
+    }
+
+    // 超级管理员登录
+    public LoginResponseDTO adminLogin(String account, String password, String dynamicCode) {
+        AdminUser admin = adminUserMapper.findByAccount(account);
+        if (admin == null) return LoginResponseDTO.fail("管理员不存在");
+
+        if (!passwordUtil.matches(password, admin.getPassword())) {
+            return LoginResponseDTO.fail("密码错误");
+        }
+
+        // 校验动态验证码（假设已发送到绑定设备）
+        if (!dynamicCode.equals(admin.getDynamicCode())) {
+            return LoginResponseDTO.fail("动态验证码错误");
+        }
+
+        String token = jwtUtil.generateToken(admin.getAccount());
+        return LoginResponseDTO.success(token, admin);
+    }
+
+
+    @Override
+    public LoginResponseDTO login(String account, String password) {
+        return null;
     }
 
     @Override
     public boolean checkDynamicCode(String account, String dynamicCode) {
-        User user = userMapper.findUserByAccount(account);
+        // 示例逻辑：从用户信息/缓存校验动态码
+        User user = userMapper.findEnterpriseByAccount(account);
         if (user == null) return false;
-        return true;
+        return dynamicCode.equals(user.getDynamicCode()); // 假设User有dynamicCode字段
     }
 
     @Override
     public String generateToken(User user) {
-        // ==== 核心修改点4：确保这个方法也传入 user.getId() 和角色信息 ====
-        List<String> roles = new ArrayList<>();
-        if (user.getUserType() != null) {
-            roles.add(user.getUserType().toUpperCase());
-        } else {
-            roles.add("NORMAL");
-        }
-        return jwtUtil.generateToken(user.getId(), user.getUsername(), roles); // **传入 user.getId()**
+        return jwtUtil.generateToken(user.getAccount());
     }
 
     @Override
     public boolean validateToken(String token) {
-        try {
-            return jwtUtil.validateToken(token);
-        } catch (Exception e) {
-            return false;
-        }
+        return false;
     }
 
     @Override
@@ -123,13 +103,12 @@ public class LoginServiceImpl implements LoginService {
 
     // 自动注册第三方用户
     private User registerThirdPartyUser(String platform, String openId) {
-        User user = new User();
-        user.setUsername(platform + "_" + openId);
+        // 用 EnterpriseUser 替代 User，保证类型兼容
+        EnterpriseUser user = new EnterpriseUser();
+        user.setAccount(platform + "_" + openId);
         user.setPassword(""); // 第三方登录无需密码
-        user.setUserType("NORMAL"); // 设置默认用户类型
-        // TODO: 这里需要将 user 保存到数据库，并确保 user.getId() 能获取到生成的 ID
-        // 例如：userMapper.insert(user);
-        // 如果 insert 方法会自动填充 ID，那么 user 对象就会有 ID 了
+        // TODO: 保存到数据库，可扩展更多字段
+        userMapper.saveEnterpriseUser(user);
         return user;
     }
 }

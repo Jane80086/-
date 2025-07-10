@@ -1,18 +1,14 @@
-package com.cemenghui.system;
+package com.system;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import com.cemenghui.common.JWTUtil;
+import com.system.util.JWTUtil;
 
-//@SpringBootApplication
-@MapperScan(basePackages = {
-        "com.cemenghui.dao",             // UserDao 所在包
-        "com.cemenghui.system.repository" // EnterpriseMapper 所在包
-})
-@SpringBootApplication(scanBasePackages = "com.cemenghui") // 扫描整个项目根包
+@SpringBootApplication
+@MapperScan("com.system.repository")
 public class SystemApplication implements CommandLineRunner {
 
     @Autowired
@@ -25,6 +21,6 @@ public class SystemApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // 初始化JWT密钥缓存
-        // jwtUtil.initStaticKey();
+        jwtUtil.initStaticKey();
     }
 } 

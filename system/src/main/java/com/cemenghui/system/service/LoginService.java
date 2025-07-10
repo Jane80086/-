@@ -1,7 +1,7 @@
-package com.cemenghui.system.service;
+package com.system.service;
 
-import com.cemenghui.entity.User;
-import com.cemenghui.system.dto.LoginResponseDTO; // 改用DTO
+import com.system.entity.User;
+import com.system.dto.LoginResponseDTO; // 改用DTO
 
 /**
  * 登录业务逻辑接口

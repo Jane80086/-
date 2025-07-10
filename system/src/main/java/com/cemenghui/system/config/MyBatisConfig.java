@@ -1,4 +1,4 @@
-package com.cemenghui.system.config;
+package com.system.config;
 
 import org.springframework.context.annotation.Configuration;
 

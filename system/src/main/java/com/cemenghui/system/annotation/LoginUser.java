@@ -1,4 +1,4 @@
-package com.cemenghui.system.annotation;
+package com.system.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

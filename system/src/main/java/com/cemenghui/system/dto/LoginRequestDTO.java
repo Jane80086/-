@@ -1,8 +1,6 @@
-package com.cemenghui.system.dto;
+package com.system.dto;
 
-import lombok.Data;
-
-@Data
+// @Data
 public class LoginRequestDTO {
 
     // 账号
@@ -22,4 +20,52 @@ public class LoginRequestDTO {
 
     // 动态验证码（超级管理员登录专用）
     private String dynamicCode;
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public boolean isRememberMe() {
+        return rememberMe;
+    }
+
+    public void setRememberMe(boolean rememberMe) {
+        this.rememberMe = rememberMe;
+    }
+
+    public String getVerificationCode() {
+        return verificationCode;
+    }
+
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
+    }
+
+    public String getThirdPartyToken() {
+        return thirdPartyToken;
+    }
+
+    public void setThirdPartyToken(String thirdPartyToken) {
+        this.thirdPartyToken = thirdPartyToken;
+    }
+
+    public String getDynamicCode() {
+        return dynamicCode;
+    }
+
+    public void setDynamicCode(String dynamicCode) {
+        this.dynamicCode = dynamicCode;
+    }
 }

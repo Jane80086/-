@@ -1,14 +1,16 @@
-package com.cemenghui.system.service.impl;
+package com.system.service.impl;
 
-import com.cemenghui.entity.User;
-import com.cemenghui.system.dto.UserListDTO;
-import com.cemenghui.system.dto.UserQueryDTO;
-import com.cemenghui.system.entity.UserModifyHistory;
-import com.cemenghui.system.entity.UserTemplate;
-import com.cemenghui.system.repository.UserManagementMapper;
-import com.cemenghui.system.service.UserManagementService;
-import com.cemenghui.system.util.ExcelUtil;
-import com.cemenghui.system.util.UUIDUtil;
+import com.system.dto.UserHistoryListDTO;
+import com.system.dto.UserHistoryQueryDTO;
+import com.system.dto.UserListDTO;
+import com.system.dto.UserQueryDTO;
+import com.system.entity.EnterpriseUser;
+import com.system.entity.UserModifyHistory;
+import com.system.entity.UserTemplate;
+import com.system.repository.UserManagementMapper;
+import com.system.service.UserManagementService;
+import com.system.util.ExcelUtil;
+import com.system.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +23,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import com.cemenghui.system.repository.EnterpriseMapper;
-import com.cemenghui.system.entity.Enterprise;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import java.io.ByteArrayOutputStream;
+import com.system.repository.EnterpriseMapper;
+import com.system.entity.Enterprise;
+import com.system.repository.EnterpriseUserMapper;
 
 @Service
 public class UserManagementServiceImpl implements UserManagementService {
@@ -36,10 +36,13 @@ public class UserManagementServiceImpl implements UserManagementService {
     @Autowired
     private EnterpriseMapper enterpriseMapper;
 
+    @Autowired
+    private EnterpriseUserMapper enterpriseUserMapper;
+
     @Override
     public UserListDTO getUserList(UserQueryDTO query) {
         UserListDTO result = new UserListDTO();
-        List<User> userList = userManagementMapper.getUserList(query);
+        List<EnterpriseUser> userList = userManagementMapper.getUserList(query);
         int total = userManagementMapper.getUserCount(query);
 
         result.setRecords(userList);
@@ -51,31 +54,30 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Override
     public void exportUserList(UserQueryDTO query, HttpServletResponse response) throws IOException {
-        List<User> userList = userManagementMapper.getUserList(query);
+        List<EnterpriseUser> userList = userManagementMapper.getUserList(query);
         if (CollectionUtils.isEmpty(userList)) {
             return;
         }
 
         // 定义Excel表头
         List<String> headers = Arrays.asList(
-                "用户ID", "用户名", "真实姓名", "昵称", "企业ID", "手机号码", "邮箱", "用户类型", "状态", "创建时间", "更新时间"
+                "用户ID", "真实姓名", "账号", "昵称", "企业ID", "企业名称", "手机号码", "邮箱", "创建时间", "更新时间"
         );
 
         // 转换数据格式
         List<List<String>> data = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        for (User user : userList) {
+        for (EnterpriseUser user : userList) {
             List<String> row = Arrays.asList(
-                    user.getId() != null ? user.getId().toString() : "",
-                    user.getUsername(),
+                    user.getUserId(),
                     user.getRealName(),
+                    user.getAccount(),
                     user.getNickname(),
                     user.getEnterpriseId(),
+                    user.getEnterpriseName(),
                     user.getPhone(),
                     user.getEmail(),
-                    user.getUserType(),
-                    user.getStatus() != null ? user.getStatus().toString() : "",
                     user.getCreateTime() != null ? user.getCreateTime().toString() : "",
                     user.getUpdateTime() != null ? user.getUpdateTime().toString() : ""
             );
@@ -88,47 +90,171 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Transactional
     @Override
-    public String createUserByTemplate(User user, String templateId) {
+    public String createUserByTemplate(EnterpriseUser user, String templateId) {
         // 查询模板
         UserTemplate template = userManagementMapper.getUserTemplate(templateId);
-        if (template != null) {
-            // 应用模板默认值
-            if (template.getDefaultValues() != null) {
-                // TODO: 实现模板默认值应用逻辑
-            }
-            // 继承模板角色权限
-            if (template.getRole() != null) {
-                userManagementMapper.inheritPermissions(user.getId(), template.getRole());
-            }
-            // 添加模板预设权限
-            if (!CollectionUtils.isEmpty(template.getPermissions())) {
-                template.getPermissions().forEach(permission -> {
-                    userManagementMapper.addPermission(user.getId(), permission);
-                });
-            }
+        if (template == null) {
+            return null;
+        }
+        // 生成用户ID
+        String userId = UUIDUtil.generateUUID();
+        user.setUserId(userId);
+        // 应用模板默认值
+        if (template.getDefaultValues() != null) {
+            template.getDefaultValues().forEach((key, value) -> {
+                switch (key) {
+                    case "realName":
+                        user.setRealName((String) value); break;
+                    case "nickname":
+                        user.setNickname((String) value); break;
+                    case "enterpriseId":
+                        user.setEnterpriseId((String) value); break;
+                    case "enterpriseName":
+                        user.setEnterpriseName((String) value); break;
+                    case "phone":
+                        user.setPhone((String) value); break;
+                    case "email":
+                        user.setEmail((String) value); break;
+                    case "account":
+                        user.setAccount((String) value); break;
+                    case "password":
+                        user.setPassword((String) value); break;
+                    default:
+                        // 其它字段可扩展
+                }
+            });
+        }
+        // 继承模板角色权限
+        if (template.getRole() != null) {
+            userManagementMapper.inheritPermissions(userId, template.getRole());
+        }
+        // 添加模板预设权限
+        if (!CollectionUtils.isEmpty(template.getPermissions())) {
+            template.getPermissions().forEach(permission -> {
+                userManagementMapper.addPermission(userId, permission);
+            });
         }
         // 创建用户
         userManagementMapper.createUserByTemplate(user);
-        return user.getId() != null ? user.getId().toString() : "";
+        return userId;
     }
 
     @Transactional
     @Override
-    public boolean updateUser(User user) {
-        user.setUpdateTime(LocalDateTime.now());
+    public boolean updateUser(EnterpriseUser user) {
+        // 获取原始用户信息
+        EnterpriseUser originalUser = userManagementMapper.getUserById(user.getUserId());
+        
+        // 更新用户信息
+        user.setUpdateTime(LocalDateTime.now().toString());
         userManagementMapper.updateUser(user);
+        
+        // 记录修改历史
+        if (originalUser != null) {
+            recordModifyHistory(originalUser, user, user.getUserId()); // 这里可以传入实际的操作人ID
+        }
+        
         return true;
     }
 
     @Override
-    public List<UserModifyHistory> getUserModifyHistory(Long userId) {
+    public List<UserModifyHistory> getUserModifyHistory(String userId) {
         // 实际项目中使用SELECT语句查询历史记录，这里简化为返回空列表
         return new ArrayList<>();
     }
 
+    @Override
+    public UserHistoryListDTO getUserModifyHistoryPaged(UserHistoryQueryDTO query) {
+        UserHistoryListDTO result = new UserHistoryListDTO();
+        List<UserModifyHistory> historyList = userManagementMapper.getUserModifyHistoryPaged(query);
+        int total = userManagementMapper.countUserModifyHistory(query);
+
+        result.setRecords(historyList);
+        result.setTotal(total);
+        result.setPages((int) Math.ceil((double) total / query.getPageSize()));
+        result.setCurrent(query.getPage());
+        result.setSize(query.getPageSize());
+
+        return result;
+    }
+
     @Transactional
     @Override
-    public boolean assignPermissions(Long userId, Set<String> permissions) {
+    public boolean restoreUserHistory(String historyId) {
+        try {
+            // 1. 根据历史ID获取历史记录
+            UserModifyHistory history = userManagementMapper.getHistoryById(historyId);
+            if (history == null) {
+                System.err.println("[ERROR] 历史记录不存在: historyId=" + historyId);
+                return false;
+            }
+
+            // 2. 获取当前用户信息
+            EnterpriseUser currentUser = userManagementMapper.getUserById(history.getUserId());
+            if (currentUser == null) {
+                System.err.println("[ERROR] 用户不存在: userId=" + history.getUserId());
+                return false;
+            }
+
+            // 3. 复制当前用户的所有信息，然后只更新需要恢复的字段
+            EnterpriseUser userToUpdate = new EnterpriseUser();
+            userToUpdate.setUserId(currentUser.getUserId());
+            userToUpdate.setRealName(currentUser.getRealName());
+            userToUpdate.setAccount(currentUser.getAccount());
+            userToUpdate.setPassword(currentUser.getPassword());
+            userToUpdate.setNickname(currentUser.getNickname());
+            userToUpdate.setEnterpriseId(currentUser.getEnterpriseId());
+            userToUpdate.setPhone(currentUser.getPhone());
+            userToUpdate.setEmail(currentUser.getEmail());
+            userToUpdate.setStatus(currentUser.getStatus());
+            
+            // 4. 根据字段名恢复对应的值
+            switch (history.getFieldName()) {
+                case "realName":
+                    userToUpdate.setRealName(history.getOldValue());
+                    break;
+                case "nickname":
+                    userToUpdate.setNickname(history.getOldValue());
+                    break;
+                case "phone":
+                    userToUpdate.setPhone(history.getOldValue());
+                    break;
+                case "email":
+                    userToUpdate.setEmail(history.getOldValue());
+                    break;
+                case "enterpriseId":
+                    userToUpdate.setEnterpriseId(history.getOldValue());
+                    break;
+                default:
+                    System.err.println("[ERROR] 不支持的字段恢复: " + history.getFieldName());
+                    return false;
+            }
+
+            // 5. 更新用户信息
+            userToUpdate.setUpdateTime(LocalDateTime.now().toString());
+            userManagementMapper.updateUser(userToUpdate);
+
+            // 6. 记录恢复操作的历史
+            UserModifyHistory restoreHistory = new UserModifyHistory();
+            restoreHistory.setHistoryId(UUIDUtil.generateUUID());
+            restoreHistory.setUserId(history.getUserId());
+            restoreHistory.setFieldName(history.getFieldName());
+            restoreHistory.setOldValue(history.getNewValue()); // 当前值
+            restoreHistory.setNewValue(history.getOldValue()); // 恢复的值
+            restoreHistory.setOperatorId(history.getOperatorId()); // 使用原操作人ID
+            userManagementMapper.recordModifyHistory(restoreHistory);
+
+            System.out.println("[INFO] 成功恢复历史记录: historyId=" + historyId + ", field=" + history.getFieldName());
+            return true;
+        } catch (Exception e) {
+            System.err.println("[ERROR] 恢复历史记录失败: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Transactional
+    @Override
+    public boolean assignPermissions(String userId, Set<String> permissions) {
         if (CollectionUtils.isEmpty(permissions)) {
             return false;
         }
@@ -144,7 +270,7 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Transactional
     @Override
-    public boolean inheritRolePermissions(Long userId, String roleName) {
+    public boolean inheritRolePermissions(String userId, String roleName) {
         if (roleName == null) {
             return false;
         }
@@ -159,139 +285,169 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     // 记录修改历史的辅助方法
-    private void recordModifyHistory(User original, User updated, Long operatorId) {
+    private void recordModifyHistory(EnterpriseUser original, EnterpriseUser updated, String operatorId) {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String historyId = UUIDUtil.generateUUID();
         // 比较并记录修改的字段
         if (!Objects.equals(original.getPhone(), updated.getPhone())) {
             UserModifyHistory history = new UserModifyHistory();
             history.setHistoryId(historyId);
-            history.setUserId(original.getId());
+            history.setUserId(original.getUserId());
             history.setFieldName("phone");
             history.setOldValue(original.getPhone());
             history.setNewValue(updated.getPhone());
             history.setOperatorId(operatorId);
-            history.setModifyTime(LocalDateTime.now());
             userManagementMapper.recordModifyHistory(history);
         }
-        // 可以继续添加其他字段的比较
+        if (!Objects.equals(original.getEmail(), updated.getEmail())) {
+            UserModifyHistory history = new UserModifyHistory();
+            history.setHistoryId(UUIDUtil.generateUUID());
+            history.setUserId(original.getUserId());
+            history.setFieldName("email");
+            history.setOldValue(original.getEmail());
+            history.setNewValue(updated.getEmail());
+            history.setOperatorId(operatorId);
+            userManagementMapper.recordModifyHistory(history);
+        }
+        if (!Objects.equals(original.getRealName(), updated.getRealName())) {
+            UserModifyHistory history = new UserModifyHistory();
+            history.setHistoryId(UUIDUtil.generateUUID());
+            history.setUserId(original.getUserId());
+            history.setFieldName("realName");
+            history.setOldValue(original.getRealName());
+            history.setNewValue(updated.getRealName());
+            history.setOperatorId(operatorId);
+            userManagementMapper.recordModifyHistory(history);
+        }
+        if (!Objects.equals(original.getNickname(), updated.getNickname())) {
+            UserModifyHistory history = new UserModifyHistory();
+            history.setHistoryId(UUIDUtil.generateUUID());
+            history.setUserId(original.getUserId());
+            history.setFieldName("nickname");
+            history.setOldValue(original.getNickname());
+            history.setNewValue(updated.getNickname());
+            history.setOperatorId(operatorId);
+            userManagementMapper.recordModifyHistory(history);
+        }
     }
 
+    // 同步企业工商信息
     @Override
-    public User syncEnterpriseInfo(String enterpriseName) {
-        // 调用企业信息查询API（这里简化实现）
-        Enterprise enterprise = enterpriseMapper.findByEnterpriseName(enterpriseName);
-        if (enterprise == null) {
+    public EnterpriseUser syncEnterpriseInfo(String enterpriseName) {
+        if (enterpriseName == null || enterpriseName.trim().isEmpty()) {
             return null;
         }
-
-        User user = new User();
-        user.setEnterpriseId(enterprise.getEnterpriseId());
-        // TODO: 设置其他企业相关信息
-        return user;
+        
+        try {
+            Enterprise enterprise = enterpriseMapper.findByEnterpriseName(enterpriseName);
+            if (enterprise != null) {
+                EnterpriseUser enterpriseUser = new EnterpriseUser();
+                enterpriseUser.setEnterpriseId(enterprise.getEnterpriseId() != null ? enterprise.getEnterpriseId().toString() : null);
+                enterpriseUser.setEnterpriseName(enterprise.getEnterpriseName());
+                enterpriseUser.setEnterprise(enterprise);
+                return enterpriseUser;
+            }
+        } catch (Exception e) {
+            System.err.println("同步企业工商信息失败：" + e.getMessage());
+        }
+        return null;
     }
 
+    // 根据企业ID同步企业工商信息
     @Override
-    public User syncEnterpriseInfoById(String enterpriseId) {
-        // 调用企业信息查询API（这里简化实现）
-        Enterprise enterprise = enterpriseMapper.findByEnterpriseId(enterpriseId);
-        if (enterprise == null) {
+    public EnterpriseUser syncEnterpriseInfoById(String enterpriseId) {
+        if (enterpriseId == null || enterpriseId.trim().isEmpty()) {
             return null;
         }
-
-        User user = new User();
-        user.setEnterpriseId(enterprise.getEnterpriseId());
-        // TODO: 设置其他企业相关信息
-        return user;
+        
+        try {
+            Enterprise enterprise = enterpriseMapper.findByEnterpriseId(enterpriseId);
+            if (enterprise != null) {
+                EnterpriseUser enterpriseUser = new EnterpriseUser();
+                enterpriseUser.setEnterpriseId(enterprise.getEnterpriseId() != null ? enterprise.getEnterpriseId().toString() : null);
+                enterpriseUser.setEnterpriseName(enterprise.getEnterpriseName());
+                enterpriseUser.setEnterprise(enterprise);
+                return enterpriseUser;
+            }
+        } catch (Exception e) {
+            System.err.println("根据企业ID同步企业工商信息失败：" + e.getMessage());
+        }
+        return null;
     }
 
+    // 根据企业ID查询企业用户列表
     @Override
-    public List<User> getEnterpriseUsersByEnterpriseId(String enterpriseId) {
-        // 查询企业下的所有用户
-        List<User> users = userManagementMapper.getUsersByEnterpriseId(enterpriseId);
-        
-        // 可以在这里添加额外的业务逻辑
-        for (User user : users) {
-            // TODO: 设置企业相关信息
+    public List<EnterpriseUser> getEnterpriseUsersByEnterpriseId(String enterpriseId) {
+        if (enterpriseId == null || enterpriseId.trim().isEmpty()) {
+            return new ArrayList<>();
         }
         
-        return users;
+        try {
+            List<EnterpriseUser> users = enterpriseUserMapper.findByEnterpriseId(enterpriseId);
+            // 为每个用户加载企业信息
+            for (EnterpriseUser user : users) {
+                Enterprise enterprise = enterpriseMapper.findByEnterpriseId(enterpriseId);
+                user.setEnterprise(enterprise);
+            }
+            return users;
+        } catch (Exception e) {
+            System.err.println("根据企业ID查询企业用户失败：" + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     @Transactional
     @Override
-    public String createUser(User user) {
-        // 设置默认值
-        user.setCreateTime(LocalDateTime.now());
-        user.setUpdateTime(LocalDateTime.now());
-        user.setStatus(1); // 默认启用
-        
-        // 创建用户
-        userManagementMapper.createUserByTemplate(user);
-        
-        // 返回用户ID
-        User inserted = userManagementMapper.getUserById(user.getId());
-        return inserted != null ? inserted.getId().toString() : "";
+    public String createUser(EnterpriseUser user) {
+        String userId = UUIDUtil.generateUUID();
+        user.setUserId(userId);
+        System.out.println("[DEBUG] 尝试插入用户: " + user);
+        try {
+            userManagementMapper.createUserByTemplate(user);
+            // 插入后立即查询确认
+            EnterpriseUser inserted = userManagementMapper.getUserById(userId);
+            if (inserted == null) {
+                System.err.println("[ERROR] 用户插入失败，数据库无记录: userId=" + userId);
+                throw new RuntimeException("用户插入失败，数据库无记录");
+            } else {
+                System.out.println("[DEBUG] 用户插入成功: " + inserted);
+            }
+            return userId;
+        } catch (Exception e) {
+            System.err.println("[ERROR] 用户插入异常: " + e.getMessage());
+            throw new RuntimeException("用户插入异常: " + e.getMessage(), e);
+        }
     }
 
     @Override
-    public boolean deleteUser(Long userId) {
-        // 实际项目中可能需要软删除
-        userManagementMapper.deleteUserById(userId);
-        return true;
+    public boolean deleteUser(String userId) {
+        try {
+            System.out.println("[DEBUG] 尝试删除用户: userId=" + userId);
+            int before = userManagementMapper.getUserCount(new com.system.dto.UserQueryDTO());
+            userManagementMapper.deleteUserById(userId);
+            int after = userManagementMapper.getUserCount(new com.system.dto.UserQueryDTO());
+            System.out.println("[DEBUG] 删除前用户数: " + before + ", 删除后用户数: " + after);
+            return true;
+        } catch (Exception e) {
+            System.err.println("[ERROR] 删除用户异常: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
-    public User getUserById(Long userId) {
+    public EnterpriseUser getUserById(String userId) {
         return userManagementMapper.getUserById(userId);
     }
 
     @Override
-    public User getUserByAccount(String account) {
+    public EnterpriseUser getUserByAccount(String account) {
         return userManagementMapper.getUserByAccount(account);
     }
 
     @Override
-    public boolean updateUserByAccount(User user) {
-        user.setUpdateTime(LocalDateTime.now());
+    public boolean updateUserByAccount(EnterpriseUser user) {
+        user.setUpdateTime(java.time.LocalDateTime.now().toString());
         userManagementMapper.updateUserByAccount(user);
         return true;
-    }
-
-    @Override
-    public byte[] exportUsersToExcel() throws IOException {
-        List<User> users = userManagementMapper.getAllUsers();
-        
-        try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("用户列表");
-            
-            // 创建表头
-            Row headerRow = sheet.createRow(0);
-            String[] headers = {"用户ID", "用户名", "真实姓名", "昵称", "企业ID", "手机号码", "邮箱", "用户类型", "状态", "创建时间"};
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-            }
-            
-            // 填充数据
-            int rowNum = 1;
-            for (User user : users) {
-                Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue(user.getId() != null ? user.getId().toString() : "");
-                row.createCell(1).setCellValue(user.getUsername());
-                row.createCell(2).setCellValue(user.getRealName());
-                row.createCell(3).setCellValue(user.getNickname());
-                row.createCell(4).setCellValue(user.getEnterpriseId());
-                row.createCell(5).setCellValue(user.getPhone());
-                row.createCell(6).setCellValue(user.getEmail());
-                row.createCell(7).setCellValue(user.getUserType());
-                row.createCell(8).setCellValue(user.getStatus() != null ? user.getStatus().toString() : "");
-                row.createCell(9).setCellValue(user.getCreateTime() != null ? user.getCreateTime().toString() : "");
-            }
-            
-            // 输出到字节数组
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            workbook.write(outputStream);
-            return outputStream.toByteArray();
-        }
     }
 }

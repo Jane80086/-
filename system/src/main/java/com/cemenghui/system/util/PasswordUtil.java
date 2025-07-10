@@ -1,4 +1,4 @@
-package com.cemenghui.system.util;
+package com.system.util;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;

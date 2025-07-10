@@ -1,6 +1,6 @@
-package com.cemenghui.system.dto;
+package com.system.dto;
 
-import com.cemenghui.entity.User;
+import com.system.entity.EnterpriseUser;
 import lombok.Data;
 
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
 public class UserListDTO {
     private long total;             // 总记录数
     private int pages;              // 总页数
-    private List<User> records; // 用户列表
+    private List<EnterpriseUser> records; // 用户列表
 
     // 手动添加getter和setter方法
     public long getTotal() {
@@ -28,11 +28,11 @@ public class UserListDTO {
         this.pages = pages;
     }
 
-    public List<User> getRecords() {
+    public List<EnterpriseUser> getRecords() {
         return records;
     }
 
-    public void setRecords(List<User> records) {
+    public void setRecords(List<EnterpriseUser> records) {
         this.records = records;
     }
 }

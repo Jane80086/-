@@ -1,63 +1,60 @@
-package com.cemenghui.system.entity;
+package com.system.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-import java.time.LocalDateTime;
 
 /**
  * 企业工商信息实体类
  */
-@Data
-@TableName("system_enterprise")
+
 public class Enterprise {
 
-    @TableId("enterprise_id")
+    // 企业ID（主键）
     private String enterpriseId;
 
-    @TableField("enterprise_name")
+    // 企业名称
     private String enterpriseName;
 
-    @TableField("credit_code")
+    // 统一社会信用代码
     private String creditCode;
 
-    @TableField("enterprise_status")
+    // 企业状态（存续、吊销、注销等）
     private String enterpriseStatus;
 
-    @TableField("enterprise_type")
+    // 企业类型
     private String enterpriseType;
 
-    @TableField("establishment_date")
+    // 成立日期
     private String establishmentDate;
 
-    @TableField("legal_representative")
+    // 法定代表人
     private String legalRepresentative;
 
-    @TableField("register_address")
+    // 注册地址
     private String registerAddress;
 
-    @TableField("registered_capital")
+    // 注册资本
     private String registeredCapital;
 
-    @TableField("registration_authority")
+    // 注册机关
     private String registrationAuthority;
 
-    @TableField("registration_date")
+    // 注册日期
     private String registrationDate;
 
-    @TableField("approval_date")
+    // 批准日期
     private String approvalDate;
 
-    @TableField("business_scope")
+    // 经营范围
     private String businessScope;
 
-    @TableField("business_term")
+    // 营业期限
     private String businessTerm;
 
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
+    // 创建时间
+    private String createTime;
 
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
+    // 更新时间
+    private String updateTime;
 
     /**
      * 检查企业状态是否正常
@@ -205,19 +202,19 @@ public class Enterprise {
         this.businessTerm = businessTerm;
     }
 
-    public LocalDateTime getCreateTime() {
+    public String getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(LocalDateTime createTime) {
+    public void setCreateTime(String createTime) {
         this.createTime = createTime;
     }
 
-    public LocalDateTime getUpdateTime() {
+    public String getUpdateTime() {
         return updateTime;
     }
 
-    public void setUpdateTime(LocalDateTime updateTime) {
+    public void setUpdateTime(String updateTime) {
         this.updateTime = updateTime;
     }
 } 

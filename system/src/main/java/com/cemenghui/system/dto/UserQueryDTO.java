@@ -1,4 +1,4 @@
-package com.cemenghui.system.dto;
+package com.system.dto;
 
 import lombok.Data;
 
@@ -14,6 +14,10 @@ public class UserQueryDTO {
     private Integer page;
     private String realName;        // 用户真实姓名（用于模糊搜索）
     private String email;           // 用户邮箱
+    private String account;         // 用户账号
+    private String enterpriseName;  // 企业名称
+    private String enterpriseType;  // 企业类型
+    private String phone;           // 手机号码
 
     // 手动添加getter和setter方法
     public String getKeyword() {
@@ -94,5 +98,37 @@ public class UserQueryDTO {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
+    }
+
+    public String getEnterpriseName() {
+        return enterpriseName;
+    }
+
+    public void setEnterpriseName(String enterpriseName) {
+        this.enterpriseName = enterpriseName;
+    }
+
+    public String getEnterpriseType() {
+        return enterpriseType;
+    }
+
+    public void setEnterpriseType(String enterpriseType) {
+        this.enterpriseType = enterpriseType;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }

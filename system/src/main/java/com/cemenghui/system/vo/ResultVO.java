@@ -1,4 +1,4 @@
-package com.cemenghui.system.vo;
+package com.system.vo;
 
 import lombok.Data;
 

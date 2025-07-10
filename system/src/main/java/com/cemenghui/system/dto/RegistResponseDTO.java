@@ -1,4 +1,4 @@
-package com.cemenghui.system.dto;
+package com.system.dto;
 
 import lombok.Data;
 

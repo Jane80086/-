@@ -1,44 +1,41 @@
-package com.cemenghui.system.repository;
+package com.system.repository;
 
-import com.cemenghui.entity.User;
-import com.cemenghui.system.entity.EnterpriseUser;
-import com.cemenghui.system.entity.ThirdPartyAccount;
+import com.system.entity.EnterpriseUser;
+import com.system.entity.AdminUser;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
-import java.util.List;
 
 @Repository
 public interface UserMapper {
-    
-    // 使用main-app的User实体
-    @Select("SELECT * FROM users WHERE account = #{account}")
-    User findUserByAccount(String account);
+    // EnterpriseUser 通用方法
+    @Insert("INSERT INTO enterprise_user (user_id, real_name, enterprise_id, account, password, nickname, phone, email) VALUES (#{userId}, #{realName}, #{enterpriseId}, #{account}, #{password}, #{nickname}, #{phone}, #{email})")
+    void saveEnterpriseUser(EnterpriseUser user);
 
-    @Select("SELECT * FROM users WHERE id = #{userId}")
-    User findUserById(Long userId);
+    @Select("SELECT * FROM enterprise_user WHERE account = #{account}")
+    EnterpriseUser findEnterpriseByAccount(String account);
 
-    @Select("SELECT * FROM users WHERE enterprise_id = #{enterpriseId}")
-    List<User> findUsersByEnterpriseId(String enterpriseId);
+    @Select("SELECT * FROM enterprise_user WHERE user_id = #{userId}")
+    EnterpriseUser findEnterpriseByUserId(String userId);
 
-    @Update("UPDATE users SET real_name = #{realName}, enterprise_id = #{enterpriseId}, account = #{account}, nickname = #{nickname}, phone = #{phone}, email = #{email}, avatar = #{avatar} WHERE id = #{id}")
-    void updateUser(User user);
+    @Update("UPDATE enterprise_user SET real_name = #{realName}, enterprise_id = #{enterpriseId}, account = #{account}, password = #{password}, nickname = #{nickname}, phone = #{phone}, email = #{email} WHERE user_id = #{userId}")
+    void updateEnterpriseUser(EnterpriseUser user);
 
-    @Delete("DELETE FROM users WHERE id = #{userId}")
-    void deleteUserById(Long userId);
+    @Delete("DELETE FROM enterprise_user WHERE user_id = #{userId}")
+    void deleteEnterpriseByUserId(String userId);
 
-    // 查找第三方账号
-    @Select("SELECT * FROM system_third_party_account WHERE platform = #{platform} AND open_id = #{openId}")
-    ThirdPartyAccount findThirdPartyAccount(@Param("platform") String platform, @Param("openId") String openId);
+    // AdminUser 通用方法
+    @Insert("INSERT INTO admin_user (user_id, real_name, department, account, password, nickname, phone, email) VALUES (#{userId}, #{realName}, #{department}, #{account}, #{password}, #{nickname}, #{phone}, #{email})")
+    void saveAdminUser(AdminUser user);
 
-    @Select("SELECT * FROM system_third_party_account WHERE user_id = #{userId}")
-    List<ThirdPartyAccount> findThirdPartyAccountsByUserId(Long userId);
+    @Select("SELECT * FROM admin_user WHERE account = #{account}")
+    AdminUser findAdminByAccount(String account);
 
-    @Insert("INSERT INTO system_third_party_account (third_party_id, open_id, platform, account, user_id) VALUES (#{thirdPartyId}, #{openId}, #{platform}, #{account}, #{userId})")
-    void saveThirdPartyAccount(ThirdPartyAccount account);
+    @Select("SELECT * FROM admin_user WHERE user_id = #{userId}")
+    AdminUser findAdminByUserId(String userId);
 
-    @Delete("DELETE FROM system_third_party_account WHERE user_id = #{userId}")
-    void deleteThirdPartyAccountsByUserId(Long userId);
+    @Update("UPDATE admin_user SET real_name = #{realName}, department = #{department}, account = #{account}, password = #{password}, nickname = #{nickname}, phone = #{phone}, email = #{email} WHERE user_id = #{userId}")
+    void updateAdminUser(AdminUser user);
 
-    @Select("SELECT * FROM users WHERE account = #{account} AND user_type = 'ENTERPRISE'")
-    User findEnterpriseByAccount(String account);
+    @Delete("DELETE FROM admin_user WHERE user_id = #{userId}")
+    void deleteAdminByUserId(String userId);
 }

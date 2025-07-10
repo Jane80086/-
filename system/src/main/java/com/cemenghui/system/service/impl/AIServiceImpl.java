@@ -1,6 +1,6 @@
-package com.cemenghui.system.service.impl;
+package com.system.service.impl;
 
-import com.cemenghui.system.service.AIService;
+import com.system.service.AIService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;

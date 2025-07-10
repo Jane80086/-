@@ -1,11 +1,12 @@
-package com.cemenghui.system.controller;
+package com.system.controller;
 
-import com.cemenghui.system.dto.LoginRequestDTO;
-import com.cemenghui.system.dto.LoginResponseDTO;
-import com.cemenghui.system.util.CaptchaUtil;
-import com.cemenghui.system.util.RedisUtil;
+import com.system.util.CaptchaUtil;
+import com.system.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
@@ -22,10 +23,6 @@ public class AuthController {
 
     @Autowired
     private RedisUtil redisUtil;
-
-    @Autowired
-
-    private com.cemenghui.system.service.LoginService loginService;
 
     @GetMapping("/captcha")
     public void getCaptcha(HttpServletResponse response, @RequestParam("uuid") String uuid) throws IOException {
@@ -46,5 +43,4 @@ public class AuthController {
         response.setContentType("image/png");
         ImageIO.write(image, "png", response.getOutputStream());
     }
-
-}
+} 

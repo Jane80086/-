@@ -1,6 +1,6 @@
-package com.cemenghui.system.repository;
+package com.system.repository;
 
-import com.cemenghui.system.entity.Enterprise;
+import com.system.entity.Enterprise;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Insert;
 import org.springframework.stereotype.Repository;
@@ -75,4 +75,39 @@ public interface EnterpriseMapper {
      */
     @org.apache.ibatis.annotations.Update("UPDATE enterprise SET enterprise_name = #{enterpriseName}, credit_code = #{creditCode}, legal_representative = #{legalRepresentative}, registered_capital = #{registeredCapital}, establishment_date = #{establishmentDate}, register_address = #{registerAddress}, business_scope = #{businessScope}, enterprise_status = #{enterpriseStatus}, update_time = NOW() WHERE enterprise_id = #{enterpriseId}")
     int updateEnterprise(Enterprise enterprise);
+
+    /**
+     * 查询企业列表用于导出（支持条件筛选）
+     */
+    @Select("<script>" +
+            "SELECT * FROM enterprise WHERE 1=1" +
+            "<if test='enterpriseName != null and enterpriseName != \"\"'>" +
+            " AND enterprise_name LIKE CONCAT('%', #{enterpriseName}, '%')" +
+            "</if>" +
+            "<if test='creditCode != null and creditCode != \"\"'>" +
+            " AND credit_code LIKE CONCAT('%', #{creditCode}, '%')" +
+            "</if>" +
+            "<if test='status != null and status != \"\"'>" +
+            " AND enterprise_status = #{status}" +
+            "</if>" +
+            "</script>")
+    List<Enterprise> selectEnterpriseListForExport(@Param("enterpriseName") String enterpriseName, 
+                                                   @Param("creditCode") String creditCode, 
+                                                   @Param("status") String status);
+
+    /**
+     * 分页+条件筛选企业列表
+     */
+    List<Enterprise> selectEnterpriseListPaged(@Param("enterpriseName") String enterpriseName,
+                                              @Param("creditCode") String creditCode,
+                                              @Param("status") String status,
+                                              @Param("offset") int offset,
+                                              @Param("size") int size);
+
+    /**
+     * 条件筛选企业总数
+     */
+    int countEnterpriseListPaged(@Param("enterpriseName") String enterpriseName,
+                                @Param("creditCode") String creditCode,
+                                @Param("status") String status);
 }
