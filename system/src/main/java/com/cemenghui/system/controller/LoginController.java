@@ -1,5 +1,6 @@
 package com.cemenghui.system.controller;
 
+import com.cemenghui.entity.User;
 import com.cemenghui.system.entity.EnterpriseUser;
 import com.cemenghui.system.service.UserManagementService;
 import com.cemenghui.system.util.CaptchaUtil;
@@ -22,13 +23,13 @@ public class LoginController {
     private CaptchaUtil captchaUtil;
 
     @Autowired
-    private com.system.repository.UserMapper userMapper;
+    private com.cemenghui.system.repository.UserMapper userMapper;
 
     @Autowired
-    private com.system.repository.AdminUserMapper adminUserMapper;
+    private com.cemenghui.system.repository.AdminUserMapper adminUserMapper;
 
     @Autowired
-    private com.system.util.JWTUtil jwtUtil;
+    private com.cemenghui.system.util.JWTUtil jwtUtil;
 
     // 测试接口
     @GetMapping("/test")
@@ -38,7 +39,7 @@ public class LoginController {
 
     // 同步企业工商信息
     @GetMapping("/syncEnterpriseInfo")
-    public EnterpriseUser syncEnterpriseInfo(@RequestParam String enterpriseName) {
+    public User syncEnterpriseInfo(@RequestParam String enterpriseName) {
         return userManagementService.syncEnterpriseInfo(enterpriseName);
     }
 
@@ -74,7 +75,7 @@ public class LoginController {
         // 验证码校验略
         if (account.startsWith("0000")) {
             // 管理员
-            com.system.entity.AdminUser admin = adminUserMapper.findByAccount(account);
+            com.cemenghui.system.entity.AdminUser admin = adminUserMapper.findByAccount(account);
             System.out.println("SQL查到的用户: " + admin);
             if (admin == null) {
                 dto.setSuccess(false);
@@ -95,7 +96,7 @@ public class LoginController {
             return ResponseEntity.ok(dto);
         } else {
             // 企业用户
-            com.system.entity.EnterpriseUser user = userMapper.findEnterpriseByAccount(account);
+            com.cemenghui.system.entity.EnterpriseUser user = userMapper.findEnterpriseByAccount(account);
             System.out.println("SQL查到的企业用户: " + user);
             if (user == null) {
                 dto.setSuccess(false);
