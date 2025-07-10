@@ -59,7 +59,7 @@ public class JWTUtil {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(SIGNING_KEY).parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(SIGNING_KEY).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             log.warn("JWT validation failed: {}", e.getMessage());
@@ -85,6 +85,6 @@ public class JWTUtil {
     }
 
     public Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser().setSigningKey(SIGNING_KEY).parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder().setSigningKey(SIGNING_KEY).build().parseClaimsJws(token).getBody();
     }
 }
