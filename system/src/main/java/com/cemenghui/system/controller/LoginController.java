@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.cemenghui.common.JWTUtil;
 
 @RestController
 @RequestMapping("/api/login")
@@ -28,7 +29,7 @@ public class LoginController {
     private com.cemenghui.system.repository.AdminUserMapper adminUserMapper;
 
     @Autowired
-    private com.cemenghui.system.util.JWTUtil jwtUtil;
+    private com.cemenghui.common.JWTUtil jwtUtil;
 
     // 测试接口
     @GetMapping("/test")
@@ -89,7 +90,7 @@ public class LoginController {
             }
             dto.setSuccess(true);
             dto.setMessage("登录成功");
-            String jwt = jwtUtil.generateToken(admin);
+            String jwt = jwtUtil.generateToken(admin.getId(), admin.getAccount(), java.util.List.of(admin.getRole()));
             dto.setToken(jwt);
             dto.setUserType("admin");
             dto.setAdminUser(admin);
@@ -112,7 +113,7 @@ public class LoginController {
             }
             dto.setSuccess(true);
             dto.setMessage("登录成功");
-            String jwt = jwtUtil.generateToken(account);
+            String jwt = jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of(user.getRole()));
             dto.setToken(jwt);
             dto.setUserType("enterprise");
             dto.setEnterpriseUser(user);

@@ -2,7 +2,7 @@ package com.cemenghui.system.controller;
 
 import com.cemenghui.system.entity.Enterprise;
 import com.cemenghui.system.service.EnterpriseService;
-import com.cemenghui.system.util.JWTUtil;
+import com.cemenghui.common.JWTUtil;
 import com.cemenghui.system.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

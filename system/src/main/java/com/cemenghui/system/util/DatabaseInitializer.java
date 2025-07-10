@@ -77,88 +77,83 @@ public class DatabaseInitializer implements CommandLineRunner {
     
     private void createBasicTables() {
         // 创建用户表
-        jdbcTemplate.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(100) NOT NULL UNIQUE,
-                password VARCHAR(255) NOT NULL,
-                real_name VARCHAR(100),
-                email VARCHAR(255),
-                phone VARCHAR(20),
-                user_type VARCHAR(20) NOT NULL,
-                status INTEGER DEFAULT 1,
-                department VARCHAR(100),
-                nickname VARCHAR(100),
-                avatar VARCHAR(500),
-                is_remembered BOOLEAN DEFAULT FALSE,
-                enterprise_id VARCHAR(64),
-                dynamic_code VARCHAR(20),
-                role VARCHAR(50),
-                create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                deleted INTEGER DEFAULT 0
-            )
-        """);
-        
+        jdbcTemplate.execute(
+            "CREATE TABLE IF NOT EXISTS users (" +
+            "id SERIAL PRIMARY KEY," +
+            "username VARCHAR(100) NOT NULL UNIQUE," +
+            "password VARCHAR(255) NOT NULL," +
+            "real_name VARCHAR(100)," +
+            "email VARCHAR(255)," +
+            "phone VARCHAR(20)," +
+            "user_type VARCHAR(20) NOT NULL," +
+            "status INTEGER DEFAULT 1," +
+            "department VARCHAR(100)," +
+            "nickname VARCHAR(100)," +
+            "avatar VARCHAR(500)," +
+            "is_remembered BOOLEAN DEFAULT FALSE," +
+            "enterprise_id VARCHAR(64)," +
+            "dynamic_code VARCHAR(20)," +
+            "role VARCHAR(50)," +
+            "create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+            "update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+            "deleted INTEGER DEFAULT 0" +
+            ")"
+        );
         // 创建企业表
-        jdbcTemplate.execute("""
-            CREATE TABLE IF NOT EXISTS enterprise (
-                enterprise_id VARCHAR(30) PRIMARY KEY,
-                enterprise_name VARCHAR(100) NOT NULL,
-                credit_code VARCHAR(30) UNIQUE,
-                register_address VARCHAR(200),
-                legal_representative VARCHAR(50),
-                registration_date DATE,
-                enterprise_type VARCHAR(50),
-                registered_capital VARCHAR(50),
-                business_scope TEXT,
-                establishment_date DATE,
-                business_term VARCHAR(100),
-                registration_authority VARCHAR(100),
-                approval_date DATE,
-                enterprise_status VARCHAR(30),
-                create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """);
-        
+        jdbcTemplate.execute(
+            "CREATE TABLE IF NOT EXISTS enterprise (" +
+            "enterprise_id VARCHAR(30) PRIMARY KEY," +
+            "enterprise_name VARCHAR(100) NOT NULL," +
+            "credit_code VARCHAR(30) UNIQUE," +
+            "register_address VARCHAR(200)," +
+            "legal_representative VARCHAR(50)," +
+            "registration_date DATE," +
+            "enterprise_type VARCHAR(50)," +
+            "registered_capital VARCHAR(50)," +
+            "business_scope TEXT," +
+            "establishment_date DATE," +
+            "business_term VARCHAR(100)," +
+            "registration_authority VARCHAR(100)," +
+            "approval_date DATE," +
+            "enterprise_status VARCHAR(30)," +
+            "create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+            "update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
         // 创建用户修改历史表
-        jdbcTemplate.execute("""
-            CREATE TABLE IF NOT EXISTS system_user_modify_history (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT,
-                modify_type VARCHAR(50),
-                field_name VARCHAR(100),
-                old_value TEXT,
-                new_value TEXT,
-                modify_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                operator_id BIGINT
-            )
-        """);
-        
+        jdbcTemplate.execute(
+            "CREATE TABLE IF NOT EXISTS system_user_modify_history (" +
+            "id SERIAL PRIMARY KEY," +
+            "user_id BIGINT," +
+            "modify_type VARCHAR(50)," +
+            "field_name VARCHAR(100)," +
+            "old_value TEXT," +
+            "new_value TEXT," +
+            "modify_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+            "operator_id BIGINT" +
+            ")"
+        );
         // 创建系统日志表
-        jdbcTemplate.execute("""
-            CREATE TABLE IF NOT EXISTS system_log (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT,
-                operation_type VARCHAR(50),
-                operation_desc VARCHAR(500),
-                ip_address VARCHAR(50),
-                operation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """);
-        
+        jdbcTemplate.execute(
+            "CREATE TABLE IF NOT EXISTS system_log (" +
+            "id SERIAL PRIMARY KEY," +
+            "user_id BIGINT," +
+            "operation_type VARCHAR(50)," +
+            "operation_desc VARCHAR(500)," +
+            "ip_address VARCHAR(50)," +
+            "operation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+            ")"
+        );
         // 插入默认管理员用户
         try {
-            jdbcTemplate.execute("""
-                INSERT INTO users (username, password, real_name, user_type, status, role) 
-                VALUES ('0000admin', 'admin123', '系统管理员', 'ADMIN', 1, 'SUPER_ADMIN')
-                ON CONFLICT (username) DO NOTHING
-            """);
+            jdbcTemplate.execute(
+                "INSERT INTO users (username, password, real_name, user_type, status, role) " +
+                "VALUES ('0000admin', 'admin123', '系统管理员', 'ADMIN', 1, 'SUPER_ADMIN') " +
+                "ON CONFLICT (username) DO NOTHING"
+            );
         } catch (Exception e) {
             System.out.println("默认管理员用户可能已存在");
         }
-        
         System.out.println("基本表结构创建完成");
     }
     

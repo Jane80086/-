@@ -7,7 +7,7 @@ import com.cemenghui.system.dto.UserQueryDTO;
 import com.cemenghui.system.entity.EnterpriseUser;
 import com.cemenghui.system.entity.UserTemplate;
 import com.cemenghui.system.service.UserManagementService;
-import com.cemenghui.system.util.JWTUtil;
+import com.cemenghui.common.JWTUtil;
 import com.cemenghui.system.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

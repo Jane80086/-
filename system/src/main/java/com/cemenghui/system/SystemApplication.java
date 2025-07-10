@@ -5,9 +5,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import com.cemenghui.system.util.JWTUtil;
+import com.cemenghui.common.JWTUtil;
+import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
+@ComponentScan(basePackages = {"com.cemenghui.system", "com.cemenghui.common"})
 @MapperScan("com.cemenghui.system.repository")
 public class SystemApplication implements CommandLineRunner {
 
@@ -20,7 +22,6 @@ public class SystemApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // 初始化JWT密钥缓存
-        jwtUtil.initStaticKey();
+        // jwtUtil.initStaticKey(); // 已废弃，无需初始化
     }
 } 

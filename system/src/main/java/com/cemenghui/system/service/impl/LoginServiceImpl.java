@@ -7,7 +7,7 @@ import com.cemenghui.system.service.LoginService;
 import com.cemenghui.system.repository.UserMapper;
 import com.cemenghui.system.repository.AdminUserMapper;
 import com.cemenghui.system.repository.EnterpriseUserMapper;
-import com.cemenghui.system.util.JWTUtil;
+import com.cemenghui.common.JWTUtil;
 import com.cemenghui.system.util.PasswordUtil;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
@@ -49,7 +49,7 @@ public class LoginServiceImpl implements LoginService {
             enterpriseUserMapper.update(user);
         }
 
-        String token = jwtUtil.generateToken(user.getUsername());
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of(user.getRole()));
         return LoginResponseDTO.success(token, user);
     }
 
@@ -67,7 +67,7 @@ public class LoginServiceImpl implements LoginService {
             return LoginResponseDTO.fail("动态验证码错误");
         }
 
-        String token = jwtUtil.generateToken(admin.getUsername());
+        String token = jwtUtil.generateToken(admin.getId(), admin.getAccount(), java.util.List.of(admin.getRole()));
         return LoginResponseDTO.success(token, admin);
     }
 
@@ -87,7 +87,7 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public String generateToken(EnterpriseUser user) {
-        return jwtUtil.generateToken(user.getUsername());
+        return jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of(user.getRole()));
     }
 
     @Override
