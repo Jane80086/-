@@ -40,8 +40,7 @@ public class AdminUser {
     private String enterpriseId;
     @TableField("dynamic_code")
     private String dynamicCode;
-    @TableField("role")
-    private String role;
+    
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
@@ -58,7 +57,4 @@ public class AdminUser {
         return this.username;
     }
     
-    public String getRole() {
-        return this.role;
-    }
 }
