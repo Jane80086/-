@@ -116,11 +116,11 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
               <!-- Springdoc OpenAPI 依赖，兼容Spring Boot 2.6+ -->
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-ui</artifactId>
-      <version>1.7.0</version>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.springdoc</groupId>-->
+<!--      <artifactId>springdoc-openapi-ui</artifactId>-->
+<!--      <version>1.7.0</version>-->
+<!--    </dependency>-->
     <!-- JUnit5单元测试依赖 -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>

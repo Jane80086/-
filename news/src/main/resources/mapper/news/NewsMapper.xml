@@ -4,7 +4,7 @@
 <mapper namespace="com.cemenghui.news.mapper.NewsMapper">
 
     <select id="findByCondition" resultType="com.cemenghui.news.entity.News">
-        SELECT * FROM news
+        SELECT * FROM cmh.news
         <where>
             is_deleted = 0
             <if test="request.keyword != null and request.keyword != ''">
@@ -28,14 +28,14 @@
     </select>
 
     <select id="findByUserId" resultType="com.cemenghui.news.entity.News">
-        SELECT * FROM news
+        SELECT * FROM cmh.news
         WHERE user_id = #{userId}
           AND is_deleted = 0
         ORDER BY create_time DESC
     </select>
 
     <select id="findPendingNews" resultType="com.cemenghui.news.entity.News">
-        SELECT * FROM news
+        SELECT * FROM cmh.news
         WHERE status = 0
           AND is_deleted = 0
         ORDER BY create_time ASC
@@ -43,19 +43,18 @@
 
     <select id="getAdminBasicStatistics" resultType="map">
         SELECT
-                (SELECT COUNT(*) FROM news WHERE is_deleted = 0) AS totalNews,
-                (SELECT COUNT(*) FROM news WHERE status = #{pendingStatus} AND is_deleted = 0) AS pendingNews,
-                (SELECT COUNT(*) FROM news WHERE status = #{publishedStatus} AND is_deleted = 0) AS publishedNews,
-                (SELECT COUNT(*) FROM news WHERE status = #{rejectedStatus} AND is_deleted = 0) AS rejectedNews,
-                (SELECT SUM(view_count) FROM news WHERE is_deleted = 0) AS totalViews,
-                (SELECT COUNT(id) FROM user_view_logs WHERE resource_type = 'NEWS' AND DATE(view_time) = CURDATE()) AS todayViews,
-                (SELECT COUNT(DISTINCT id) FROM users WHERE status = 1) AS totalUsers,
-                (SELECT COUNT(DISTINCT user_id) FROM user_operation_logs WHERE resource_type = 'NEWS' AND operation_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)) AS activeUsers
-        FROM DUAL
+                (SELECT COUNT(*) FROM cmh.news WHERE is_deleted = 0) AS totalNews,
+                (SELECT COUNT(*) FROM cmh.news WHERE status = #{pendingStatus} AND is_deleted = 0) AS pendingNews,
+                (SELECT COUNT(*) FROM cmh.news WHERE status = #{publishedStatus} AND is_deleted = 0) AS publishedNews,
+                (SELECT COUNT(*) FROM cmh.news WHERE status = #{rejectedStatus} AND is_deleted = 0) AS rejectedNews,
+                (SELECT SUM(view_count) FROM cmh.news WHERE is_deleted = 0) AS totalViews,
+                (SELECT COUNT(id) FROM cmh.user_view_logs WHERE resource_type = 'NEWS' AND CAST(view_time AS DATE) = CURRENT_DATE) AS todayViews,
+                (SELECT COUNT(DISTINCT user_id) FROM cmh.news WHERE status = #{publishedStatus} AND is_deleted = 0) AS totalUsers,
+                (SELECT COUNT(DISTINCT user_id) FROM cmh.user_operation_logs WHERE resource_type = 'NEWS' AND operation_time >= (CURRENT_DATE - 7)) AS activeUsers
     </select>
 
     <select id="countByStatus" resultType="java.lang.Long">
-        SELECT COUNT(*) FROM news
+        SELECT COUNT(*) FROM cmh.news
         <where>
             is_deleted = 0
             <if test="status != null">
@@ -65,7 +64,7 @@
     </select>
 
     <select id="findPopularNews" resultType="com.cemenghui.news.entity.News">
-        SELECT * FROM news
+        SELECT * FROM cmh.news
         <where>
             is_deleted = 0
             <if test="status != null">
@@ -78,17 +77,18 @@
 
     <select id="getViewTrend" resultType="java.util.Map">
         SELECT
-            DATE_FORMAT(view_time, '%Y-%m-%d') AS date,
+            CAST(view_time AS DATE) AS date, -- 直接将时间戳转换为日期
             COUNT(id) AS views
-        FROM user_view_logs
-        WHERE resource_type = 'NEWS' AND view_time BETWEEN #{startDate} AND #{endDate} + INTERVAL 1 DAY - INTERVAL 1 SECOND
-        GROUP BY date
+        FROM cmh.user_view_logs
+        WHERE resource_type = 'NEWS'
+          AND CAST(view_time AS DATE) BETWEEN #{startDate} AND #{endDate} -- 移除 INTERVAL，直接比较日期部分
+        GROUP BY CAST(view_time AS DATE) -- 分组也使用转换后的日期
         ORDER BY date ASC
     </select>
 
     <select id="getHotNews" resultType="com.cemenghui.news.entity.News">
         SELECT id, title, view_count, status, create_time, author
-        FROM news
+        FROM cmh.news
         <where>
             is_deleted = 0
             <if test="status != null">
