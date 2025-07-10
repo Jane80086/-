@@ -1,1357 +1,460 @@
 <template>
   <div class="course-play-container">
-    <div v-if="error" class="error-tip">
-      <el-result icon="error" title="页面加载失败" :sub-title="error">
-        <template #extra>
-          <el-button type="primary" @click="$router.go(-1)">返回</el-button>
-        </template>
-      </el-result>
+    <div v-if="loading" class="loading">
+      <el-skeleton :rows="10" animated />
     </div>
-    <div v-else>
-      <div v-if="loading" class="loading">
-        <el-skeleton :rows="10" animated />
+    
+    <div v-else-if="course" class="play-content">
+      <!-- 课程标题和导航 -->
+      <div class="play-header">
+        <div class="header-left">
+          <el-button @click="$router.go(-1)" size="small">
+            <el-icon><ArrowLeft /></el-icon>
+            返回
+          </el-button>
+          <h1 class="course-title">{{ course.title }}</h1>
+        </div>
+        <div class="header-right">
+          <span class="progress-text">学习进度：{{ learningProgress }}%</span>
+        </div>
       </div>
-      <div v-else-if="course" class="play-content">
-        <div class="play-header">
-          <div class="header-left">
-            <el-button @click="$router.go(-1)" size="small">
-              <el-icon><ArrowLeft /></el-icon>
-              返回
-            </el-button>
-            <h1 class="course-title">{{ course.title }}</h1>
-          </div>
-          <div class="header-right">
-            <span class="progress-text">学习进度：{{ learningProgress }}%</span>
-          </div>
+
+      <!-- 视频播放区域 -->
+      <div class="video-section">
+        <div class="video-player">
+          <video
+            ref="videoPlayer"
+            :src="currentVideoUrl"
+            controls
+            class="video-element"
+            @timeupdate="onTimeUpdate"
+            @ended="onVideoEnded"
+            @play="onVideoPlay"
+            @pause="onVideoPause"
+          >
+            您的浏览器不支持视频播放
+          </video>
         </div>
-        <div class="video-section">
-          <div class="video-player">
-            <video
-              ref="videoPlayer"
-              :src="currentVideoUrl"
-              controls
-              class="video-element"
-            >
-              您的浏览器不支持视频播放
-            </video>
-          </div>
-          <div class="video-info">
-            <h2>{{ currentChapter?.title || '课程视频' }}</h2>
-            <p>{{ currentChapter?.description || course.description }}</p>
-          </div>
+        
+        <div class="video-info">
+          <h2>{{ currentChapter?.title || '课程视频' }}</h2>
+          <p>{{ currentChapter?.description || course.description }}</p>
         </div>
-        <div class="chapters-section">
-          <h3>课程章节</h3>
-          <div class="chapters-list">
-            <div
-              v-for="(chapter, index) in chapters"
-              :key="chapter.id"
-              class="chapter-item"
-              :class="{ 'active': currentChapterIndex === index, 'completed': chapter.completed }"
-              @click="selectChapter(index)"
-            >
-              <div class="chapter-info">
-                <div class="chapter-title">
-                  <span class="chapter-number">{{ index + 1 }}</span>
-                  <span class="title">{{ chapter.title }}</span>
-                </div>
-                <div class="chapter-meta">
-                  <span class="duration">{{ formatDuration(chapter.duration) }}</span>
-                  <el-icon v-if="chapter.completed" class="completed-icon"><Check /></el-icon>
-                </div>
+      </div>
+
+      <!-- 章节列表 -->
+      <div class="chapters-section">
+        <h3>课程章节</h3>
+        <div class="chapters-list">
+          <div
+            v-for="(chapter, index) in chapters"
+            :key="chapter.id"
+            class="chapter-item"
+            :class="{ 
+              'active': currentChapterIndex === index,
+              'completed': chapter.completed 
+            }"
+            @click="selectChapter(index)"
+          >
+            <div class="chapter-info">
+              <div class="chapter-title">
+                <span class="chapter-number">{{ index + 1 }}</span>
+                <span class="title">{{ chapter.title }}</span>
+              </div>
+              <div class="chapter-meta">
+                <span class="duration">{{ formatDuration(chapter.duration) }}</span>
+                <el-icon v-if="chapter.completed" class="completed-icon"><Check /></el-icon>
               </div>
             </div>
           </div>
         </div>
-        <div class="features-section">
-          <el-tabs v-model="activeTab" class="features-tabs">
-            <el-tab-pane label="AI问答" name="aiqna">
-              <div class="aiqna-section">
-                <div class="aiqna-ask card-input">
-                  <el-input 
-                    v-model="aiQuestion" 
-                    placeholder="向AI提问关于课程内容的问题..." 
-                    clearable 
-                    @keyup.enter="submitAiQuestion"
-                    size="large"
-                  />
-                  <el-button type="primary" @click="submitAiQuestion" :loading="aiLoading" size="large">
-                    <el-icon><ChatDotRound /></el-icon>
-                    提问
-                  </el-button>
+      </div>
+
+      <!-- 功能区 -->
+      <div class="features-section">
+        <el-tabs v-model="activeTab" class="features-tabs">
+          <!-- AI问答 -->
+          <el-tab-pane label="AI问答" name="aiqna">
+            <div class="aiqna-section">
+              <div class="aiqna-ask">
+                <el-input 
+                  v-model="aiQuestion" 
+                  placeholder="向AI提问关于课程内容的问题..." 
+                  clearable 
+                  @keyup.enter="submitAiQuestion"
+                  size="large"
+                />
+                <el-button type="primary" @click="submitAiQuestion" :loading="aiLoading" size="large">
+                  <el-icon><ChatDotRound /></el-icon>
+                  提问
+                </el-button>
+              </div>
+              
+              <div v-if="aiAnswer" class="aiqna-answer">
+                <div class="ai-header">
+                  <el-icon><Cpu /></el-icon>
+                  <span class="ai-label">AI智能回复</span>
                 </div>
-                <div class="section-title">历史问答</div>
-                <div class="aiqna-history">
-                  <div v-if="aiQnaList.length === 0" class="no-history">
-                    <el-empty description="暂无历史问答" />
-                  </div>
-                  <div v-else class="history-list">
-                    <el-card v-for="item in aiQnaList" :key="item.id" class="aiqna-item card-block" shadow="hover">
-                      <div class="question"><b>Q:</b> {{ item.question }}</div>
-                      <div class="answer"><b>A: <span class="ai-label">AI</span></b> {{ item.answer }}</div>
-                      <div class="meta">{{ item.userName }} · {{ item.createTime }}</div>
-                    </el-card>
+                <div class="ai-content">{{ aiAnswer }}</div>
+              </div>
+              
+              <div class="aiqna-history">
+                <h4>历史问答</h4>
+                <div v-if="aiQnaList.length === 0" class="no-history">
+                  <el-empty description="暂无历史问答" />
+                </div>
+                <div v-else class="history-list">
+                  <div v-for="item in aiQnaList" :key="item.id" class="aiqna-item">
+                    <div class="question">Q: {{ item.question }}</div>
+                    <div class="answer">A: <span class="ai-label">AI</span> {{ item.answer }}</div>
+                    <div class="meta">{{ item.userName }} · {{ item.createTime }}</div>
                   </div>
                 </div>
               </div>
-            </el-tab-pane>
-            <el-tab-pane label="评论区" name="comments">
-              <div class="comments-section">
-                <div class="comments-header section-title">
-                  课程评论 <span class="comment-count">{{ comments.length }} 条评论</span>
+            </div>
+          </el-tab-pane>
+
+          <!-- 学习笔记 -->
+          <el-tab-pane label="学习笔记" name="notes">
+            <div class="notes-section">
+              <div class="notes-header">
+                <h3>学习笔记</h3>
+                <el-button type="primary" @click="showAddNote = true">
+                  <el-icon><Edit /></el-icon>
+                  添加笔记
+                </el-button>
+              </div>
+              
+              <!-- 添加笔记对话框 -->
+              <el-dialog v-model="showAddNote" title="添加笔记" width="500px">
+                <el-form :model="noteForm" label-width="80px">
+                  <el-form-item label="笔记标题">
+                    <el-input v-model="noteForm.title" placeholder="请输入笔记标题" />
+                  </el-form-item>
+                  <el-form-item label="笔记内容">
+                    <el-input 
+                      v-model="noteForm.content" 
+                      type="textarea" 
+                      :rows="6"
+                      placeholder="请输入笔记内容"
+                    />
+                  </el-form-item>
+                  <el-form-item label="时间点">
+                    <el-input v-model="noteForm.timestamp" placeholder="视频时间点（秒）" />
+                  </el-form-item>
+                </el-form>
+                <template #footer>
+                  <el-button @click="showAddNote = false">取消</el-button>
+                  <el-button type="primary" @click="addNote">保存笔记</el-button>
+                </template>
+              </el-dialog>
+              
+              <!-- 笔记列表 -->
+              <div class="notes-list">
+                <div v-if="notes.length === 0" class="no-notes">
+                  <el-empty description="暂无笔记，开始记录您的学习心得吧" />
                 </div>
-                <div class="comment-input card-input">
-                  <el-input 
-                    v-model="newComment" 
-                    placeholder="写下您的学习感受和评论..." 
-                    type="textarea"
-                    :rows="3"
-                    clearable 
-                  />
-                  <el-button type="primary" @click="submitComment" size="large">
-                    <el-icon><ChatLineRound /></el-icon>
-                    发表评论
-                  </el-button>
-                </div>
-                <div class="section-title">最新评论</div>
-                <div class="comment-list">
-                  <div v-if="comments.length === 0" class="no-comments">
-                    <el-empty description="暂无评论，快来发表第一条评论吧" />
-                  </div>
-                  <div v-else class="comment-items">
-                    <el-card v-for="comment in comments" :key="comment.id" class="comment-item card-block" shadow="hover">
-                      <div class="comment-user">
-                        <img :src="comment.userAvatar || '/default-avatar.jpg'" :alt="comment.userName" class="user-avatar">
-                        <div class="user-info">
-                          <span class="username">{{ comment.userName }}</span>
-                          <span class="time">{{ comment.createTime }}</span>
-                        </div>
+                
+                <div v-else class="note-items">
+                  <div v-for="note in notes" :key="note.id" class="note-item">
+                    <div class="note-header">
+                      <h4>{{ note.title }}</h4>
+                      <div class="note-actions">
+                        <el-button size="small" @click="editNote(note)">编辑</el-button>
+                        <el-button size="small" type="danger" @click="deleteNote(note.id)">删除</el-button>
                       </div>
-                      <div class="comment-content">
-                        {{ comment.content }}
-                      </div>
-                      <div class="comment-actions">
-                        <el-button size="small" @click="likeComment(comment.id)">
-                          <el-icon><Pointer /></el-icon>
-                          {{ comment.likeCount || 0 }}
-                        </el-button>
-                      </div>
-                    </el-card>
+                    </div>
+                    <div class="note-content">
+                      <p>{{ note.content }}</p>
+                    </div>
+                    <div class="note-meta">
+                      <span class="timestamp">{{ formatTime(note.timestamp) }}</span>
+                      <span class="time">{{ formatDate(note.createTime) }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </el-tab-pane>
-          </el-tabs>
-        </div>
+            </div>
+          </el-tab-pane>
+
+          <!-- 评论区 -->
+          <el-tab-pane label="评论区" name="comments">
+            <div class="comments-section">
+              <div class="comments-header">
+                <h3>课程评论</h3>
+                <span class="comment-count">{{ comments.length }} 条评论</span>
+              </div>
+              
+              <div class="comment-input">
+                <el-input 
+                  v-model="newComment" 
+                  placeholder="写下您的学习感受和评论..." 
+                  type="textarea"
+                  :rows="3"
+                  clearable 
+                />
+                <el-button type="primary" @click="submitComment" size="large">
+                  <el-icon><ChatLineRound /></el-icon>
+                  发表评论
+                </el-button>
+              </div>
+              
+              <div class="comments-list">
+                <div v-if="comments.length === 0" class="no-comments">
+                  <el-empty description="暂无评论" />
+                </div>
+                <div v-else class="comment-items">
+                  <div v-for="comment in comments" :key="comment.id" class="comment-item">
+                    <div class="comment-header">
+                      <span class="user">{{ comment.userName }}</span>
+                      <span class="time">{{ formatDate(comment.createTime) }}</span>
+                    </div>
+                    <div class="comment-content">
+                      <p>{{ comment.content }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
-      <div v-else class="not-found">
-        <el-result icon="warning" title="课程不存在" sub-title="抱歉，您访问的课程不存在或已被删除">
-          <template #extra>
-            <el-button type="primary" @click="$router.push('/admin/course')">返回课程列表</el-button>
-          </template>
-        </el-result>
-      </div>
+    </div>
+    
+    <div v-else class="not-found">
+      <el-result icon="warning" title="课程不存在" sub-title="抱歉，您访问的课程不存在或已被删除">
+        <template #extra>
+          <el-button type="primary" @click="$router.push('/admin/course')">返回课程列表</el-button>
+        </template>
+      </el-result>
     </div>
   </div>
 </template>
+
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Check, ArrowLeft, ChatDotRound, Cpu, ChatLineRound, Pointer } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { 
+  ArrowLeft, Check, Close, VideoPlay, User, Clock, View, Star, ChatDotRound, Cpu, Edit, ChatLineRound
+} from '@element-plus/icons-vue'
 import { courseApi } from '@/api/course'
+
 const route = useRoute()
 const router = useRouter()
+
+// 响应式数据
 const loading = ref(false)
 const course = ref(null)
 const chapters = ref([])
 const currentChapterIndex = ref(0)
-const learningProgress = ref(0)
-const videoPlayer = ref(null)
-const currentChapter = computed(() => chapters.value[currentChapterIndex.value] || null)
-const currentVideoUrl = computed(() => currentChapter.value?.videoUrl || course.value?.videoUrl || '')
-const error = ref('')
-const activeTab = ref('aiqna')
-const aiQnaList = ref([])
-const aiQuestion = ref('')
-aiQnaList.value = []
-const aiAnswer = ref('')
-aiQnaList.value = []
-const aiLoading = ref(false)
-const comments = ref([])
-const newComment = ref('')
+const currentVideoUrl = ref('')
+const activeTab = ref('info')
+const showRejectDialog = ref(false)
+const rejectForm = ref({
+  reason: ''
+})
+
+// 模拟审核记录
+const auditRecords = ref([
+  {
+    id: 1,
+    auditor: '管理员A',
+    action: 'submit',
+    reason: '课程提交审核',
+    createTime: '2024-07-01 10:00:00'
+  },
+  {
+    id: 2,
+    auditor: '系统',
+    action: 'pending',
+    reason: '等待审核',
+    createTime: '2024-07-01 10:01:00'
+  }
+])
+
+// 方法
 const loadCourseDetail = async () => {
   try {
     loading.value = true
     const courseId = route.params.id
     const response = await courseApi.getCourseDetail(courseId)
-    console.log('getCourseDetail', response)
     if (response.code === 200) {
       course.value = response.data
       await loadChapters()
-      await loadLearningProgress()
     } else {
-      error.value = '获取课程详情失败'
       ElMessage.error('获取课程详情失败')
     }
-  } catch (e) {
-    error.value = '网络错误，请稍后重试'
+  } catch (error) {
+    console.error('加载课程详情失败:', error)
     ElMessage.error('网络错误，请稍后重试')
-    console.error(e)
   } finally {
     loading.value = false
   }
 }
+
 const loadChapters = async () => {
   try {
     const courseId = route.params.id
     const response = await courseApi.getChapters(courseId)
-    console.log('getChapters', response)
     if (response.code === 200) {
       chapters.value = response.data || []
+      if (chapters.value.length > 0) {
+        currentVideoUrl.value = chapters.value[0].videoUrl || '/default-video.mp4'
+      }
     } else {
       chapters.value = [{
         id: 1,
         title: course.value.title,
         description: course.value.description,
-        videoUrl: course.value.videoUrl,
         duration: course.value.duration,
-        completed: false
+        videoUrl: '/default-video.mp4'
       }]
+      currentVideoUrl.value = '/default-video.mp4'
     }
-  } catch (e) {
-    console.error(e)
+  } catch (error) {
     chapters.value = [{
       id: 1,
       title: course.value.title,
       description: course.value.description,
-      videoUrl: course.value.videoUrl,
       duration: course.value.duration,
-      completed: false
+      videoUrl: '/default-video.mp4'
     }]
+    currentVideoUrl.value = '/default-video.mp4'
   }
 }
-const loadLearningProgress = async () => {
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.getLearningProgress(courseId)
-    console.log('getLearningProgress', response)
-    if (response.code === 200) {
-      const data = response.data
-      learningProgress.value = data.progress || 0
-    }
-  } catch (e) {
-    console.error(e)
-  }
-}
+
 const selectChapter = (index) => {
   currentChapterIndex.value = index
-  if (videoPlayer.value) {
-    videoPlayer.value.currentTime = 0
+  const chapter = chapters.value[index]
+  currentVideoUrl.value = chapter.videoUrl || '/default-video.mp4'
+}
+
+const onTimeUpdate = () => {
+  // 视频播放进度更新
+}
+
+const onVideoEnded = () => {
+  // 视频播放结束
+}
+
+const onVideoPlay = () => {
+  // 视频开始播放
+}
+
+const onVideoPause = () => {
+  // 视频暂停
+}
+
+const approveCourse = async () => {
+  try {
+    await ElMessageBox.confirm(`确定要通过课程"${course.value.title}"吗？`, '确认通过', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'success'
+    })
+    
+    course.value.status = 'approved'
+    auditRecords.value.push({
+      id: Date.now(),
+      auditor: '当前管理员',
+      action: 'approve',
+      reason: '审核通过',
+      createTime: new Date().toISOString()
+    })
+    ElMessage.success('课程审核通过')
+  } catch {
+    // 用户取消操作
   }
 }
+
+const rejectCourse = () => {
+  showRejectDialog.value = true
+}
+
+const confirmReject = async () => {
+  if (!rejectForm.value.reason.trim()) {
+    ElMessage.warning('请输入驳回理由')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm(`确定要驳回课程"${course.value.title}"吗？`, '确认驳回', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    course.value.status = 'rejected'
+    auditRecords.value.push({
+      id: Date.now(),
+      auditor: '当前管理员',
+      action: 'reject',
+      reason: rejectForm.value.reason,
+      createTime: new Date().toISOString()
+    })
+    showRejectDialog.value = false
+    rejectForm.value.reason = ''
+    ElMessage.success('课程已驳回')
+  } catch {
+    // 用户取消操作
+  }
+}
+
+const getStatusType = (status) => {
+  switch (status) {
+    case 'approved': return 'success'
+    case 'pending': return 'warning'
+    case 'rejected': return 'danger'
+    default: return 'info'
+  }
+}
+
+const getStatusText = (status) => {
+  switch (status) {
+    case 'approved': return '已通过'
+    case 'pending': return '待审核'
+    case 'rejected': return '已驳回'
+    default: return '未知'
+  }
+}
+
+const getAuditType = (action) => {
+  switch (action) {
+    case 'submit': return 'info'
+    case 'approve': return 'success'
+    case 'reject': return 'danger'
+    case 'pending': return 'warning'
+    default: return 'info'
+  }
+}
+
+const getAuditText = (action) => {
+  switch (action) {
+    case 'submit': return '提交审核'
+    case 'approve': return '审核通过'
+    case 'reject': return '审核驳回'
+    case 'pending': return '等待审核'
+    default: return '未知'
+  }
+}
+
 const formatDuration = (minutes) => {
   if (!minutes) return '0分钟'
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
   return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`
 }
-const loadAiQnaList = async () => {
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.getAiQnaList(courseId)
-    if (response.code === 200) {
-      aiQnaList.value = response.data || []
-    }
-  } catch (error) {
-    console.error('加载AI问答失败:', error)
-  }
+
+const formatDate = (date) => {
+  if (!date) return '未知'
+  return new Date(date).toLocaleString('zh-CN')
 }
-const submitAiQuestion = async () => {
-  if (!aiQuestion.value.trim()) {
-    ElMessage.warning('请输入问题')
-    return
-  }
-  try {
-    aiLoading.value = true
-    const courseId = route.params.id
-    const response = await courseApi.aiAsk({ courseId, question: aiQuestion.value })
-    if (response.code === 200) {
-      aiAnswer.value = response.data.answer
-      aiQuestion.value = ''
-      await loadAiQnaList()
-      ElMessage.success('AI回复已生成')
-    } else {
-      ElMessage.error('AI回复生成失败')
-    }
-  } catch (error) {
-    console.error('AI问答失败:', error)
-    ElMessage.error('网络错误，请稍后重试')
-  } finally {
-    aiLoading.value = false
-  }
-}
-const loadComments = async () => {
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.getComments(courseId)
-    if (response.code === 200) {
-      comments.value = response.data || []
-    }
-  } catch (error) {
-    console.error('加载评论失败:', error)
-  }
-}
-const submitComment = async () => {
-  if (!newComment.value.trim()) {
-    ElMessage.warning('请输入评论内容')
-    return
-  }
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.submitComment({ courseId, content: newComment.value })
-    if (response.code === 200) {
-      ElMessage.success('评论发表成功')
-      newComment.value = ''
-      await loadComments()
-    } else {
-      ElMessage.error('评论发表失败')
-    }
-  } catch (error) {
-    console.error('发表评论失败:', error)
-    ElMessage.error('发表失败，请稍后重试')
-  }
-}
-const likeComment = async (commentId) => {
-  try {
-    const response = await courseApi.likeComment(commentId)
-    if (response.code === 200) {
-      ElMessage.success('点赞成功')
-      await loadComments()
-    } else {
-      ElMessage.error('点赞失败')
-    }
-  } catch (error) {
-    console.error('点赞失败:', error)
-    ElMessage.error('操作失败，请稍后重试')
-  }
-}
+
 onMounted(() => {
+  console.log('=== Admin CoursePlay 组件挂载 ===')
   loadCourseDetail()
-  loadAiQnaList()
-  loadComments()
 })
 </script>
-<style scoped>
-.course-play-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
 
-.loading {
-  padding: 40px;
-}
-
-.play-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.course-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-}
-
-.progress-text {
-  color: #409eff;
-  font-weight: 500;
-}
-
-.video-section {
-  margin-bottom: 30px;
-}
-
-.video-player {
-  width: 100%;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.video-element {
-  width: 100%;
-  height: 500px;
-  background: #000;
-}
-
-.video-info {
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.video-info h2 {
-  margin: 0 0 10px 0;
-  color: #333;
-  font-size: 18px;
-}
-
-.video-info p {
-  margin: 0;
-  color: #666;
-  line-height: 1.6;
-}
-
-.chapters-section {
-  margin-bottom: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.chapters-section h3 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 18px;
-}
-
-.chapters-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.chapter-item {
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  background: white;
-}
-
-.chapter-item:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
-}
-
-.chapter-item.active {
-  border-color: #409eff;
-  background: #f0f9ff;
-}
-
-.chapter-item.completed {
-  border-color: #67c23a;
-  background: #f0f9ff;
-}
-
-.chapter-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.chapter-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.chapter-number {
-  width: 24px;
-  height: 24px;
-  background: #409eff;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 12px;
-}
-
-.title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.chapter-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.duration {
-  color: #666;
-  font-size: 12px;
-}
-
-.completed-icon {
-  color: #67c23a;
-  font-size: 16px;
-}
-
-.not-found {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.features-section {
-  background: #fff;
-  border-radius: 8px;
-  margin-top: 0;
-  box-shadow: none;
-  padding: 0;
-}
-.features-tabs {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: none;
-  padding: 0 0 0 0;
-}
-.aiqna-section {
-  padding: 20px 0;
-}
-.aiqna-ask {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.aiqna-answer {
-  background: #f0f9ff;
-  border: 1px solid #b3d8ff;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-}
-.ai-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  color: #409eff;
-  font-weight: 600;
-}
-.ai-content {
-  color: #333;
-  line-height: 1.6;
-}
-.aiqna-history h4 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 16px;
-}
-.no-history {
-  text-align: center;
-  padding: 40px 0;
-}
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.aiqna-item {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 15px;
-  border-left: 4px solid #409eff;
-}
-.aiqna-item .question {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-.aiqna-item .answer {
-  color: #666;
-  line-height: 1.5;
-}
-.aiqna-item .meta {
-  color: #999;
-  font-size: 12px;
-  margin-top: 8px;
-}
-.ai-label {
-  color: #409eff;
-  font-weight: 600;
-}
-.comments-section {
-  padding: 20px 0;
-}
-.comments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.comments-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 18px;
-}
-.comment-count {
-  color: #666;
-  font-size: 14px;
-}
-.comment-input {
-  margin-bottom: 20px;
-}
-.comment-input .el-button {
-  margin-top: 10px;
-}
-.no-comments {
-  text-align: center;
-  padding: 40px 0;
-}
-.comment-items {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-.comment-item {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #e0e0e0;
-}
-.comment-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.user-info {
-  display: flex;
-  flex-direction: column;
-}
-.username {
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
-}
-.time {
-  color: #999;
-  font-size: 12px;
-}
-.comment-content {
-  color: #333;
-  line-height: 1.6;
-  margin-bottom: 10px;
-}
-.comment-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-@media (max-width: 768px) {
-  .aiqna-ask {
-    flex-direction: column;
-  }
-  .comment-user {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-}
-</style> 
-  <div class="course-play-container">
-    <div v-if="error" class="error-tip">
-      <el-result icon="error" title="页面加载失败" :sub-title="error">
-        <template #extra>
-          <el-button type="primary" @click="$router.go(-1)">返回</el-button>
-        </template>
-      </el-result>
-    </div>
-    <div v-else>
-      <div v-if="loading" class="loading">
-        <el-skeleton :rows="10" animated />
-      </div>
-      <div v-else-if="course" class="play-content">
-        <div class="play-header">
-          <div class="header-left">
-            <el-button @click="$router.go(-1)" size="small">
-              <el-icon><ArrowLeft /></el-icon>
-              返回
-            </el-button>
-            <h1 class="course-title">{{ course.title }}</h1>
-          </div>
-          <div class="header-right">
-            <span class="progress-text">学习进度：{{ learningProgress }}%</span>
-          </div>
-        </div>
-        <div class="video-section">
-          <div class="video-player">
-            <video
-              ref="videoPlayer"
-              :src="currentVideoUrl"
-              controls
-              class="video-element"
-            >
-              您的浏览器不支持视频播放
-            </video>
-          </div>
-          <div class="video-info">
-            <h2>{{ currentChapter?.title || '课程视频' }}</h2>
-            <p>{{ currentChapter?.description || course.description }}</p>
-          </div>
-        </div>
-        <div class="chapters-section">
-          <h3>课程章节</h3>
-          <div class="chapters-list">
-            <div
-              v-for="(chapter, index) in chapters"
-              :key="chapter.id"
-              class="chapter-item"
-              :class="{ 'active': currentChapterIndex === index, 'completed': chapter.completed }"
-              @click="selectChapter(index)"
-            >
-              <div class="chapter-info">
-                <div class="chapter-title">
-                  <span class="chapter-number">{{ index + 1 }}</span>
-                  <span class="title">{{ chapter.title }}</span>
-                </div>
-                <div class="chapter-meta">
-                  <span class="duration">{{ formatDuration(chapter.duration) }}</span>
-                  <el-icon v-if="chapter.completed" class="completed-icon"><Check /></el-icon>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="features-section">
-          <el-tabs v-model="activeTab" class="features-tabs">
-            <el-tab-pane label="AI问答" name="aiqna">
-              <div class="aiqna-section">
-                <div class="aiqna-ask card-input">
-                  <el-input 
-                    v-model="aiQuestion" 
-                    placeholder="向AI提问关于课程内容的问题..." 
-                    clearable 
-                    @keyup.enter="submitAiQuestion"
-                    size="large"
-                  />
-                  <el-button type="primary" @click="submitAiQuestion" :loading="aiLoading" size="large">
-                    <el-icon><ChatDotRound /></el-icon>
-                    提问
-                  </el-button>
-                </div>
-                <div class="section-title">历史问答</div>
-                <div class="aiqna-history">
-                  <div v-if="aiQnaList.length === 0" class="no-history">
-                    <el-empty description="暂无历史问答" />
-                  </div>
-                  <div v-else class="history-list">
-                    <el-card v-for="item in aiQnaList" :key="item.id" class="aiqna-item card-block" shadow="hover">
-                      <div class="question"><b>Q:</b> {{ item.question }}</div>
-                      <div class="answer"><b>A: <span class="ai-label">AI</span></b> {{ item.answer }}</div>
-                      <div class="meta">{{ item.userName }} · {{ item.createTime }}</div>
-                    </el-card>
-                  </div>
-                </div>
-              </div>
-            </el-tab-pane>
-            <el-tab-pane label="评论区" name="comments">
-              <div class="comments-section">
-                <div class="comments-header section-title">
-                  课程评论 <span class="comment-count">{{ comments.length }} 条评论</span>
-                </div>
-                <div class="comment-input card-input">
-                  <el-input 
-                    v-model="newComment" 
-                    placeholder="写下您的学习感受和评论..." 
-                    type="textarea"
-                    :rows="3"
-                    clearable 
-                  />
-                  <el-button type="primary" @click="submitComment" size="large">
-                    <el-icon><ChatLineRound /></el-icon>
-                    发表评论
-                  </el-button>
-                </div>
-                <div class="section-title">最新评论</div>
-                <div class="comment-list">
-                  <div v-if="comments.length === 0" class="no-comments">
-                    <el-empty description="暂无评论，快来发表第一条评论吧" />
-                  </div>
-                  <div v-else class="comment-items">
-                    <el-card v-for="comment in comments" :key="comment.id" class="comment-item card-block" shadow="hover">
-                      <div class="comment-user">
-                        <img :src="comment.userAvatar || '/default-avatar.jpg'" :alt="comment.userName" class="user-avatar">
-                        <div class="user-info">
-                          <span class="username">{{ comment.userName }}</span>
-                          <span class="time">{{ comment.createTime }}</span>
-                        </div>
-                      </div>
-                      <div class="comment-content">
-                        {{ comment.content }}
-                      </div>
-                      <div class="comment-actions">
-                        <el-button size="small" @click="likeComment(comment.id)">
-                          <el-icon><Pointer /></el-icon>
-                          {{ comment.likeCount || 0 }}
-                        </el-button>
-                      </div>
-                    </el-card>
-                  </div>
-                </div>
-              </div>
-            </el-tab-pane>
-          </el-tabs>
-        </div>
-      </div>
-      <div v-else class="not-found">
-        <el-result icon="warning" title="课程不存在" sub-title="抱歉，您访问的课程不存在或已被删除">
-          <template #extra>
-            <el-button type="primary" @click="$router.push('/admin/course')">返回课程列表</el-button>
-          </template>
-        </el-result>
-      </div>
-    </div>
-  </div>
-</template>
-<script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Check, ArrowLeft, ChatDotRound, Cpu, ChatLineRound, Pointer } from '@element-plus/icons-vue'
-import { courseApi } from '@/api/course'
-const route = useRoute()
-const router = useRouter()
-const loading = ref(false)
-const course = ref(null)
-const chapters = ref([])
-const currentChapterIndex = ref(0)
-const learningProgress = ref(0)
-const videoPlayer = ref(null)
-const currentChapter = computed(() => chapters.value[currentChapterIndex.value] || null)
-const currentVideoUrl = computed(() => currentChapter.value?.videoUrl || course.value?.videoUrl || '')
-const error = ref('')
-const activeTab = ref('aiqna')
-const aiQnaList = ref([])
-const aiQuestion = ref('')
-aiQnaList.value = []
-const aiAnswer = ref('')
-aiQnaList.value = []
-const aiLoading = ref(false)
-const comments = ref([])
-const newComment = ref('')
-const loadCourseDetail = async () => {
-  try {
-    loading.value = true
-    const courseId = route.params.id
-    const response = await courseApi.getCourseDetail(courseId)
-    console.log('getCourseDetail', response)
-    if (response.code === 200) {
-      course.value = response.data
-      await loadChapters()
-      await loadLearningProgress()
-    } else {
-      error.value = '获取课程详情失败'
-      ElMessage.error('获取课程详情失败')
-    }
-  } catch (e) {
-    error.value = '网络错误，请稍后重试'
-    ElMessage.error('网络错误，请稍后重试')
-    console.error(e)
-  } finally {
-    loading.value = false
-  }
-}
-const loadChapters = async () => {
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.getChapters(courseId)
-    console.log('getChapters', response)
-    if (response.code === 200) {
-      chapters.value = response.data || []
-    } else {
-      chapters.value = [{
-        id: 1,
-        title: course.value.title,
-        description: course.value.description,
-        videoUrl: course.value.videoUrl,
-        duration: course.value.duration,
-        completed: false
-      }]
-    }
-  } catch (e) {
-    console.error(e)
-    chapters.value = [{
-      id: 1,
-      title: course.value.title,
-      description: course.value.description,
-      videoUrl: course.value.videoUrl,
-      duration: course.value.duration,
-      completed: false
-    }]
-  }
-}
-const loadLearningProgress = async () => {
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.getLearningProgress(courseId)
-    console.log('getLearningProgress', response)
-    if (response.code === 200) {
-      const data = response.data
-      learningProgress.value = data.progress || 0
-    }
-  } catch (e) {
-    console.error(e)
-  }
-}
-const selectChapter = (index) => {
-  currentChapterIndex.value = index
-  if (videoPlayer.value) {
-    videoPlayer.value.currentTime = 0
-  }
-}
-const formatDuration = (minutes) => {
-  if (!minutes) return '0分钟'
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`
-}
-const loadAiQnaList = async () => {
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.getAiQnaList(courseId)
-    if (response.code === 200) {
-      aiQnaList.value = response.data || []
-    }
-  } catch (error) {
-    console.error('加载AI问答失败:', error)
-  }
-}
-const submitAiQuestion = async () => {
-  if (!aiQuestion.value.trim()) {
-    ElMessage.warning('请输入问题')
-    return
-  }
-  try {
-    aiLoading.value = true
-    const courseId = route.params.id
-    const response = await courseApi.aiAsk({ courseId, question: aiQuestion.value })
-    if (response.code === 200) {
-      aiAnswer.value = response.data.answer
-      aiQuestion.value = ''
-      await loadAiQnaList()
-      ElMessage.success('AI回复已生成')
-    } else {
-      ElMessage.error('AI回复生成失败')
-    }
-  } catch (error) {
-    console.error('AI问答失败:', error)
-    ElMessage.error('网络错误，请稍后重试')
-  } finally {
-    aiLoading.value = false
-  }
-}
-const loadComments = async () => {
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.getComments(courseId)
-    if (response.code === 200) {
-      comments.value = response.data || []
-    }
-  } catch (error) {
-    console.error('加载评论失败:', error)
-  }
-}
-const submitComment = async () => {
-  if (!newComment.value.trim()) {
-    ElMessage.warning('请输入评论内容')
-    return
-  }
-  try {
-    const courseId = route.params.id
-    const response = await courseApi.submitComment({ courseId, content: newComment.value })
-    if (response.code === 200) {
-      ElMessage.success('评论发表成功')
-      newComment.value = ''
-      await loadComments()
-    } else {
-      ElMessage.error('评论发表失败')
-    }
-  } catch (error) {
-    console.error('发表评论失败:', error)
-    ElMessage.error('发表失败，请稍后重试')
-  }
-}
-const likeComment = async (commentId) => {
-  try {
-    const response = await courseApi.likeComment(commentId)
-    if (response.code === 200) {
-      ElMessage.success('点赞成功')
-      await loadComments()
-    } else {
-      ElMessage.error('点赞失败')
-    }
-  } catch (error) {
-    console.error('点赞失败:', error)
-    ElMessage.error('操作失败，请稍后重试')
-  }
-}
-onMounted(() => {
-  loadCourseDetail()
-  loadAiQnaList()
-  loadComments()
-})
-</script>
-<style scoped>
-.course-play-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.loading {
-  padding: 40px;
-}
-
-.play-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.course-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-}
-
-.progress-text {
-  color: #409eff;
-  font-weight: 500;
-}
-
-.video-section {
-  margin-bottom: 30px;
-}
-
-.video-player {
-  width: 100%;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.video-element {
-  width: 100%;
-  height: 500px;
-  background: #000;
-}
-
-.video-info {
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.video-info h2 {
-  margin: 0 0 10px 0;
-  color: #333;
-  font-size: 18px;
-}
-
-.video-info p {
-  margin: 0;
-  color: #666;
-  line-height: 1.6;
-}
-
-.chapters-section {
-  margin-bottom: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.chapters-section h3 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 18px;
-}
-
-.chapters-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.chapter-item {
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  background: white;
-}
-
-.chapter-item:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
-}
-
-.chapter-item.active {
-  border-color: #409eff;
-  background: #f0f9ff;
-}
-
-.chapter-item.completed {
-  border-color: #67c23a;
-  background: #f0f9ff;
-}
-
-.chapter-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.chapter-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.chapter-number {
-  width: 24px;
-  height: 24px;
-  background: #409eff;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 12px;
-}
-
-.title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.chapter-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.duration {
-  color: #666;
-  font-size: 12px;
-}
-
-.completed-icon {
-  color: #67c23a;
-  font-size: 16px;
-}
-
-.not-found {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.features-section {
-  background: #fff;
-  border-radius: 8px;
-  margin-top: 0;
-  box-shadow: none;
-  padding: 0;
-}
-.features-tabs {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: none;
-  padding: 0 0 0 0;
-}
-.aiqna-section {
-  padding: 20px 0;
-}
-.aiqna-ask {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.aiqna-answer {
-  background: #f0f9ff;
-  border: 1px solid #b3d8ff;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-}
-.ai-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  color: #409eff;
-  font-weight: 600;
-}
-.ai-content {
-  color: #333;
-  line-height: 1.6;
-}
-.aiqna-history h4 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 16px;
-}
-.no-history {
-  text-align: center;
-  padding: 40px 0;
-}
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.aiqna-item {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 15px;
-  border-left: 4px solid #409eff;
-}
-.aiqna-item .question {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-.aiqna-item .answer {
-  color: #666;
-  line-height: 1.5;
-}
-.aiqna-item .meta {
-  color: #999;
-  font-size: 12px;
-  margin-top: 8px;
-}
-.ai-label {
-  color: #409eff;
-  font-weight: 600;
-}
-.comments-section {
-  padding: 20px 0;
-}
-.comments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.comments-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 18px;
-}
-.comment-count {
-  color: #666;
-  font-size: 14px;
-}
-.comment-input {
-  margin-bottom: 20px;
-}
-.comment-input .el-button {
-  margin-top: 10px;
-}
-.no-comments {
-  text-align: center;
-  padding: 40px 0;
-}
-.comment-items {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-.comment-item {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #e0e0e0;
-}
-.comment-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.user-info {
-  display: flex;
-  flex-direction: column;
-}
-.username {
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
-}
-.time {
-  color: #999;
-  font-size: 12px;
-}
-.comment-content {
-  color: #333;
-  line-height: 1.6;
-  margin-bottom: 10px;
-}
-.comment-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-@media (max-width: 768px) {
-  .aiqna-ask {
-    flex-direction: column;
-  }
-  .comment-user {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-}
-</style> 
+<style scoped src="./CoursePlay.css"></style> 

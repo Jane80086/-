@@ -295,12 +295,3 @@ const handleMenuSelect = (index) => {
   box-sizing: border-box;
 }
 </style> 
-}
-.main-content {
-  background: #F7F9FA;
-  padding: 20px;
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-}
-</style> 

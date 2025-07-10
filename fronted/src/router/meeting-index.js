@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/HomeView.vue'; 
+import HomeView from '../views/Meeting-HomeView.vue'; 
 import MeetingDetailView from '../views/MeetingDetailView.vue';
 import ReviewView from '../views/ReviewView.vue';
  
@@ -87,4 +87,5 @@ router.onError((error) => {
   // 可以在这里添加错误上报逻辑
 });
 
+export const meetingRoutes = routes;
 export default router; 

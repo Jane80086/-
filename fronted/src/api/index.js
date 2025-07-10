@@ -26,8 +26,8 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   response => {
     const { data } = response
-    // 后端成功状态码是"0"
-    if (data.code === "0") {
+    // 后端成功状态码是200
+    if (data.code === 200) {
       return data
     } else {
       ElMessage.error(data.msg || '请求失败')

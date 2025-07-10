@@ -1,125 +1,84 @@
-import { createRouter, createWebHistory } from 'vue-router'
-
-const router = createRouter({
-    history: createWebHistory(),
-    routes: [
+// 新闻相关路由配置
+export const newsRoutes = [
+    // 普通用户新闻路由
         {
-            path: '/',
-            redirect: '/user/news-list'
-        },
-        // 普通用户路由 (User Routes)
-        {
-            path: '/user',
-            name: 'UserLayout', // 建议为布局/父路由也使用清晰的名称
-            children: [
-                {
-                    path: 'news-list',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/user/news-list',
                     name: 'UserNewsList',
                     component: () => import('@/views/user/NewsList.vue'),
-                    meta: { title: '行业动态' } // Industry News
+        meta: { title: '行业动态' }
                 },
                 {
-                    path: 'news-detail/:id',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/user/news-detail/:id',
                     name: 'UserNewsDetail',
                     component: () => import('@/views/user/NewsDetail.vue'),
-                    meta: { title: '动态详情' } // News Details
-                }
-            ]
+        meta: { title: '动态详情' }
         },
-        // 企业用户路由 (Enterprise User Routes)
+    // 企业用户新闻路由
         {
-            path: '/enterprise',
-            name: 'EnterpriseLayout', // 建议为布局/父路由也使用清晰的名称
-            children: [
-                {
-                    path: 'news-publish',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/enterprise/news-publish',
                     name: 'EnterpriseNewsPublish',
                     component: () => import('@/views/enterprise/NewsPublish.vue'),
-                    meta: { title: '发布动态' } // Publish News
+        meta: { title: '发布动态' }
                 },
                 {
-                    path: 'my-news',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/enterprise/my-news',
                     name: 'EnterpriseMyNews',
                     component: () => import('@/views/enterprise/MyNews.vue'),
-                    meta: { title: '我的动态' } // My News
+        meta: { title: '我的动态' }
                 },
                 {
-                    path: 'news-edit/:id',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/enterprise/news-edit/:id',
                     name: 'EnterpriseNewsEdit',
                     component: () => import('@/views/enterprise/NewsEdit.vue'),
-                    meta: { title: '编辑动态' } // Edit News
+        meta: { title: '编辑动态' }
                 },
                 {
-                    path: 'news-list',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/enterprise/news-list',
                     name: 'EnterpriseNewsList',
                     component: () => import('@/views/enterprise/NewsList.vue'),
-                    meta: { title: '行业动态' } // Industry News
+        meta: { title: '行业动态' }
                 },
                 {
-                    path: 'news-detail/:id',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/enterprise/news-detail/:id',
                     name: 'EnterpriseNewsDetail',
                     component: () => import('@/views/enterprise/NewsDetail.vue'),
-                    meta: { title: '动态详情' } // News Details
-                }
-            ]
+        meta: { title: '动态详情' }
         },
-        // 管理员路由 (Admin Routes)
+    // 管理员新闻路由
         {
-            path: '/admin',
-            name: 'AdminLayout', // 建议为布局/父路由也使用清晰的名称
-            children: [
-                {
-                    path: 'news-audit',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/admin/news-audit',
                     name: 'AdminNewsAudit',
                     component: () => import('@/views/admin/NewsAudit.vue'),
-                    meta: { title: '动态审核' } // News Audit
+        meta: { title: '动态审核' }
                 },
                 {
-                    path: 'news-manage',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/admin/news-manage',
                     name: 'AdminNewsManage',
-                    component: () => import('@/views/admin/NewsManage.vue'),
-                    meta: { title: '动态管理' } // News Management
+        component: () => import('@/views/admin/NewsManagement.vue'),
+        meta: { title: '动态管理' }
                 },
                 {
-                    path: 'statistics',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
-                    name: 'AdminStatistics',
+        path: '/admin/news-statistics',
+        name: 'AdminNewsStatistics',
                     component: () => import('@/views/admin/NewsStatistics.vue'),
-                    meta: { title: '数据统计' } // Data Statistics
+        meta: { title: '数据统计' }
                 },
                 {
-                    path: 'news-publish',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/admin/news-publish',
                     name: 'AdminNewsPublish',
                     component: () => import('@/views/admin/NewsPublish.vue'),
-                    meta: { title: '发布动态' } // Publish News
+        meta: { title: '发布动态' }
                 },
                 {
-                    path: 'news-detail/:id',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/admin/news-detail/:id',
                     name: 'AdminNewsDetail',
                     component: () => import('@/views/admin/NewsDetail.vue'),
-                    meta: { title: '动态详情' } // News Details
+        meta: { title: '动态详情' }
                 },
                 {
-                    path: 'news-edit/:id',
-                    // 名称已修正，确保唯一 (Name corrected for uniqueness)
+        path: '/admin/news-edit/:id',
                     name: 'AdminNewsEdit',
                     component: () => import('@/views/admin/NewsEdit.vue'),
-                    meta: { title: '编辑动态' } // Edit News
-                }
-            ]
+        meta: { title: '编辑动态' }
         }
     ]
-})
-
-export default router

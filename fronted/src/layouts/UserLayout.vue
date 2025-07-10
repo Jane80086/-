@@ -315,34 +315,3 @@ const handleMenuSelect = (index) => {
   box-sizing: border-box;
 }
 </style> 
-}
-.header-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.avatar {
-  border: 2px solid #B7AFA3;
-}
-.role-tag {
-  font-weight: bold;
-}
-.el-dropdown-link {
-  color: #2D3A4B;
-  font-weight: 500;
-  cursor: pointer;
-}
-.el-container {
-  min-width: 0 !important;
-}
-.el-main {
-  min-width: 0 !important;
-}
-.main-content {
-  background: #F7F9FA;
-  padding: 20px;
-  width: 100%;
-  min-width: 0 !important;
-  box-sizing: border-box;
-}
-</style> 

@@ -1,263 +1,659 @@
 <template>
-  <el-card>
-    <div class="audit-header">
-      <el-input v-model="search" placeholder="搜索课程名/创建人" clearable style="width: 240px; margin-right: 16px;" @keyup.enter="loadCourses" />
-      <el-select v-model="status" placeholder="状态" clearable style="width: 120px; margin-right: 16px;">
-        <el-option label="全部" value="" />
-        <el-option label="待审核" value="pending" />
-        <el-option label="已通过" value="approved" />
-        <el-option label="已驳回" value="rejected" />
-      </el-select>
-      <el-button type="primary" @click="loadCourses">搜索</el-button>
-    </div>
-    <el-table :data="filteredCourses" style="width: 100%; margin-top: 20px;" border>
-      <el-table-column prop="title" label="课程名称" min-width="180">
-        <template #default="scope">
-          <el-link type="primary" @click="showDetail(scope.row)">{{ scope.row.title }}</el-link>
+  <div class="course-audit-page">
+    <!-- 吸顶搜索栏 -->
+    <div class="search-bar" :class="{ sticky: isSticky }" ref="searchBarRef">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索课程名称/创建人/描述..."
+        class="search-input"
+        @keyup.enter="searchCourses"
+        clearable
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
         </template>
-      </el-table-column>
-      <el-table-column prop="creator" label="创建人" width="120" />
-      <el-table-column prop="createdAt" label="提交时间" width="160" />
-      <el-table-column prop="description" label="简介" min-width="200" />
-      <el-table-column prop="status" label="状态" width="100">
-        <template #default="scope">
-          <el-tag v-if="scope.row.status==='pending'" type="warning">待审核</el-tag>
-          <el-tag v-else-if="scope.row.status==='approved'" type="success">已通过</el-tag>
-          <el-tag v-else type="danger">已驳回</el-tag>
+        <template #append>
+          <el-button @click="searchCourses" type="primary">搜索</el-button>
         </template>
-      </el-table-column>
-      <el-table-column label="操作" width="200">
-        <template #default="scope">
-          <el-button v-if="scope.row.status==='pending'" type="success" size="small" @click="approve(scope.row)">通过</el-button>
-          <el-button v-if="scope.row.status==='pending'" type="danger" size="small" @click="reject(scope.row)">驳回</el-button>
-          <el-button v-if="scope.row.status!=='pending'" size="small" @click="showDetail(scope.row)">查看</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-pagination
-      style="margin-top: 20px; text-align: right;"
-      background
-      layout="prev, pager, next, jumper"
-      :total="filteredCourses.length"
-      :page-size="pageSize"
-      v-model:current-page="currentPage"
-    />
-    <!-- 课程详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="课程详情" width="600px">
-      <div v-if="currentCourse">
-        <h3>{{ currentCourse.title }}</h3>
-        <el-image :src="currentCourse.cover" style="width: 120px; height: 80px; border-radius: 8px; margin-bottom: 12px;" fit="cover" />
-        <p><b>创建人：</b>{{ currentCourse.creator }}</p>
-        <p><b>简介：</b>{{ currentCourse.description }}</p>
-        <p><b>提交时间：</b>{{ currentCourse.createdAt }}</p>
-        <p><b>状态：</b>
-          <el-tag v-if="currentCourse.status==='pending'" type="warning">待审核</el-tag>
-          <el-tag v-else-if="currentCourse.status==='approved'" type="success">已通过</el-tag>
-          <el-tag v-else type="danger">已驳回</el-tag>
-        </p>
-        <h4 style="margin-top: 16px;">章节</h4>
-        <el-timeline>
-          <el-timeline-item v-for="(ch, idx) in currentCourse.chapters" :key="ch.id" :timestamp="'第'+(idx+1)+'章'">
-            <b>{{ ch.title }}</b> <span style="color:#888;">({{ ch.duration }}分钟)</span>
-            <div style="color:#666; font-size:13px;">{{ ch.description }}</div>
-          </el-timeline-item>
-        </el-timeline>
+      </el-input>
+      <div class="hot-trends-scroll">
+        <div class="hot-trends-title">快速筛选：</div>
+        <div class="hot-trends-list">
+          <el-tag
+            v-for="(keyword, index) in hotKeywords"
+            :key="index"
+            @click="searchByKeyword(keyword)"
+            class="trend-tag"
+            :type="index < 3 ? 'primary' : 'info'"
+            effect="dark"
+          >
+            <el-icon v-if="index === 0"><StarFilled /></el-icon>
+            {{ keyword }}
+          </el-tag>
+        </div>
       </div>
-    </el-dialog>
+    </div>
+
+    <!-- 筛选区 -->
+    <div class="filter-bar">
+      <el-select v-model="statusFilter" placeholder="审核状态" @change="filterCourses" class="filter-item">
+        <el-option label="全部状态" value=""></el-option>
+        <el-option label="待审核" value="pending"></el-option>
+        <el-option label="已通过" value="approved"></el-option>
+        <el-option label="已驳回" value="rejected"></el-option>
+      </el-select>
+      <el-select v-model="selectedCategory" placeholder="分类" @change="filterCourses" class="filter-item">
+        <el-option label="全部" value=""></el-option>
+        <el-option label="编程开发" value="编程开发"></el-option>
+        <el-option label="前端开发" value="前端开发"></el-option>
+        <el-option label="后端开发" value="后端开发"></el-option>
+        <el-option label="数据库" value="数据库"></el-option>
+        <el-option label="移动开发" value="移动开发"></el-option>
+      </el-select>
+      <el-select v-model="sortBy" placeholder="排序" @change="sortCourses" class="filter-item">
+        <el-option label="最新提交" value="latest"></el-option>
+        <el-option label="最早提交" value="earliest"></el-option>
+        <el-option label="课程名称" value="title"></el-option>
+        <el-option label="创建人" value="creator"></el-option>
+      </el-select>
+      <el-button @click="resetFilters" class="filter-item" type="info" plain>重置</el-button>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-section">
+      <el-row :gutter="20">
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-card">
+            <div class="stat-content">
+              <div class="stat-number">{{ totalCourses }}</div>
+              <div class="stat-label">总课程数</div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-card">
+            <div class="stat-content">
+              <div class="stat-number">{{ pendingCourses }}</div>
+              <div class="stat-label">待审核</div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-card">
+            <div class="stat-content">
+              <div class="stat-number">{{ approvedCourses }}</div>
+              <div class="stat-label">已通过</div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-card">
+            <div class="stat-content">
+              <div class="stat-number">{{ rejectedCourses }}</div>
+              <div class="stat-label">已驳回</div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    </div>
+
+    <!-- 课程卡片瀑布流 -->
+    <div class="courses-masonry">
+      <div
+        v-for="course in displayCourses"
+        :key="course.id"
+        class="course-card"
+        @click="viewCourseDetail(course.id)"
+      >
+        <div class="card-image-wrap">
+          <img :src="course.imageUrl || '/default-course.jpg'" :alt="course.title" class="card-image" />
+          <div class="card-badge" :class="getStatusClass(course.status)">
+            {{ getStatusText(course.status) }}
+          </div>
+          <el-button
+            class="card-play-btn"
+            type="primary"
+            circle
+            size="large"
+            @click.stop="viewCourseDetail(course.id)"
+          >
+            <el-icon><View /></el-icon>
+          </el-button>
+        </div>
+        <div class="card-info">
+          <div class="card-title">{{ course.title }}</div>
+          <div class="card-meta">
+            <span class="creator"><el-icon><User /></el-icon>{{ course.creator }}</span>
+            <span class="created-time"><el-icon><Clock /></el-icon>{{ formatDate(course.createdAt) }}</span>
+          </div>
+          <div class="card-desc">{{ course.description }}</div>
+          <div class="card-stats">
+            <span class="chapters-count"><el-icon><Document /></el-icon>{{ course.chapters?.length || 0 }} 章节</span>
+            <div class="card-actions">
+              <el-button v-if="course.status === 'pending'" type="success" size="small" @click.stop="approveCourse(course)">
+                通过
+              </el-button>
+              <el-button v-if="course.status === 'pending'" type="danger" size="small" @click.stop="rejectCourse(course)">
+                驳回
+              </el-button>
+              <el-button size="small" @click.stop="viewCourseDetail(course.id)">
+                查看详情
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination-section">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[12, 24, 36, 48]"
+        :total="totalCourses"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
+
+    <div v-if="loading" class="loading">
+      <el-skeleton :rows="6" animated />
+    </div>
+
     <!-- 驳回理由弹窗 -->
     <el-dialog v-model="rejectVisible" title="驳回理由" width="400px">
-      <el-input v-model="rejectReason" type="textarea" :rows="4" placeholder="请输入驳回理由" />
+      <el-form>
+        <el-form-item label="驳回理由" required>
+          <el-input
+            v-model="rejectReason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入驳回理由..."
+          />
+        </el-form-item>
+      </el-form>
       <template #footer>
-        <el-button @click="rejectVisible=false">取消</el-button>
+        <el-button @click="rejectVisible = false">取消</el-button>
         <el-button type="danger" @click="confirmReject">确认驳回</el-button>
       </template>
     </el-dialog>
-  </el-card>
+  </div>
 </template>
+
 <script setup>
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-// 假数据
-const allCourses = ref([
-  { id: 1, title: 'Java入门', creator: '张三', createdAt: '2024-06-01 10:00', description: '零基础Java课程', status: 'pending', cover: '/default-course.jpg', chapters: [ {id:1,title:'基础语法',description:'Java基本语法',duration:30}, {id:2,title:'面向对象',description:'OOP核心',duration:40} ] },
-  { id: 2, title: '前端开发', creator: '李四', createdAt: '2024-06-02 11:20', description: 'HTML/CSS/JS全栈', status: 'approved', cover: '/default-course.jpg', chapters: [ {id:1,title:'HTML',description:'网页结构',duration:20}, {id:2,title:'CSS',description:'样式美化',duration:25} ] },
-  { id: 3, title: 'Python数据分析', creator: '王五', createdAt: '2024-06-03 09:30', description: '数据分析与可视化', status: 'rejected', cover: '/default-course.jpg', chapters: [ {id:1,title:'Numpy',description:'数值计算',duration:35}, {id:2,title:'Pandas',description:'数据处理',duration:40} ] },
-  { id: 4, title: 'AI智能应用', creator: '赵六', createdAt: '2024-06-04 14:10', description: 'AI基础与实战', status: 'pending', cover: '/default-course.jpg', chapters: [ {id:1,title:'AI基础',description:'AI原理',duration:30}, {id:2,title:'实战案例',description:'AI项目实操',duration:50} ] },
-])
-const search = ref('')
-const status = ref('')
-const pageSize = 5
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, StarFilled, View, User, Clock, Document } from '@element-plus/icons-vue'
+import { courseApi } from '@/api/course'
+
+const router = useRouter()
+const loading = ref(false)
+const hotKeywords = ref(['待审核', '已通过', '已驳回', 'Java', '前端', 'Python'])
+const searchKeyword = ref('')
+const statusFilter = ref('')
+const selectedCategory = ref('')
+const sortBy = ref('latest')
 const currentPage = ref(1)
-const detailVisible = ref(false)
-const currentCourse = ref(null)
+const pageSize = ref(12)
+const isSticky = ref(false)
+const searchBarRef = ref(null)
 const rejectVisible = ref(false)
 const rejectReason = ref('')
+const currentCourse = ref(null)
+
+// 模拟审核数据
+const courses = ref([])
+const loadCourses = async () => {
+  loading.value = true
+  const params = {
+    page: currentPage.value, // 改为从1开始
+    size: pageSize.value,
+    keyword: searchKeyword.value,
+    status: statusFilter.value,
+    category: selectedCategory.value,
+    sortBy: sortBy.value
+  }
+  const res = await courseApi.getCourseList(params)
+  if (res.code === 200) {
+    courses.value = res.data.content || res.data || []
+    totalCourses.value = res.data.totalElements || courses.value.length
+  } else {
+    ElMessage.error(res.message || '获取课程列表失败')
+  }
+  loading.value = false
+}
+
+// 计算属性
 const filteredCourses = computed(() => {
-  let list = allCourses.value
-  if (search.value) {
-    list = list.filter(c => c.title.includes(search.value) || c.creator.includes(search.value))
+  let filtered = courses.value
+  
+  if (searchKeyword.value) {
+    const kw = searchKeyword.value.trim().toLowerCase()
+    filtered = filtered.filter(course =>
+      course.title.toLowerCase().includes(kw) ||
+      course.creator.toLowerCase().includes(kw) ||
+      course.description.toLowerCase().includes(kw)
+    )
   }
-  if (status.value) {
-    list = list.filter(c => c.status === status.value)
+  
+  if (statusFilter.value) {
+    filtered = filtered.filter(course => course.status === statusFilter.value)
   }
-  // 分页
-  const start = (currentPage.value-1)*pageSize
-  return list.slice(start, start+pageSize)
+  
+  if (selectedCategory.value) {
+    filtered = filtered.filter(course => course.category === selectedCategory.value)
+  }
+  
+  switch (sortBy.value) {
+    case 'latest':
+      filtered = [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      break
+    case 'earliest':
+      filtered = [...filtered].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      break
+    case 'title':
+      filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title))
+      break
+    case 'creator':
+      filtered = [...filtered].sort((a, b) => a.creator.localeCompare(b.creator))
+      break
+  }
+  
+  return filtered
 })
-function loadCourses() {
+
+const displayCourses = computed(() => {
+  totalCourses.value = filteredCourses.value.length
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredCourses.value.slice(start, end)
+})
+
+const totalCourses = computed(() => filteredCourses.value.length)
+const pendingCourses = computed(() => filteredCourses.value.filter(course => course.status === 'pending').length)
+const approvedCourses = computed(() => filteredCourses.value.filter(course => course.status === 'approved').length)
+const rejectedCourses = computed(() => filteredCourses.value.filter(course => course.status === 'rejected').length)
+
+// 方法
+const searchCourses = () => {
   currentPage.value = 1
 }
-function showDetail(row) {
-  currentCourse.value = row
-  detailVisible.value = true
+
+const searchByKeyword = (keyword) => {
+  if (['待审核', '已通过', '已驳回'].includes(keyword)) {
+    statusFilter.value = keyword === '待审核' ? 'pending' : keyword === '已通过' ? 'approved' : 'rejected'
+  } else {
+    searchKeyword.value = keyword
+  }
+  searchCourses()
 }
-function approve(row) {
-  row.status = 'approved'
-  ElMessage.success('已通过')
+
+const filterCourses = () => {
+  currentPage.value = 1
 }
-function reject(row) {
-  currentCourse.value = row
+
+const sortCourses = () => {
+  currentPage.value = 1
+}
+
+const resetFilters = () => {
+  statusFilter.value = ''
+  selectedCategory.value = ''
+  sortBy.value = 'latest'
+  searchKeyword.value = ''
+  currentPage.value = 1
+}
+
+const viewCourseDetail = (courseId) => {
+  router.push(`/admin/course/${courseId}`)
+}
+
+const approveCourse = async (course) => {
+  try {
+    await ElMessageBox.confirm(`确定要通过课程"${course.title}"吗？`, '确认通过', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'success'
+    })
+    
+    course.status = 'approved'
+    ElMessage.success('课程审核通过')
+  } catch {
+    // 用户取消操作
+  }
+}
+
+const rejectCourse = (course) => {
+  currentCourse.value = course
   rejectReason.value = ''
   rejectVisible.value = true
 }
-function confirmReject() {
+
+const confirmReject = async () => {
   if (!rejectReason.value.trim()) {
     ElMessage.warning('请输入驳回理由')
     return
   }
-  currentCourse.value.status = 'rejected'
-  rejectVisible.value = false
-  ElMessage.success('已驳回')
+  
+  try {
+    await ElMessageBox.confirm(`确定要驳回课程"${currentCourse.value.title}"吗？`, '确认驳回', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    currentCourse.value.status = 'rejected'
+    rejectVisible.value = false
+    ElMessage.success('课程已驳回')
+  } catch {
+    // 用户取消操作
+  }
 }
-</script>
-<style scoped>
-.audit-header { margin-bottom: 10px; }
-</style> 
-        <el-option label="已通过" value="approved" />
-        <el-option label="已驳回" value="rejected" />
-      </el-select>
-      <el-button type="primary" @click="loadCourses">搜索</el-button>
-    </div>
-    <el-table :data="filteredCourses" style="width: 100%; margin-top: 20px;" border>
-      <el-table-column prop="title" label="课程名称" min-width="180">
-        <template #default="scope">
-          <el-link type="primary" @click="showDetail(scope.row)">{{ scope.row.title }}</el-link>
-        </template>
-      </el-table-column>
-      <el-table-column prop="creator" label="创建人" width="120" />
-      <el-table-column prop="createdAt" label="提交时间" width="160" />
-      <el-table-column prop="description" label="简介" min-width="200" />
-      <el-table-column prop="status" label="状态" width="100">
-        <template #default="scope">
-          <el-tag v-if="scope.row.status==='pending'" type="warning">待审核</el-tag>
-          <el-tag v-else-if="scope.row.status==='approved'" type="success">已通过</el-tag>
-          <el-tag v-else type="danger">已驳回</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="200">
-        <template #default="scope">
-          <el-button v-if="scope.row.status==='pending'" type="success" size="small" @click="approve(scope.row)">通过</el-button>
-          <el-button v-if="scope.row.status==='pending'" type="danger" size="small" @click="reject(scope.row)">驳回</el-button>
-          <el-button v-if="scope.row.status!=='pending'" size="small" @click="showDetail(scope.row)">查看</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-pagination
-      style="margin-top: 20px; text-align: right;"
-      background
-      layout="prev, pager, next, jumper"
-      :total="filteredCourses.length"
-      :page-size="pageSize"
-      v-model:current-page="currentPage"
-    />
-    <!-- 课程详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="课程详情" width="600px">
-      <div v-if="currentCourse">
-        <h3>{{ currentCourse.title }}</h3>
-        <el-image :src="currentCourse.cover" style="width: 120px; height: 80px; border-radius: 8px; margin-bottom: 12px;" fit="cover" />
-        <p><b>创建人：</b>{{ currentCourse.creator }}</p>
-        <p><b>简介：</b>{{ currentCourse.description }}</p>
-        <p><b>提交时间：</b>{{ currentCourse.createdAt }}</p>
-        <p><b>状态：</b>
-          <el-tag v-if="currentCourse.status==='pending'" type="warning">待审核</el-tag>
-          <el-tag v-else-if="currentCourse.status==='approved'" type="success">已通过</el-tag>
-          <el-tag v-else type="danger">已驳回</el-tag>
-        </p>
-        <h4 style="margin-top: 16px;">章节</h4>
-        <el-timeline>
-          <el-timeline-item v-for="(ch, idx) in currentCourse.chapters" :key="ch.id" :timestamp="'第'+(idx+1)+'章'">
-            <b>{{ ch.title }}</b> <span style="color:#888;">({{ ch.duration }}分钟)</span>
-            <div style="color:#666; font-size:13px;">{{ ch.description }}</div>
-          </el-timeline-item>
-        </el-timeline>
-      </div>
-    </el-dialog>
-    <!-- 驳回理由弹窗 -->
-    <el-dialog v-model="rejectVisible" title="驳回理由" width="400px">
-      <el-input v-model="rejectReason" type="textarea" :rows="4" placeholder="请输入驳回理由" />
-      <template #footer>
-        <el-button @click="rejectVisible=false">取消</el-button>
-        <el-button type="danger" @click="confirmReject">确认驳回</el-button>
-      </template>
-    </el-dialog>
-  </el-card>
-</template>
-<script setup>
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-// 假数据
-const allCourses = ref([
-  { id: 1, title: 'Java入门', creator: '张三', createdAt: '2024-06-01 10:00', description: '零基础Java课程', status: 'pending', cover: '/default-course.jpg', chapters: [ {id:1,title:'基础语法',description:'Java基本语法',duration:30}, {id:2,title:'面向对象',description:'OOP核心',duration:40} ] },
-  { id: 2, title: '前端开发', creator: '李四', createdAt: '2024-06-02 11:20', description: 'HTML/CSS/JS全栈', status: 'approved', cover: '/default-course.jpg', chapters: [ {id:1,title:'HTML',description:'网页结构',duration:20}, {id:2,title:'CSS',description:'样式美化',duration:25} ] },
-  { id: 3, title: 'Python数据分析', creator: '王五', createdAt: '2024-06-03 09:30', description: '数据分析与可视化', status: 'rejected', cover: '/default-course.jpg', chapters: [ {id:1,title:'Numpy',description:'数值计算',duration:35}, {id:2,title:'Pandas',description:'数据处理',duration:40} ] },
-  { id: 4, title: 'AI智能应用', creator: '赵六', createdAt: '2024-06-04 14:10', description: 'AI基础与实战', status: 'pending', cover: '/default-course.jpg', chapters: [ {id:1,title:'AI基础',description:'AI原理',duration:30}, {id:2,title:'实战案例',description:'AI项目实操',duration:50} ] },
-])
-const search = ref('')
-const status = ref('')
-const pageSize = 5
-const currentPage = ref(1)
-const detailVisible = ref(false)
-const currentCourse = ref(null)
-const rejectVisible = ref(false)
-const rejectReason = ref('')
-const filteredCourses = computed(() => {
-  let list = allCourses.value
-  if (search.value) {
-    list = list.filter(c => c.title.includes(search.value) || c.creator.includes(search.value))
+
+const getStatusType = (status) => {
+  switch (status) {
+    case 'approved': return 'success'
+    case 'pending': return 'warning'
+    case 'rejected': return 'danger'
+    default: return 'info'
   }
-  if (status.value) {
-    list = list.filter(c => c.status === status.value)
+}
+
+const getStatusText = (status) => {
+  switch (status) {
+    case 'approved': return '已通过'
+    case 'pending': return '待审核'
+    case 'rejected': return '已驳回'
+    default: return '未知'
   }
-  // 分页
-  const start = (currentPage.value-1)*pageSize
-  return list.slice(start, start+pageSize)
-})
-function loadCourses() {
+}
+
+const getStatusClass = (status) => {
+  switch (status) {
+    case 'approved': return 'approved'
+    case 'pending': return 'pending'
+    case 'rejected': return 'rejected'
+    default: return ''
+  }
+}
+
+const formatDate = (date) => {
+  if (!date) return '未知'
+  return new Date(date).toLocaleDateString('zh-CN')
+}
+
+const handleSizeChange = (size) => {
+  pageSize.value = size
   currentPage.value = 1
 }
-function showDetail(row) {
-  currentCourse.value = row
-  detailVisible.value = true
+
+const handleCurrentChange = (page) => {
+  currentPage.value = page
 }
-function approve(row) {
-  row.status = 'approved'
-  ElMessage.success('已通过')
-}
-function reject(row) {
-  currentCourse.value = row
-  rejectReason.value = ''
-  rejectVisible.value = true
-}
-function confirmReject() {
-  if (!rejectReason.value.trim()) {
-    ElMessage.warning('请输入驳回理由')
-    return
-  }
-  currentCourse.value.status = 'rejected'
-  rejectVisible.value = false
-  ElMessage.success('已驳回')
-}
+
+// 组件挂载
+onMounted(loadCourses)
 </script>
+
 <style scoped>
-.audit-header { margin-bottom: 10px; }
+.course-audit-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.search-bar {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.search-bar.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.search-input {
+  margin-bottom: 16px;
+}
+
+.hot-trends-scroll {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 8px 0;
+}
+
+.hot-trends-title {
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.hot-trends-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.trend-tag {
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.trend-tag:hover {
+  transform: translateY(-2px);
+}
+
+.filter-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  min-width: 120px;
+}
+
+.stats-section {
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 20px;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: bold;
+  color: #409eff;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.courses-masonry {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.course-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.course-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.card-image-wrap {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.course-card:hover .card-image {
+  transform: scale(1.05);
+}
+
+.card-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+}
+
+.card-badge.pending {
+  background: #e6a23c;
+}
+
+.card-badge.approved {
+  background: #67c23a;
+}
+
+.card-badge.rejected {
+  background: #f56c6c;
+}
+
+.card-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.course-card:hover .card-play-btn {
+  opacity: 1;
+}
+
+.card-info {
+  padding: 20px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2D3A4B;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #666;
+}
+
+.card-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-desc {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chapters-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #409eff;
+  font-size: 14px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pagination-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .courses-masonry {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-bar {
+    flex-direction: column;
+  }
+  
+  .filter-item {
+    min-width: auto;
+  }
+  
+  .card-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
 </style> 

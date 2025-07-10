@@ -11,12 +11,23 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    // proxy: {
-    //   '/api': {
-    //     target: 'http://localhost:8080',
-    //     changeOrigin: true,
-    //     rewrite: path => path.replace(/^\/api/, '/api')
-    //   }
-    // }
+    proxy: {
+      '/api/file': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      },
+      '/api/course': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      },
+      '/course': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      },
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
   }
 }) 
