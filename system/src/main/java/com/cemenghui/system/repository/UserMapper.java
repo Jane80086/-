@@ -1,6 +1,7 @@
 package com.cemenghui.system.repository;
 
 import com.cemenghui.entity.User;
+import com.cemenghui.system.entity.EnterpriseUser;
 import com.cemenghui.system.entity.ThirdPartyAccount;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
@@ -37,4 +38,7 @@ public interface UserMapper {
 
     @Delete("DELETE FROM system_third_party_account WHERE user_id = #{userId}")
     void deleteThirdPartyAccountsByUserId(Long userId);
+
+    @Select("SELECT * FROM users WHERE account = #{account} AND user_type = 'ENTERPRISE'")
+    User findEnterpriseByAccount(String account);
 }

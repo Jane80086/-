@@ -73,8 +73,13 @@ public class UserService {
         if (user.getStatus() != 1) {
             throw new IllegalArgumentException("用户已被禁用");
         }
+        // 检查用户ID是否存在
+        if (user.getId() == null) {
+            throw new IllegalArgumentException("用户ID不能为空");
+        }
         // 生成JWT token
-        return jwtUtil.generateToken(user.getUsername());
+        List<String> roles = List.of(user.getUserType() != null ? user.getUserType() : "USER");
+        return jwtUtil.generateToken(user.getId(), user.getUsername(), roles);
     }
     
     /**

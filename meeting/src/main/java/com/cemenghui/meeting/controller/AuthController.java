@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -68,7 +69,14 @@ public class AuthController {
             
             if (jwtUtil.validateToken(token)) {
                 String username = jwtUtil.getUsernameFromToken(token);
-                String newToken = jwtUtil.generateToken(username);
+                // 获取用户信息以获取用户ID和角色
+                User user = userService.getUserByUsername(username);
+                if (user == null || user.getId() == null) {
+                    return ApiResponse.error(401, "用户信息无效");
+                }
+                
+                List<String> roles = List.of(user.getUserType() != null ? user.getUserType() : "USER");
+                String newToken = jwtUtil.generateToken(user.getId(), user.getUsername(), roles);
                 String newRefreshToken = jwtUtil.generateRefreshToken(username);
                 
                 Map<String, String> result = new HashMap<>();
