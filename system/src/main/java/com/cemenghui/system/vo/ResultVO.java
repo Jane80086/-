@@ -1,4 +1,4 @@
-package com.system.vo;
+package com.cemenghui.system.vo;
 
 import lombok.Data;
 
@@ -59,4 +59,4 @@ public class ResultVO<T> {
         vo.setData(null);
         return vo;
     }
-} 
+}

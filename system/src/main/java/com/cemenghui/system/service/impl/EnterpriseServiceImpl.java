@@ -1,15 +1,15 @@
-package com.system.service.impl;
+package com.cemenghui.system.service.impl;
 
-import com.system.service.EnterpriseService;
-import com.system.util.ExcelUtil;
+import com.cemenghui.system.service.EnterpriseService;
+import com.cemenghui.system.util.ExcelUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
-import com.system.entity.Enterprise;
-import com.system.repository.EnterpriseMapper;
+import com.cemenghui.system.entity.Enterprise;
+import com.cemenghui.system.repository.EnterpriseMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
@@ -48,7 +48,7 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     }
 
     @Override
-    public Map<String, Object> deleteEnterprise(Long enterpriseId) {
+    public Map<String, Object> deleteEnterprise(String enterpriseId) {
         Map<String, Object> result = new HashMap<>();
         int rows = enterpriseMapper.deleteByEnterpriseId(enterpriseId);
         if (rows > 0) {
@@ -84,8 +84,8 @@ public class EnterpriseServiceImpl implements EnterpriseService {
 
         // 定义Excel表头
         List<String> headers = Arrays.asList(
-                "企业ID", "企业名称", "统一社会信用代码", "法定代表人", "注册资本", 
-                "成立日期", "企业类型", "注册地址", "经营范围", "企业状态", 
+                "企业ID", "企业名称", "统一社会信用代码", "法定代表人", "注册资本",
+                "成立日期", "企业类型", "注册地址", "经营范围", "企业状态",
                 "注册机关", "注册日期", "批准日期", "营业期限", "创建时间", "更新时间"
         );
 
@@ -95,22 +95,22 @@ public class EnterpriseServiceImpl implements EnterpriseService {
 
         for (Enterprise enterprise : enterpriseList) {
             List<String> row = Arrays.asList(
-                    enterprise.getEnterpriseId(),
+                    enterprise.getEnterpriseId() != null ? enterprise.getEnterpriseId() : "",
                     enterprise.getEnterpriseName(),
                     enterprise.getCreditCode(),
                     enterprise.getLegalRepresentative(),
                     enterprise.getRegisteredCapital(),
-                    enterprise.getEstablishmentDate(),
+                    enterprise.getEstablishmentDate() != null ? enterprise.getEstablishmentDate().toString() : "",
                     enterprise.getEnterpriseType(),
                     enterprise.getRegisterAddress(),
                     enterprise.getBusinessScope(),
                     enterprise.getEnterpriseStatus(),
                     enterprise.getRegistrationAuthority(),
-                    enterprise.getRegistrationDate(),
-                    enterprise.getApprovalDate(),
+                    enterprise.getRegistrationDate() != null ? enterprise.getRegistrationDate().toString() : "",
+                    enterprise.getApprovalDate() != null ? enterprise.getApprovalDate().toString() : "",
                     enterprise.getBusinessTerm(),
-                    enterprise.getCreateTime(),
-                    enterprise.getUpdateTime()
+                    enterprise.getCreateTime() != null ? enterprise.getCreateTime().toString() : "",
+                    enterprise.getUpdateTime() != null ? enterprise.getUpdateTime().toString() : ""
             );
             data.add(row);
         }

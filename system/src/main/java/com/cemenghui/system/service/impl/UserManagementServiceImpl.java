@@ -1,16 +1,16 @@
-package com.system.service.impl;
+package com.cemenghui.system.service.impl;
 
-import com.system.dto.UserHistoryListDTO;
-import com.system.dto.UserHistoryQueryDTO;
-import com.system.dto.UserListDTO;
-import com.system.dto.UserQueryDTO;
-import com.system.entity.EnterpriseUser;
-import com.system.entity.UserModifyHistory;
-import com.system.entity.UserTemplate;
-import com.system.repository.UserManagementMapper;
-import com.system.service.UserManagementService;
-import com.system.util.ExcelUtil;
-import com.system.util.UUIDUtil;
+import com.cemenghui.system.dto.UserHistoryListDTO;
+import com.cemenghui.system.dto.UserHistoryQueryDTO;
+import com.cemenghui.system.dto.UserListDTO;
+import com.cemenghui.system.dto.UserQueryDTO;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.entity.UserModifyHistory;
+import com.cemenghui.system.entity.UserTemplate;
+import com.cemenghui.system.repository.UserManagementMapper;
+import com.cemenghui.system.service.UserManagementService;
+import com.cemenghui.system.util.ExcelUtil;
+import com.cemenghui.system.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +23,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import com.system.repository.EnterpriseMapper;
-import com.system.entity.Enterprise;
-import com.system.repository.EnterpriseUserMapper;
+import com.cemenghui.system.repository.EnterpriseMapper;
+import com.cemenghui.system.entity.Enterprise;
+import com.cemenghui.system.repository.EnterpriseUserMapper;
 
 @Service
 public class UserManagementServiceImpl implements UserManagementService {
@@ -70,9 +70,9 @@ public class UserManagementServiceImpl implements UserManagementService {
 
         for (EnterpriseUser user : userList) {
             List<String> row = Arrays.asList(
-                    user.getUserId(),
+                    user.getId() != null ? user.getId().toString() : "",
                     user.getRealName(),
-                    user.getAccount(),
+                    user.getUsername(),
                     user.getNickname(),
                     user.getEnterpriseId(),
                     user.getEnterpriseName(),
@@ -97,8 +97,8 @@ public class UserManagementServiceImpl implements UserManagementService {
             return null;
         }
         // 生成用户ID
-        String userId = UUIDUtil.generateUUID();
-        user.setUserId(userId);
+        Long userId = System.currentTimeMillis(); // 临时ID生成方式
+        user.setId(userId);
         // 应用模板默认值
         if (template.getDefaultValues() != null) {
             template.getDefaultValues().forEach((key, value) -> {
@@ -115,8 +115,8 @@ public class UserManagementServiceImpl implements UserManagementService {
                         user.setPhone((String) value); break;
                     case "email":
                         user.setEmail((String) value); break;
-                    case "account":
-                        user.setAccount((String) value); break;
+                    case "username":
+                        user.setUsername((String) value); break;
                     case "password":
                         user.setPassword((String) value); break;
                     default:
@@ -136,29 +136,29 @@ public class UserManagementServiceImpl implements UserManagementService {
         }
         // 创建用户
         userManagementMapper.createUserByTemplate(user);
-        return userId;
+        return userId.toString();
     }
 
     @Transactional
     @Override
     public boolean updateUser(EnterpriseUser user) {
         // 获取原始用户信息
-        EnterpriseUser originalUser = userManagementMapper.getUserById(user.getUserId());
-        
+        EnterpriseUser originalUser = userManagementMapper.getUserById(user.getId());
+
         // 更新用户信息
-        user.setUpdateTime(LocalDateTime.now().toString());
+        user.setUpdateTime(LocalDateTime.now());
         userManagementMapper.updateUser(user);
-        
+
         // 记录修改历史
         if (originalUser != null) {
-            recordModifyHistory(originalUser, user, user.getUserId()); // 这里可以传入实际的操作人ID
+            recordModifyHistory(originalUser, user, user.getId().toString()); // 这里可以传入实际的操作人ID
         }
-        
+
         return true;
     }
 
     @Override
-    public List<UserModifyHistory> getUserModifyHistory(String userId) {
+    public List<UserModifyHistory> getUserModifyHistory(Long userId) {
         // 实际项目中使用SELECT语句查询历史记录，这里简化为返回空列表
         return new ArrayList<>();
     }
@@ -180,7 +180,7 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Transactional
     @Override
-    public boolean restoreUserHistory(String historyId) {
+    public boolean restoreUserHistory(Long historyId) {
         try {
             // 1. 根据历史ID获取历史记录
             UserModifyHistory history = userManagementMapper.getHistoryById(historyId);
@@ -198,16 +198,16 @@ public class UserManagementServiceImpl implements UserManagementService {
 
             // 3. 复制当前用户的所有信息，然后只更新需要恢复的字段
             EnterpriseUser userToUpdate = new EnterpriseUser();
-            userToUpdate.setUserId(currentUser.getUserId());
+            userToUpdate.setId(currentUser.getId());
             userToUpdate.setRealName(currentUser.getRealName());
-            userToUpdate.setAccount(currentUser.getAccount());
+            userToUpdate.setUsername(currentUser.getUsername());
             userToUpdate.setPassword(currentUser.getPassword());
             userToUpdate.setNickname(currentUser.getNickname());
             userToUpdate.setEnterpriseId(currentUser.getEnterpriseId());
             userToUpdate.setPhone(currentUser.getPhone());
             userToUpdate.setEmail(currentUser.getEmail());
             userToUpdate.setStatus(currentUser.getStatus());
-            
+
             // 4. 根据字段名恢复对应的值
             switch (history.getFieldName()) {
                 case "realName":
@@ -231,7 +231,7 @@ public class UserManagementServiceImpl implements UserManagementService {
             }
 
             // 5. 更新用户信息
-            userToUpdate.setUpdateTime(LocalDateTime.now().toString());
+            userToUpdate.setUpdateTime(LocalDateTime.now());
             userManagementMapper.updateUser(userToUpdate);
 
             // 6. 记录恢复操作的历史
@@ -254,7 +254,7 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Transactional
     @Override
-    public boolean assignPermissions(String userId, Set<String> permissions) {
+    public boolean assignPermissions(Long userId, Set<String> permissions) {
         if (CollectionUtils.isEmpty(permissions)) {
             return false;
         }
@@ -270,7 +270,7 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Transactional
     @Override
-    public boolean inheritRolePermissions(String userId, String roleName) {
+    public boolean inheritRolePermissions(Long userId, String roleName) {
         if (roleName == null) {
             return false;
         }
@@ -292,41 +292,41 @@ public class UserManagementServiceImpl implements UserManagementService {
         if (!Objects.equals(original.getPhone(), updated.getPhone())) {
             UserModifyHistory history = new UserModifyHistory();
             history.setHistoryId(historyId);
-            history.setUserId(original.getUserId());
+            history.setUserId(original.getId());
             history.setFieldName("phone");
             history.setOldValue(original.getPhone());
             history.setNewValue(updated.getPhone());
-            history.setOperatorId(operatorId);
+            history.setOperatorId(operatorId != null ? Long.valueOf(operatorId) : null);
             userManagementMapper.recordModifyHistory(history);
         }
         if (!Objects.equals(original.getEmail(), updated.getEmail())) {
             UserModifyHistory history = new UserModifyHistory();
             history.setHistoryId(UUIDUtil.generateUUID());
-            history.setUserId(original.getUserId());
+            history.setUserId(original.getId());
             history.setFieldName("email");
             history.setOldValue(original.getEmail());
             history.setNewValue(updated.getEmail());
-            history.setOperatorId(operatorId);
+            history.setOperatorId(operatorId != null ? Long.valueOf(operatorId) : null);
             userManagementMapper.recordModifyHistory(history);
         }
         if (!Objects.equals(original.getRealName(), updated.getRealName())) {
             UserModifyHistory history = new UserModifyHistory();
             history.setHistoryId(UUIDUtil.generateUUID());
-            history.setUserId(original.getUserId());
+            history.setUserId(original.getId());
             history.setFieldName("realName");
             history.setOldValue(original.getRealName());
             history.setNewValue(updated.getRealName());
-            history.setOperatorId(operatorId);
+            history.setOperatorId(operatorId != null ? Long.valueOf(operatorId) : null);
             userManagementMapper.recordModifyHistory(history);
         }
         if (!Objects.equals(original.getNickname(), updated.getNickname())) {
             UserModifyHistory history = new UserModifyHistory();
             history.setHistoryId(UUIDUtil.generateUUID());
-            history.setUserId(original.getUserId());
+            history.setUserId(original.getId());
             history.setFieldName("nickname");
             history.setOldValue(original.getNickname());
             history.setNewValue(updated.getNickname());
-            history.setOperatorId(operatorId);
+            history.setOperatorId(operatorId != null ? Long.valueOf(operatorId) : null);
             userManagementMapper.recordModifyHistory(history);
         }
     }
@@ -337,7 +337,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         if (enterpriseName == null || enterpriseName.trim().isEmpty()) {
             return null;
         }
-        
+
         try {
             Enterprise enterprise = enterpriseMapper.findByEnterpriseName(enterpriseName);
             if (enterprise != null) {
@@ -359,7 +359,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         if (enterpriseId == null || enterpriseId.trim().isEmpty()) {
             return null;
         }
-        
+
         try {
             Enterprise enterprise = enterpriseMapper.findByEnterpriseId(enterpriseId);
             if (enterprise != null) {
@@ -381,7 +381,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         if (enterpriseId == null || enterpriseId.trim().isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         try {
             List<EnterpriseUser> users = enterpriseUserMapper.findByEnterpriseId(enterpriseId);
             // 为每个用户加载企业信息
@@ -398,9 +398,9 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Transactional
     @Override
-    public String createUser(EnterpriseUser user) {
-        String userId = UUIDUtil.generateUUID();
-        user.setUserId(userId);
+    public Long createUser(EnterpriseUser user) {
+        Long userId = System.currentTimeMillis(); // 临时ID生成方式
+        user.setId(userId);
         System.out.println("[DEBUG] 尝试插入用户: " + user);
         try {
             userManagementMapper.createUserByTemplate(user);
@@ -420,12 +420,12 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     @Override
-    public boolean deleteUser(String userId) {
+    public boolean deleteUser(Long userId) {
         try {
             System.out.println("[DEBUG] 尝试删除用户: userId=" + userId);
-            int before = userManagementMapper.getUserCount(new com.system.dto.UserQueryDTO());
+            int before = userManagementMapper.getUserCount(new com.cemenghui.system.dto.UserQueryDTO());
             userManagementMapper.deleteUserById(userId);
-            int after = userManagementMapper.getUserCount(new com.system.dto.UserQueryDTO());
+            int after = userManagementMapper.getUserCount(new com.cemenghui.system.dto.UserQueryDTO());
             System.out.println("[DEBUG] 删除前用户数: " + before + ", 删除后用户数: " + after);
             return true;
         } catch (Exception e) {
@@ -435,19 +435,29 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     @Override
-    public EnterpriseUser getUserById(String userId) {
+    public EnterpriseUser getUserById(Long userId) {
         return userManagementMapper.getUserById(userId);
     }
 
     @Override
-    public EnterpriseUser getUserByAccount(String account) {
-        return userManagementMapper.getUserByAccount(account);
+    public EnterpriseUser getUserByUsername(String username) {
+        return userManagementMapper.getUserByUsername(username);
     }
 
     @Override
-    public boolean updateUserByAccount(EnterpriseUser user) {
-        user.setUpdateTime(java.time.LocalDateTime.now().toString());
-        userManagementMapper.updateUserByAccount(user);
+    public boolean updateUserByUsername(EnterpriseUser user) {
+        user.setUpdateTime(java.time.LocalDateTime.now());
+        userManagementMapper.updateUserByUsername(user);
         return true;
+    }
+    
+    @Override
+    public EnterpriseUser getUserByAccount(String account) {
+        return userManagementMapper.getUserByUsername(account);
+    }
+    
+    @Override
+    public boolean updateUserByAccount(EnterpriseUser user) {
+        return updateUserByUsername(user);
     }
 }

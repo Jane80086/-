@@ -1,73 +1,38 @@
-package com.system.entity;
+package com.cemenghui.system.entity;
 
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
+/**
+ * 用户修改历史实体类，对应 system_user_modify_history 表
+ */
 @Data
+@TableName("system_user_modify_history")
 public class UserModifyHistory {
-    private String historyId;       // 历史记录ID
-    private String userId;          // 用户ID
-    private String fieldName;       // 修改字段
-    private String oldValue;        // 旧值
-    private String newValue;        // 新值
-    private String operatorId;      // 操作人ID
-    private LocalDateTime modifyTime; // 修改时间
-
-    // 手动添加getter和setter方法
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    @TableField("user_id")
+    private Long userId;
+    @TableField("modify_type")
+    private String modifyType;
+    @TableField("field_name")
+    private String fieldName;
+    @TableField("old_value")
+    private String oldValue;
+    @TableField("new_value")
+    private String newValue;
+    @TableField("modify_time")
+    private LocalDateTime modifyTime;
+    @TableField("operator_id")
+    private Long operatorId;
+    
+    // 添加兼容方法
     public String getHistoryId() {
-        return historyId;
+        return this.id != null ? this.id.toString() : null;
     }
-
+    
     public void setHistoryId(String historyId) {
-        this.historyId = historyId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getFieldName() {
-        return fieldName;
-    }
-
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
-    }
-
-    public String getOldValue() {
-        return oldValue;
-    }
-
-    public void setOldValue(String oldValue) {
-        this.oldValue = oldValue;
-    }
-
-    public String getNewValue() {
-        return newValue;
-    }
-
-    public void setNewValue(String newValue) {
-        this.newValue = newValue;
-    }
-
-    public String getOperatorId() {
-        return operatorId;
-    }
-
-    public void setOperatorId(String operatorId) {
-        this.operatorId = operatorId;
-    }
-
-    public LocalDateTime getModifyTime() {
-        return modifyTime;
-    }
-
-    public void setModifyTime(LocalDateTime modifyTime) {
-        this.modifyTime = modifyTime;
+        this.id = historyId != null ? Long.valueOf(historyId) : null;
     }
 }

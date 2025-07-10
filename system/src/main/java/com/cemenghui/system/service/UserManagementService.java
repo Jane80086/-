@@ -1,12 +1,12 @@
-package com.system.service;
+package com.cemenghui.system.service;
 
-import com.system.dto.UserHistoryListDTO;
-import com.system.dto.UserHistoryQueryDTO;
-import com.system.dto.UserListDTO;
-import com.system.dto.UserQueryDTO;
-import com.system.entity.EnterpriseUser;
-import com.system.entity.UserModifyHistory;
-import com.system.entity.UserTemplate;
+import com.cemenghui.system.dto.UserHistoryListDTO;
+import com.cemenghui.system.dto.UserHistoryQueryDTO;
+import com.cemenghui.system.dto.UserListDTO;
+import com.cemenghui.system.dto.UserQueryDTO;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.entity.UserModifyHistory;
+import com.cemenghui.system.entity.UserTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -26,7 +26,7 @@ public interface UserManagementService {
     String createUserByTemplate(EnterpriseUser user, String templateId);
 
     // 普通添加用户
-    String createUser(EnterpriseUser user);
+    Long createUser(EnterpriseUser user);
 
     /**
      * 更新用户信息
@@ -34,19 +34,19 @@ public interface UserManagementService {
     boolean updateUser(EnterpriseUser user);
 
     // 获取用户修改历史
-    List<UserModifyHistory> getUserModifyHistory(String userId);
+    List<UserModifyHistory> getUserModifyHistory(Long userId);
 
     // 分页查询用户修改历史
     UserHistoryListDTO getUserModifyHistoryPaged(UserHistoryQueryDTO query);
 
     // 恢复用户修改历史
-    boolean restoreUserHistory(String historyId);
+    boolean restoreUserHistory(Long historyId);
 
     // 分配权限
-    boolean assignPermissions(String userId, Set<String> permissions);
+    boolean assignPermissions(Long userId, Set<String> permissions);
 
     // 继承角色权限
-    boolean inheritRolePermissions(String userId, String roleName);
+    boolean inheritRolePermissions(Long userId, String roleName);
 
     // 获取所有用户模板
     List<UserTemplate> getAllTemplates();
@@ -61,14 +61,20 @@ public interface UserManagementService {
     List<EnterpriseUser> getEnterpriseUsersByEnterpriseId(String enterpriseId);
 
     // 删除用户
-    boolean deleteUser(String userId);
+    boolean deleteUser(Long userId);
 
     // 根据ID查询用户
-    EnterpriseUser getUserById(String userId);
+    EnterpriseUser getUserById(Long userId);
 
-    // 通过账号查询用户
+    // 通过用户名查询用户
+    EnterpriseUser getUserByUsername(String username);
+
+    // 通过用户名更新用户
+    boolean updateUserByUsername(EnterpriseUser user);
+    
+    // 通过账号查询用户（兼容方法）
     EnterpriseUser getUserByAccount(String account);
-
-    // 通过账号更新用户
+    
+    // 通过账号更新用户（兼容方法）
     boolean updateUserByAccount(EnterpriseUser user);
 }

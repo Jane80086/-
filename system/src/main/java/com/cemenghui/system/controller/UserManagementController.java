@@ -1,14 +1,14 @@
-package com.system.controller;
+package com.cemenghui.system.controller;
 
-import com.system.dto.UserHistoryListDTO;
-import com.system.dto.UserHistoryQueryDTO;
-import com.system.dto.UserListDTO;
-import com.system.dto.UserQueryDTO;
-import com.system.entity.EnterpriseUser;
-import com.system.entity.UserTemplate;
-import com.system.service.UserManagementService;
-import com.system.util.JWTUtil;
-import com.system.vo.ResultVO;
+import com.cemenghui.system.dto.UserHistoryListDTO;
+import com.cemenghui.system.dto.UserHistoryQueryDTO;
+import com.cemenghui.system.dto.UserListDTO;
+import com.cemenghui.system.dto.UserQueryDTO;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.entity.UserTemplate;
+import com.cemenghui.system.service.UserManagementService;
+import com.cemenghui.system.util.JWTUtil;
+import com.cemenghui.system.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -65,12 +65,12 @@ public class UserManagementController {
      * 普通添加用户（不依赖模板）
      */
     @PostMapping
-    public ResponseEntity<ResultVO<String>> createUser(@Valid @RequestBody EnterpriseUser user,
+    public ResponseEntity<ResultVO<Long>> createUser(@Valid @RequestBody EnterpriseUser user,
                                                        @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
-        String userId = userManagementService.createUser(user);
+        Long userId = userManagementService.createUser(user);
         return new ResponseEntity<>(ResultVO.success(userId), HttpStatus.CREATED);
     }
 
@@ -91,7 +91,7 @@ public class UserManagementController {
      * 获取用户修改历史
      */
     @GetMapping("/{userId}/history")
-    public ResponseEntity<ResultVO<List>> getUserModifyHistory(@PathVariable String userId,
+    public ResponseEntity<ResultVO<List>> getUserModifyHistory(@PathVariable Long userId,
                                                                @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限访问"), HttpStatus.UNAUTHORIZED);
@@ -120,7 +120,7 @@ public class UserManagementController {
      * 恢复用户修改历史
      */
     @PostMapping("/history/{historyId}/restore")
-    public ResponseEntity<ResultVO<Boolean>> restoreUserHistory(@PathVariable String historyId,
+    public ResponseEntity<ResultVO<Boolean>> restoreUserHistory(@PathVariable Long historyId,
                                                                 @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
@@ -134,7 +134,7 @@ public class UserManagementController {
      * 分配用户权限
      */
     @PostMapping("/{userId}/permissions")
-    public ResponseEntity<ResultVO<Boolean>> assignPermissions(@PathVariable String userId,
+    public ResponseEntity<ResultVO<Boolean>> assignPermissions(@PathVariable Long userId,
                                                                @RequestBody Map<String, Set<String>> permissions,
                                                                @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
@@ -149,7 +149,7 @@ public class UserManagementController {
      * 继承角色权限
      */
     @PostMapping("/{userId}/roles/{roleName}/permissions")
-    public ResponseEntity<ResultVO<Boolean>> inheritRolePermissions(@PathVariable String userId,
+    public ResponseEntity<ResultVO<Boolean>> inheritRolePermissions(@PathVariable Long userId,
                                                                     @PathVariable String roleName,
                                                                     @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
@@ -177,7 +177,7 @@ public class UserManagementController {
      * 删除用户
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResultVO<Boolean>> deleteUser(@PathVariable String id, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<ResultVO<Boolean>> deleteUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
@@ -189,13 +189,13 @@ public class UserManagementController {
      * 根据userId修改用户信息（适配前端RESTful风格）
      */
     @PutMapping("/{userId}")
-    public ResponseEntity<ResultVO<Boolean>> updateUserById(@PathVariable String userId,
+    public ResponseEntity<ResultVO<Boolean>> updateUserById(@PathVariable Long userId,
                                                             @Valid @RequestBody EnterpriseUser user,
                                                             @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
-        user.setUserId(userId); // 确保userId正确
+        user.setId(userId); // 确保userId正确
         boolean result = userManagementService.updateUser(user);
         return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
     }

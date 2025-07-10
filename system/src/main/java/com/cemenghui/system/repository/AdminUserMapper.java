@@ -1,7 +1,7 @@
-package com.system.repository;
+package com.cemenghui.system.repository;
 
-import com.system.entity.AdminUser;
-import com.system.entity.EnterpriseUser;
+import com.cemenghui.system.entity.AdminUser;
+import com.cemenghui.system.entity.EnterpriseUser;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
@@ -12,11 +12,11 @@ public interface AdminUserMapper {
 
     /**
      * 根据账号查询管理员用户
-     * @param account 管理员账号
+     * @param username 管理员账号
      * @return 管理员用户实体
      */
-    @Select("SELECT * FROM admin_user WHERE account = #{account}")
-    AdminUser findByAccount(String account);
+    @Select("SELECT * FROM users WHERE username = #{username} AND user_type = 'ADMIN' AND deleted = 0")
+    AdminUser findByAccount(String username);
 
     /**
      * 管理员登录记录
@@ -25,24 +25,24 @@ public interface AdminUserMapper {
      */
     void recordLogin(@Param("adminId") Long adminId, @Param("loginTime") String loginTime);
 
-    @Insert("INSERT INTO admin_user (user_id, real_name, department, account, password, nickname, phone, email) VALUES (#{userId}, #{realName}, #{department}, #{account}, #{password}, #{nickname}, #{phone}, #{email})")
+    @Insert("INSERT INTO users (username, password, real_name, email, phone, user_type, status, department, nickname, avatar, is_remembered, create_time, update_time, deleted) VALUES (#{username}, #{password}, #{realName}, #{email}, #{phone}, 'ADMIN', #{status}, #{department}, #{nickname}, #{avatar}, #{isRemembered}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)")
     void save(AdminUser user);
 
-    @Select("SELECT * FROM admin_user WHERE user_id = #{userId}")
-    AdminUser findByUserId(String userId);
+    @Select("SELECT * FROM users WHERE id = #{userId} AND user_type = 'ADMIN' AND deleted = 0")
+    AdminUser findByUserId(Long userId);
 
-    @Update("UPDATE admin_user SET real_name = #{realName}, department = #{department}, account = #{account}, password = #{password}, nickname = #{nickname}, phone = #{phone}, email = #{email} WHERE user_id = #{userId}")
+    @Update("UPDATE users SET real_name = #{realName}, email = #{email}, phone = #{phone}, status = #{status}, department = #{department}, nickname = #{nickname}, avatar = #{avatar}, is_remembered = #{isRemembered}, update_time = CURRENT_TIMESTAMP WHERE id = #{id} AND user_type = 'ADMIN'")
     void update(AdminUser user);
 
-    @Delete("DELETE FROM admin_user WHERE user_id = #{userId}")
-    void deleteByUserId(String userId);
+    @Update("UPDATE users SET deleted = 1, update_time = CURRENT_TIMESTAMP WHERE id = #{userId} AND user_type = 'ADMIN'")
+    void deleteByUserId(Long userId);
 
-    @Select("SELECT * FROM admin_user")
+    @Select("SELECT * FROM users WHERE user_type = 'ADMIN' AND deleted = 0")
     List<AdminUser> findAll();
 
-    @Select("SELECT * FROM enterprise_user WHERE account = #{account}")
-    EnterpriseUser findEnterpriseByAccount(String account);
+    @Select("SELECT * FROM users WHERE username = #{username} AND user_type = 'ENTERPRISE' AND deleted = 0")
+    EnterpriseUser findEnterpriseByAccount(String username);
 
-    @Select("SELECT * FROM admin_user WHERE account = #{account}")
-    AdminUser findAdminByAccount(String account);
+    @Select("SELECT * FROM users WHERE username = #{username} AND user_type = 'ADMIN' AND deleted = 0")
+    AdminUser findAdminByAccount(String username);
 }

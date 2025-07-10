@@ -1,9 +1,9 @@
-package com.system.controller;
+package com.cemenghui.system.controller;
 
-import com.system.dto.RegisterRequestDTO;
-import com.system.dto.RegistResponseDTO;
-import com.system.service.RegisterService;
-import com.system.util.CaptchaUtil;
+import com.cemenghui.system.dto.RegisterRequestDTO;
+import com.cemenghui.system.dto.RegistResponseDTO;
+import com.cemenghui.system.service.RegisterService;
+import com.cemenghui.system.util.CaptchaUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,5 +54,5 @@ public class RegisterController {
         registerService.syncBusinessInfo(requestDTO);
         return requestDTO;
     }
-    
+
 }

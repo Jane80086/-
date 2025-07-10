@@ -1,9 +1,9 @@
-package com.system.controller;
+package com.cemenghui.system.controller;
 
-import com.system.entity.Enterprise;
-import com.system.service.EnterpriseService;
-import com.system.util.JWTUtil;
-import com.system.vo.ResultVO;
+import com.cemenghui.system.entity.Enterprise;
+import com.cemenghui.system.service.EnterpriseService;
+import com.cemenghui.system.util.JWTUtil;
+import com.cemenghui.system.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +36,7 @@ public class EnterpriseController {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限访问"), HttpStatus.UNAUTHORIZED);
         }
-        
+
         Map<String, Object> result = enterpriseService.getEnterpriseList(page, size, enterpriseName, creditCode, status);
         return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
     }
@@ -67,19 +67,19 @@ public class EnterpriseController {
         }
         // 设置创建时间
         if (enterprise.getCreateTime() == null) {
-            enterprise.setCreateTime(java.time.LocalDateTime.now().toString());
+            enterprise.setCreateTime(java.time.LocalDateTime.now());
         }
         return enterpriseService.createEnterprise(enterprise);
     }
 
     @DeleteMapping("/{enterpriseId}")
-    public Map<String, Object> deleteEnterprise(@PathVariable("enterpriseId") Long enterpriseId) {
+    public Map<String, Object> deleteEnterprise(@PathVariable("enterpriseId") String enterpriseId) {
         return enterpriseService.deleteEnterprise(enterpriseId);
     }
 
     @PutMapping("/{enterpriseId}")
-    public Map<String, Object> updateEnterprise(@PathVariable("enterpriseId") Long enterpriseId, @RequestBody Enterprise enterprise) {
-        enterprise.setEnterpriseId(String.valueOf(enterpriseId));
+    public Map<String, Object> updateEnterprise(@PathVariable("enterpriseId") String enterpriseId, @RequestBody Enterprise enterprise) {
+        enterprise.setEnterpriseId(enterpriseId);
         return enterpriseService.updateEnterprise(enterprise);
     }
 
@@ -95,4 +95,4 @@ public class EnterpriseController {
             return false;
         }
     }
-} 
+}

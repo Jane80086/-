@@ -1,4 +1,4 @@
-package com.system.util;
+package com.cemenghui.system.util;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -17,7 +17,7 @@ public class ExcelUtil {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet(fileName);
 
-        // 创建表头行
+        // 创建表头
         Row headerRow = sheet.createRow(0);
         for (int i = 0; i < headers.size(); i++) {
             Cell cell = headerRow.createCell(i);

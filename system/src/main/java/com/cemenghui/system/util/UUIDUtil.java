@@ -1,4 +1,4 @@
-package com.system.util;
+package com.cemenghui.system.util;
 
 import java.util.UUID;
 

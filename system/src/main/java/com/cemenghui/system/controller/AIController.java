@@ -1,6 +1,6 @@
-package com.system.controller;
+package com.cemenghui.system.controller;
 
-import com.system.service.AIService;
+import com.cemenghui.system.service.AIService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;

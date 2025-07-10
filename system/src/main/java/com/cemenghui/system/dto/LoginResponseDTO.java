@@ -1,6 +1,7 @@
-package com.system.dto;
+package com.cemenghui.system.dto;
 
-import com.system.entity.User;
+import com.cemenghui.system.entity.AdminUser;
+import com.cemenghui.system.entity.EnterpriseUser;
 import lombok.Data;
 
 @Data
@@ -10,56 +11,46 @@ public class LoginResponseDTO {
     private boolean success;
     // 提示消息
     private String message;
-    // 令牌（用于后续请求认证 ）
+    // 令牌（用于后续请求认证）
     private String token;
-    // 用户信息
-    private User user;
-
-    // 手动添加getter和setter方法
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
+    // 用户类型：admin, enterprise
+    private String userType;
+    // 企业用户信息
+    private EnterpriseUser enterpriseUser;
+    // 管理员用户信息
+    private AdminUser adminUser;
 
     /**
-     * 构建登录成功响应
+     * 构建企业用户登录成功响应
      * @param token    认证令牌
-     * @param user 用户信息
+     * @param user 企业用户信息
      * @return 登录成功的响应DTO
      */
-    public static LoginResponseDTO success(String token, User user) {
+    public static LoginResponseDTO success(String token, EnterpriseUser user) {
         LoginResponseDTO dto = new LoginResponseDTO();
         dto.setSuccess(true);
         dto.setMessage("登录成功");
         dto.setToken(token);
-        dto.setUser(user);
+        dto.setUserType("enterprise");
+        dto.setEnterpriseUser(user);
+        dto.setAdminUser(null);
+        return dto;
+    }
+
+    /**
+     * 构建管理员用户登录成功响应
+     * @param token    认证令牌
+     * @param admin 管理员用户信息
+     * @return 登录成功的响应DTO
+     */
+    public static LoginResponseDTO success(String token, AdminUser admin) {
+        LoginResponseDTO dto = new LoginResponseDTO();
+        dto.setSuccess(true);
+        dto.setMessage("登录成功");
+        dto.setToken(token);
+        dto.setUserType("admin");
+        dto.setAdminUser(admin);
+        dto.setEnterpriseUser(null);
         return dto;
     }
 
@@ -72,9 +63,23 @@ public class LoginResponseDTO {
         LoginResponseDTO dto = new LoginResponseDTO();
         dto.setSuccess(false);
         dto.setMessage(message);
-        // 失败时可按需决定是否设置 token、user，这里简单置空
         dto.setToken(null);
-        dto.setUser(null);
+        dto.setUserType(null);
+        dto.setEnterpriseUser(null);
+        dto.setAdminUser(null);
         return dto;
+    }
+
+    /**
+     * 获取用户信息（通用方法）
+     * @return 用户对象
+     */
+    public Object getUser() {
+        if ("admin".equals(userType)) {
+            return adminUser;
+        } else if ("enterprise".equals(userType)) {
+            return enterpriseUser;
+        }
+        return null;
     }
 }

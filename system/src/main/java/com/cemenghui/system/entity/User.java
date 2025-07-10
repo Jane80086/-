@@ -1,144 +1,54 @@
-package com.system.entity;
+package com.cemenghui.system.entity;
 
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 
+/**
+ * 用户基础实体类，对应 users 表
+ */
 @Data
+@EqualsAndHashCode(callSuper = false)
+@TableName("users")
 public class User {
-
-    // 账号，非空
-    @NotBlank(message = "账号不能为空")
-    protected String account;
-
-    // 密码
-    protected String password;
-
-    // 角色（可用于区分企业用户、管理员等角色 ）
-    protected String role;
-
-    // 是否记住登录状态
-    protected boolean isRemembered;
-
-    // 用户 ID
-    private String userId;
-
-    // 昵称
-    protected String nickname;
-
-    // 电话
-    protected String phone;
-
-    // 邮箱
-    protected String email;
-
-    // 新增
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    @TableField("username")
+    @NotBlank(message = "用户名不能为空")
+    private String username;
+    @TableField("password")
+    @NotBlank(message = "密码不能为空")
+    private String password;
+    @TableField("real_name")
     private String realName;
-
-    // 已有
-    private String enterpriseId;
-
-    // 已有
+    @TableField("email")
+    private String email;
+    @TableField("phone")
+    private String phone;
+    @TableField("user_type")
+    @NotBlank(message = "用户类型不能为空")
+    private String userType;
+    @TableField("status")
+    private Integer status = 1;
+    @TableField("department")
     private String department;
-
-    protected String dynamicCode;
-    
-    // 手动添加getter和setter方法
-    public String getAccount() {
-        return account;
-    }
-
-    public void setAccount(String account) {
-        this.account = account;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public boolean isRemembered() {
-        return isRemembered;
-    }
-
-    public void setRemembered(boolean remembered) {
-        isRemembered = remembered;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getNickname() {
-        return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getRealName() {
-        return realName;
-    }
-
-    public void setRealName(String realName) {
-        this.realName = realName;
-    }
-
-    public String getEnterpriseId() {
-        return enterpriseId;
-    }
-
-    public void setEnterpriseId(String enterpriseId) {
-        this.enterpriseId = enterpriseId;
-    }
-
-    public String getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(String department) {
-        this.department = department;
-    }
-
-    public String getDynamicCode() { return dynamicCode; }
-    public void setDynamicCode(String code) { this.dynamicCode = code; }
-    public String sendDynamicCode(String phone) {
-        String code = String.valueOf((int)((Math.random()*9+1)*100000)); // 6位验证码
-        setDynamicCode(code);
-        // 实际发送逻辑（此处模拟，可对接短信/邮件服务）
-        System.out.println("已为用户 " + getAccount() + " 发送动态验证码：" + code + " 到手机号：" + phone);
-        return code;
-    }
-
+    @TableField("nickname")
+    private String nickname;
+    @TableField("avatar")
+    private String avatar;
+    @TableField("is_remembered")
+    private Boolean isRemembered = false;
+    @TableField("enterprise_id")
+    private String enterpriseId;
+    @TableField("dynamic_code")
+    private String dynamicCode;
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted = 0;
 }

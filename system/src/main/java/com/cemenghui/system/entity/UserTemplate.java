@@ -1,4 +1,4 @@
-package com.system.entity;
+package com.cemenghui.system.entity;
 
 import lombok.Data;
 
@@ -10,7 +10,7 @@ public class UserTemplate {
     private String templateName;    // 模板名称
     private String enterpriseType;  // 适用企业类型
     private String role;            // 默认角色
-    private Map<String, Object> defaultValues; // 默认属性值
+    private Map<String, Object> defaultValues; // 默认属性
     private Set<String> permissions;// 预设权限集合
 
     public String getTemplateId() {

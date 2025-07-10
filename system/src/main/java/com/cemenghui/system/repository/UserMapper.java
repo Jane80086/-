@@ -1,41 +1,41 @@
-package com.system.repository;
+package com.cemenghui.system.repository;
 
-import com.system.entity.EnterpriseUser;
-import com.system.entity.AdminUser;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.entity.AdminUser;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserMapper {
     // EnterpriseUser 通用方法
-    @Insert("INSERT INTO enterprise_user (user_id, real_name, enterprise_id, account, password, nickname, phone, email) VALUES (#{userId}, #{realName}, #{enterpriseId}, #{account}, #{password}, #{nickname}, #{phone}, #{email})")
+    @Insert("INSERT INTO users (username, password, real_name, email, phone, user_type, status, department, nickname, avatar, is_remembered, enterprise_id, dynamic_code, create_time, update_time, deleted) VALUES (#{username}, #{password}, #{realName}, #{email}, #{phone}, 'ENTERPRISE', #{status}, #{department}, #{nickname}, #{avatar}, #{isRemembered}, #{enterpriseId}, #{dynamicCode}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)")
     void saveEnterpriseUser(EnterpriseUser user);
 
-    @Select("SELECT * FROM enterprise_user WHERE account = #{account}")
-    EnterpriseUser findEnterpriseByAccount(String account);
+    @Select("SELECT * FROM users WHERE username = #{username} AND user_type = 'ENTERPRISE' AND deleted = 0")
+    EnterpriseUser findEnterpriseByAccount(String username);
 
-    @Select("SELECT * FROM enterprise_user WHERE user_id = #{userId}")
-    EnterpriseUser findEnterpriseByUserId(String userId);
+    @Select("SELECT * FROM users WHERE id = #{userId} AND user_type = 'ENTERPRISE' AND deleted = 0")
+    EnterpriseUser findEnterpriseByUserId(Long userId);
 
-    @Update("UPDATE enterprise_user SET real_name = #{realName}, enterprise_id = #{enterpriseId}, account = #{account}, password = #{password}, nickname = #{nickname}, phone = #{phone}, email = #{email} WHERE user_id = #{userId}")
+    @Update("UPDATE users SET real_name = #{realName}, email = #{email}, phone = #{phone}, status = #{status}, department = #{department}, nickname = #{nickname}, avatar = #{avatar}, is_remembered = #{isRemembered}, enterprise_id = #{enterpriseId}, dynamic_code = #{dynamicCode}, update_time = CURRENT_TIMESTAMP WHERE id = #{id} AND user_type = 'ENTERPRISE'")
     void updateEnterpriseUser(EnterpriseUser user);
 
-    @Delete("DELETE FROM enterprise_user WHERE user_id = #{userId}")
-    void deleteEnterpriseByUserId(String userId);
+    @Update("UPDATE users SET deleted = 1, update_time = CURRENT_TIMESTAMP WHERE id = #{userId} AND user_type = 'ENTERPRISE'")
+    void deleteEnterpriseByUserId(Long userId);
 
     // AdminUser 通用方法
-    @Insert("INSERT INTO admin_user (user_id, real_name, department, account, password, nickname, phone, email) VALUES (#{userId}, #{realName}, #{department}, #{account}, #{password}, #{nickname}, #{phone}, #{email})")
+    @Insert("INSERT INTO users (username, password, real_name, email, phone, user_type, status, department, nickname, avatar, is_remembered, create_time, update_time, deleted) VALUES (#{username}, #{password}, #{realName}, #{email}, #{phone}, 'ADMIN', #{status}, #{department}, #{nickname}, #{avatar}, #{isRemembered}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)")
     void saveAdminUser(AdminUser user);
 
-    @Select("SELECT * FROM admin_user WHERE account = #{account}")
-    AdminUser findAdminByAccount(String account);
+    @Select("SELECT * FROM users WHERE username = #{username} AND user_type = 'ADMIN' AND deleted = 0")
+    AdminUser findAdminByAccount(String username);
 
-    @Select("SELECT * FROM admin_user WHERE user_id = #{userId}")
-    AdminUser findAdminByUserId(String userId);
+    @Select("SELECT * FROM users WHERE id = #{userId} AND user_type = 'ADMIN' AND deleted = 0")
+    AdminUser findAdminByUserId(Long userId);
 
-    @Update("UPDATE admin_user SET real_name = #{realName}, department = #{department}, account = #{account}, password = #{password}, nickname = #{nickname}, phone = #{phone}, email = #{email} WHERE user_id = #{userId}")
+    @Update("UPDATE users SET real_name = #{realName}, email = #{email}, phone = #{phone}, status = #{status}, department = #{department}, nickname = #{nickname}, avatar = #{avatar}, is_remembered = #{isRemembered}, update_time = CURRENT_TIMESTAMP WHERE id = #{id} AND user_type = 'ADMIN'")
     void updateAdminUser(AdminUser user);
 
-    @Delete("DELETE FROM admin_user WHERE user_id = #{userId}")
-    void deleteAdminByUserId(String userId);
+    @Update("UPDATE users SET deleted = 1, update_time = CURRENT_TIMESTAMP WHERE id = #{userId} AND user_type = 'ADMIN'")
+    void deleteAdminByUserId(Long userId);
 }

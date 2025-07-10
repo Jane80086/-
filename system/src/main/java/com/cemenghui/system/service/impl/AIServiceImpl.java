@@ -1,6 +1,6 @@
-package com.system.service.impl;
+package com.cemenghui.system.service.impl;
 
-import com.system.service.AIService;
+import com.cemenghui.system.service.AIService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -39,10 +39,10 @@ public class AIServiceImpl implements AIService {
             ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
             ObjectNode json = (ObjectNode) mapper.readTree(response.getBody());
             String answer = json.withArray("choices")
-                .get(0)
-                .path("message")
-                .path("content")
-                .asText();
+                    .get(0)
+                    .path("message")
+                    .path("content")
+                    .asText();
             return answer;
         } catch (Exception e) {
             return "AI服务暂时不可用，请稍后再试。";
@@ -62,8 +62,8 @@ public class AIServiceImpl implements AIService {
             String role = userInfo.getOrDefault("role", "成员");
             String enterprise = userInfo.getOrDefault("enterprise", "本系统");
             String prompt = String.format(
-                "请用一句温暖、积极的话欢迎名为%s的%s，他/她来自%s。内容不超过30字。",
-                nickname, role, enterprise
+                    "请用一句温暖、积极的话欢迎名为%s的%s，他/她来自%s。内容不超过30字。",
+                    nickname, role, enterprise
             );
             ObjectNode requestBody = mapper.createObjectNode();
             requestBody.put("model", "gpt-3.5-turbo");
@@ -77,10 +77,10 @@ public class AIServiceImpl implements AIService {
             ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
             ObjectNode json = (ObjectNode) mapper.readTree(response.getBody());
             String answer = json.withArray("choices")
-                .get(0)
-                .path("message")
-                .path("content")
-                .asText();
+                    .get(0)
+                    .path("message")
+                    .path("content")
+                    .asText();
             return answer;
         } catch (Exception e) {
             e.printStackTrace();
@@ -102,8 +102,8 @@ public class AIServiceImpl implements AIService {
             reportData.forEach((k, v) -> sb.append(k).append(": ").append(v).append("; "));
             String dataText = sb.toString();
             String prompt = String.format(
-                "请用简洁自然语言解读下述数据，生成1-2句话的分析摘要：%s",
-                dataText
+                    "请用简洁自然语言解读下述数据，生成1-2句话的分析摘要：%s",
+                    dataText
             );
             ObjectNode requestBody = mapper.createObjectNode();
             requestBody.put("model", "gpt-3.5-turbo");
@@ -117,10 +117,10 @@ public class AIServiceImpl implements AIService {
             ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
             ObjectNode json = (ObjectNode) mapper.readTree(response.getBody());
             String answer = json.withArray("choices")
-                .get(0)
-                .path("message")
-                .path("content")
-                .asText();
+                    .get(0)
+                    .path("message")
+                    .path("content")
+                    .asText();
             return answer;
         } catch (Exception e) {
             e.printStackTrace();

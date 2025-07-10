@@ -1,7 +1,7 @@
-package com.system.util;
+package com.cemenghui.system.util;
 
-import com.system.config.JWTConfig;
-import com.system.entity.AdminUser;
+import com.cemenghui.system.config.JWTConfig;
+import com.cemenghui.system.entity.AdminUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

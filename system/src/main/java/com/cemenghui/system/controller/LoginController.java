@@ -1,10 +1,10 @@
-package com.system.controller;
+package com.cemenghui.system.controller;
 
-import com.system.entity.EnterpriseUser;
-import com.system.service.UserManagementService;
-import com.system.util.CaptchaUtil;
-import com.system.dto.LoginRequestDTO;
-import com.system.dto.LoginResponseDTO;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.service.UserManagementService;
+import com.cemenghui.system.util.CaptchaUtil;
+import com.cemenghui.system.dto.LoginRequestDTO;
+import com.cemenghui.system.dto.LoginResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +22,13 @@ public class LoginController {
     private CaptchaUtil captchaUtil;
 
     @Autowired
-    private com.system.repository.UserMapper userMapper;
+    private com.cemenghui.system.repository.UserMapper userMapper;
 
     @Autowired
-    private com.system.repository.AdminUserMapper adminUserMapper;
+    private com.cemenghui.system.repository.AdminUserMapper adminUserMapper;
 
     @Autowired
-    private com.system.util.JWTUtil jwtUtil;
+    private com.cemenghui.system.util.JWTUtil jwtUtil;
 
     // 测试接口
     @GetMapping("/test")
@@ -74,7 +74,7 @@ public class LoginController {
         // 验证码校验略
         if (account.startsWith("0000")) {
             // 管理员
-            com.system.entity.AdminUser admin = adminUserMapper.findByAccount(account);
+            com.cemenghui.system.entity.AdminUser admin = adminUserMapper.findByAccount(account);
             System.out.println("SQL查到的用户: " + admin);
             if (admin == null) {
                 dto.setSuccess(false);
@@ -91,11 +91,13 @@ public class LoginController {
             dto.setMessage("登录成功");
             String jwt = jwtUtil.generateToken(admin);
             dto.setToken(jwt);
-            dto.setUser(admin);
+            dto.setUserType("admin");
+            dto.setAdminUser(admin);
+            dto.setEnterpriseUser(null);
             return ResponseEntity.ok(dto);
         } else {
             // 企业用户
-            com.system.entity.EnterpriseUser user = userMapper.findEnterpriseByAccount(account);
+            com.cemenghui.system.entity.EnterpriseUser user = userMapper.findEnterpriseByAccount(account);
             System.out.println("SQL查到的企业用户: " + user);
             if (user == null) {
                 dto.setSuccess(false);
@@ -112,7 +114,9 @@ public class LoginController {
             dto.setMessage("登录成功");
             String jwt = jwtUtil.generateToken(account);
             dto.setToken(jwt);
-            dto.setUser(user);
+            dto.setUserType("enterprise");
+            dto.setEnterpriseUser(user);
+            dto.setAdminUser(null);
             return ResponseEntity.ok(dto);
         }
     }

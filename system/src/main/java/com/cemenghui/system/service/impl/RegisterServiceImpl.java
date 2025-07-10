@@ -1,16 +1,16 @@
-package com.system.service.impl;
+package com.cemenghui.system.service.impl;
 
-import com.system.dto.RegisterRequestDTO;
-import com.system.dto.RegistResponseDTO;
-import com.system.entity.EnterpriseUser;
-import com.system.entity.Enterprise;
-import com.system.entity.AdminUser;
-import com.system.repository.EnterpriseMapper;
-import com.system.repository.EnterpriseUserMapper;
-import com.system.repository.AdminUserMapper;
-import com.system.service.RegisterService;
-import com.system.util.CaptchaUtil;
-import com.system.util.RedisUtil;
+import com.cemenghui.system.dto.RegisterRequestDTO;
+import com.cemenghui.system.dto.RegistResponseDTO;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.entity.Enterprise;
+import com.cemenghui.system.entity.AdminUser;
+import com.cemenghui.system.repository.EnterpriseMapper;
+import com.cemenghui.system.repository.EnterpriseUserMapper;
+import com.cemenghui.system.repository.AdminUserMapper;
+import com.cemenghui.system.service.RegisterService;
+import com.cemenghui.system.util.CaptchaUtil;
+import com.cemenghui.system.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -38,8 +38,8 @@ public class RegisterServiceImpl implements RegisterService {
     public RegistResponseDTO register(RegisterRequestDTO requestDTO, CaptchaUtil captchaUtil) {
         RegistResponseDTO responseDTO = new RegistResponseDTO();
 
-        String account = requestDTO.getAccount() != null ? requestDTO.getAccount() : "";
-        boolean isAdmin = account.length() >= 4 && account.substring(0, 4).equals("0000");
+        String username = requestDTO.getAccount() != null ? requestDTO.getAccount() : "";
+        boolean isAdmin = username.length() >= 4 && username.substring(0, 4).equals("0000");
 
         // 1. 仅普通用户校验企业ID和企业存在性，管理员可不填
         String enterpriseId = requestDTO.getEnterpriseId() != null ? requestDTO.getEnterpriseId() : "";
@@ -59,7 +59,7 @@ public class RegisterServiceImpl implements RegisterService {
             }
         }
 
-        // 1. 基础校验（可通过 @Valid 注解在 Controller 层提前拦截，这里做补充校验 ）
+        // 1. 基础校验（可通过 @Valid 注解在 Controller 层提前拦截，这里做补充校验）
         String password = requestDTO.getPassword() != null ? requestDTO.getPassword() : "";
         if (!validatePassword(password)) {
             responseDTO.setSuccess(false);
@@ -80,7 +80,7 @@ public class RegisterServiceImpl implements RegisterService {
         }
         // 验证码校验（从Redis获取）
         String verificationCode = requestDTO.getVerificationCode();
-        String uuid = account; // 可根据实际前端传递的uuid调整
+        String uuid = username; // 可根据实际前端传递的uuid调整
         String storedCaptcha = redisUtil.get("captcha:" + uuid);
         if (verificationCode == null || storedCaptcha == null || !captchaUtil.validateCaptcha(verificationCode, storedCaptcha)) {
             responseDTO.setSuccess(false);
@@ -93,38 +93,37 @@ public class RegisterServiceImpl implements RegisterService {
             if (isAdmin) {
                 // 注册为管理员
                 AdminUser adminUser = new AdminUser();
-                adminUser.setUserId(java.util.UUID.randomUUID().toString().replace("-", ""));
-                adminUser.setAccount(account);
+                adminUser.setId(null); // 让数据库自动生成ID
+                adminUser.setUsername(username);
                 adminUser.setPassword(password);
                 adminUser.setRealName(requestDTO.getRealName());
                 adminUser.setPhone(requestDTO.getPhone() != null ? requestDTO.getPhone() : "");
                 adminUser.setEmail(requestDTO.getEmail() != null ? requestDTO.getEmail() : "");
                 adminUser.setNickname(requestDTO.getNickname() != null ? requestDTO.getNickname() : adminUser.getRealName());
                 adminUser.setDepartment(requestDTO.getDepartment() != null ? requestDTO.getDepartment() : "");
-                adminUser.setEnterpriseId(enterpriseId); // 可为空
-                adminUser.setSuperAdmin(false); // 默认不是超级管理员
+                adminUser.setStatus(1); // 启用状态
                 System.out.println("注册写入数据库的管理员实体：" + adminUser);
                 adminUserMapper.save(adminUser);
                 responseDTO.setSuccess(true);
                 responseDTO.setMessage("注册成功（管理员）");
-                responseDTO.setUserId(adminUser.getUserId());
+                responseDTO.setUserId(adminUser.getId().toString());
             } else {
                 // 注册为普通用户
                 EnterpriseUser user = new EnterpriseUser();
-                user.setUserId(java.util.UUID.randomUUID().toString().replace("-", ""));
-                user.setAccount(account);
+                user.setId(null); // 让数据库自动生成ID
+                user.setUsername(username);
                 user.setPassword(password);
                 user.setRealName(requestDTO.getRealName());
                 user.setPhone(requestDTO.getPhone() != null ? requestDTO.getPhone() : "");
                 user.setEmail(requestDTO.getEmail() != null ? requestDTO.getEmail() : "");
                 user.setEnterpriseId(enterpriseId);
                 user.setNickname(requestDTO.getNickname() != null ? requestDTO.getNickname() : user.getRealName());
-                user.setStatus("1");
+                user.setStatus(1); // 启用状态
                 System.out.println("注册写入数据库的用户实体：" + user);
                 enterpriseUserMapper.saveUser(user);
                 responseDTO.setSuccess(true);
                 responseDTO.setMessage("注册成功");
-                responseDTO.setUserId(user.getUserId());
+                responseDTO.setUserId(user.getId().toString());
             }
         } catch (Exception e) {
             responseDTO.setSuccess(false);
@@ -135,14 +134,14 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public boolean validateEnterprise(String enterpriseName) {
-        // 从数据库查询企业是否存在（示例逻辑，需根据实际 Mapper 调整 ）
+        // 从数据库查询企业是否存在（示例逻辑，需根据实际 Mapper 调整）
         return enterpriseInfoMapper.countByEnterpriseName(enterpriseName) > 0;
     }
 
     @Override
     public void syncBusinessInfo(RegisterRequestDTO requestDTO) {
         if (StringUtils.hasText(requestDTO.getEnterpriseName())) {
-            // 从数据库查询企业信息（示例逻辑 ）
+            // 从数据库查询企业信息（示例逻辑）
             // EnterpriseInfo info = enterpriseInfoMapper.findByEnterpriseName(requestDTO.getEnterpriseName());
             // requestDTO.setUnifiedSocialCreditCode(info.getSocialCreditCode()); 
             // requestDTO.setRegistrationAddress(info.getRegisterAddress());

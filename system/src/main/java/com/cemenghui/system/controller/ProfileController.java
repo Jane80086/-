@@ -1,9 +1,10 @@
-package com.system.controller;
+package com.cemenghui.system.controller;
 
-import com.system.entity.EnterpriseUser;
-import com.system.service.UserManagementService;
-import com.system.util.JWTUtil;
-import com.system.vo.ResultVO;
+import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.system.entity.User;
+import com.cemenghui.system.service.UserManagementService;
+import com.cemenghui.system.util.JWTUtil;
+import com.cemenghui.system.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,14 +20,14 @@ public class ProfileController {
     @GetMapping("/current")
     public ResultVO<EnterpriseUser> getCurrentUser(@RequestHeader("Authorization") String token) {
         String account = jwtUtil.getAccountFromToken(token);
-        EnterpriseUser user = userService.getUserByAccount(account);
-        return ResultVO.success(user);
+        EnterpriseUser enterpriseUser = userService.getUserByAccount(account);
+        return ResultVO.success(enterpriseUser);
     }
 
     @PutMapping("/current")
     public ResultVO<Boolean> updateCurrentUser(@RequestBody EnterpriseUser user, @RequestHeader("Authorization") String token) {
         String account = jwtUtil.getAccountFromToken(token);
-        user.setAccount(account);
+        user.setUsername(account);
         boolean result = userService.updateUserByAccount(user);
         return ResultVO.success(result);
     }

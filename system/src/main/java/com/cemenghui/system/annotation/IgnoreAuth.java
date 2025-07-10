@@ -1,4 +1,4 @@
-package com.annotation;
+package com.cemenghui.system.annotation;
 
 import java.lang.annotation.*;
 

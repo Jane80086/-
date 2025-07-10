@@ -1,8 +1,8 @@
-package com.system.service;
+package com.cemenghui.system.service;
 
-import com.system.dto.RegisterRequestDTO;
-import com.system.dto.RegistResponseDTO;
-import com.system.util.CaptchaUtil;
+import com.cemenghui.system.dto.RegisterRequestDTO;
+import com.cemenghui.system.dto.RegistResponseDTO;
+import com.cemenghui.system.util.CaptchaUtil;
 
 public interface RegisterService {
 
@@ -16,14 +16,14 @@ public interface RegisterService {
     RegistResponseDTO register(RegisterRequestDTO requestDTO, CaptchaUtil captchaUtil);
 
     /**
-     * 校验企业名称是否存在（从数据库查询 ）
+     * 校验企业名称是否存在（从数据库查询）
      * @param enterpriseName 企业名称
      * @return true=存在，false=不存在
      */
     boolean validateEnterprise(String enterpriseName);
 
     /**
-     * 同步企业信息（从数据库查询并填充到 DTO ）
+     * 同步企业信息（从数据库查询并填充到 DTO）
      * @param requestDTO 包含企业名称的 DTO
      */
     void syncBusinessInfo(RegisterRequestDTO requestDTO);
