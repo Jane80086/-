@@ -3,23 +3,20 @@ package com.cemenghui.system.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 /**
- * 统一企业用户实体类，对应 users 表
+ * 管理员用户实体类，对应 users 表
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("users")
-public class EnterpriseUser {
+public class AdminUser {
     @TableId(type = IdType.AUTO)
     private Long id;
     @TableField("username")
-    @NotBlank(message = "用户名不能为空")
     private String username;
     @TableField("password")
-    @NotBlank(message = "密码不能为空")
     private String password;
     @TableField("real_name")
     private String realName;
@@ -28,10 +25,9 @@ public class EnterpriseUser {
     @TableField("phone")
     private String phone;
     @TableField("user_type")
-    @NotBlank(message = "用户类型不能为空")
-    private String userType; // ADMIN, ENTERPRISE, NORMAL, SYSTEM
+    private String userType;
     @TableField("status")
-    private Integer status = 1; // 0: 禁用, 1: 启用
+    private Integer status;
     @TableField("department")
     private String department;
     @TableField("nickname")
@@ -39,28 +35,30 @@ public class EnterpriseUser {
     @TableField("avatar")
     private String avatar;
     @TableField("is_remembered")
-    private Boolean isRemembered = false;
+    private Boolean isRemembered;
     @TableField("enterprise_id")
     private String enterpriseId;
     @TableField("dynamic_code")
     private String dynamicCode;
+    @TableField("role")
+    private String role;
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
     @TableLogic
     @TableField("deleted")
-    private Integer deleted = 0;
-    
-    // 企业相关字段（非数据库字段）
+    private Integer deleted;
+    // 管理员专属属性
     @TableField(exist = false)
-    private String enterpriseName;
-    
-    @TableField(exist = false)
-    private Enterprise enterprise;
+    private Boolean isSuperAdmin;
     
     // 添加兼容方法
     public String getAccount() {
         return this.username;
+    }
+    
+    public String getRole() {
+        return this.role;
     }
 }

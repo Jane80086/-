@@ -7,6 +7,7 @@ import com.cemenghui.system.dto.UserQueryDTO;
 import com.cemenghui.system.entity.EnterpriseUser;
 import com.cemenghui.system.entity.UserModifyHistory;
 import com.cemenghui.system.entity.UserTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -45,7 +46,7 @@ public interface UserManagementService {
     // 分配权限
     boolean assignPermissions(Long userId, Set<String> permissions);
 
-    // 继承角色权限
+    @Transactional
     boolean inheritRolePermissions(Long userId, String roleName);
 
     // 获取所有用户模板

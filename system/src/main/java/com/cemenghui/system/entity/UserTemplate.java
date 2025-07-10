@@ -9,7 +9,6 @@ public class UserTemplate {
     private String templateId;      // 模板ID
     private String templateName;    // 模板名称
     private String enterpriseType;  // 适用企业类型
-    private String role;            // 默认角色
     private Map<String, Object> defaultValues; // 默认属性
     private Set<String> permissions;// 预设权限集合
 
@@ -35,14 +34,6 @@ public class UserTemplate {
 
     public void setEnterpriseType(String enterpriseType) {
         this.enterpriseType = enterpriseType;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
     }
 
     public Map<String, Object> getDefaultValues() {

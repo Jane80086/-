@@ -37,9 +37,6 @@ public interface UserManagementMapper {
     // 分配权限
     void addPermission(@Param("userId") Long userId, @Param("permission") String permission);
 
-    // 继承角色权限
-    void inheritPermissions(@Param("userId") Long userId, @Param("roleName") String roleName);
-
     // 更新用户信息
     void updateUser(EnterpriseUser user);
 

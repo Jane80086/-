@@ -49,7 +49,8 @@ public class LoginServiceImpl implements LoginService {
             enterpriseUserMapper.update(user);
         }
 
-        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of(user.getRole()));
+        String userType = username.startsWith("0000") ? "admin" : "enterprise";
+        String token = jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of(userType));
         return LoginResponseDTO.success(token, user);
     }
 
@@ -67,7 +68,8 @@ public class LoginServiceImpl implements LoginService {
             return LoginResponseDTO.fail("动态验证码错误");
         }
 
-        String token = jwtUtil.generateToken(admin.getId(), admin.getAccount(), java.util.List.of(admin.getRole()));
+        String userType = username.startsWith("0000") ? "admin" : "enterprise";
+        String token = jwtUtil.generateToken(admin.getId(), admin.getAccount(), java.util.List.of(userType));
         return LoginResponseDTO.success(token, admin);
     }
 
@@ -87,7 +89,8 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public String generateToken(EnterpriseUser user) {
-        return jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of(user.getRole()));
+        String userType = user.getAccount().startsWith("0000") ? "admin" : "enterprise";
+        return jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of(userType));
     }
 
     @Override

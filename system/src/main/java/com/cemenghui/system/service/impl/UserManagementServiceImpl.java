@@ -125,9 +125,9 @@ public class UserManagementServiceImpl implements UserManagementService {
             });
         }
         // 继承模板角色权限
-        if (template.getRole() != null) {
-            userManagementMapper.inheritPermissions(userId, template.getRole());
-        }
+        // if (template.getRole() != null) {
+        //     userManagementMapper.inheritPermissions(userId, template.getRole());
+        // }
         // 添加模板预设权限
         if (!CollectionUtils.isEmpty(template.getPermissions())) {
             template.getPermissions().forEach(permission -> {
@@ -271,12 +271,8 @@ public class UserManagementServiceImpl implements UserManagementService {
     @Transactional
     @Override
     public boolean inheritRolePermissions(Long userId, String roleName) {
-        if (roleName == null) {
-            return false;
-        }
-
-        userManagementMapper.inheritPermissions(userId, roleName);
-        return true;
+        // 已废弃：role相关逻辑已移除
+        return false;
     }
 
     @Override
