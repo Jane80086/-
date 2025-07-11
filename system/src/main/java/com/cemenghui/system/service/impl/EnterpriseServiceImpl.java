@@ -22,10 +22,12 @@ public class EnterpriseServiceImpl implements EnterpriseService {
     private EnterpriseMapper enterpriseMapper;
 
     @Override
-    public Map<String, Object> getEnterpriseList(int page, int size, String enterpriseName, String creditCode, String status) {
+    public Map<String, Object> getEnterpriseList(int page, int size, String enterpriseName, String creditCode, String status, String sortField, String sortOrder) {
         int offset = (page - 1) * size;
-        List<Enterprise> records = enterpriseMapper.selectEnterpriseListPaged(enterpriseName, creditCode, status, offset, size);
+        System.out.println("调用Mapper查询企业列表，offset=" + offset + ", size=" + size + ", enterpriseName=" + enterpriseName + ", creditCode=" + creditCode + ", status=" + status + ", sortField=" + sortField + ", sortOrder=" + sortOrder);
+        List<Enterprise> records = enterpriseMapper.selectEnterpriseListPaged(enterpriseName, creditCode, status, offset, size, sortField, sortOrder); // 传递sortOrder
         int total = enterpriseMapper.countEnterpriseListPaged(enterpriseName, creditCode, status);
+        System.out.println("查询结果数量：" + (records != null ? records.size() : "null") + ", 总数：" + total);
         Map<String, Object> result = new HashMap<>();
         result.put("total", total);
         result.put("records", records);

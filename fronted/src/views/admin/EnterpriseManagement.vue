@@ -1,5 +1,32 @@
 <template>
   <div class="enterprise-management">
+    <!-- AI自动分析企业数据区域 -->
+    <el-card class="ai-active-analysis-card" style="margin-bottom: 24px;">
+      <template #header>
+        <span>AI自动分析企业数据</span>
+      </template>
+      <div class="ai-active-stats" style="display: flex; gap: 40px; align-items: center;">
+        <div>
+          <div>企业总数</div>
+          <div style="font-size: 24px; font-weight: bold;">{{ aiStats.total }}</div>
+        </div>
+        <div>
+          <div>正常企业</div>
+          <div style="font-size: 24px; font-weight: bold; color: #67C23A;">{{ aiStats.normal }}</div>
+        </div>
+        <div>
+          <div>异常企业</div>
+          <div style="font-size: 24px; font-weight: bold; color: #F56C6C;">{{ aiStats.abnormal }}</div>
+        </div>
+        <div style="flex: 1; min-width: 300px;">
+          <div id="enterprise-trend-chart" style="width: 100%; height: 120px;"></div>
+        </div>
+      </div>
+      <div class="ai-active-conclusion" style="margin-top: 16px; color: #666;">
+        <el-icon style="vertical-align: middle;"><el-icon-info-filled /></el-icon>
+        <span style="margin-left: 8px;">{{ aiStats.aiConclusion }}</span>
+      </div>
+    </el-card>
     <el-card>
       <template #header>
         <div class="card-header">
@@ -8,10 +35,6 @@
             <el-button type="success" @click="handleExport">
               <el-icon><Download /></el-icon>
               导出Excel
-            </el-button>
-            <el-button type="success" @click="handleSync">
-              <el-icon><Refresh /></el-icon>
-              同步企业信息
             </el-button>
             <el-button type="primary" @click="showAddDialog = true">
               <el-icon><Plus /></el-icon>
@@ -56,13 +79,13 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="enterpriseName" label="企业名称" width="200" />
         <el-table-column prop="creditCode" label="统一社会信用代码" width="180" />
-        <el-table-column prop="legalPerson" label="法定代表人" width="120" />
+        <el-table-column prop="legalRepresentative" label="法定代表人" width="120" />
         <el-table-column prop="registeredCapital" label="注册资本" width="120" />
-        <el-table-column prop="establishDate" label="成立日期" width="120" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="establishmentDate" label="成立日期" width="120" />
+        <el-table-column prop="enterpriseStatus" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === '1' ? 'success' : 'danger'">
-              {{ row.status === '1' ? '正常' : '异常' }}
+            <el-tag :type="row.enterpriseStatus === '1' ? 'success' : 'danger'">
+              {{ row.enterpriseStatus === '1' ? '正常' : '异常' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -71,7 +94,6 @@
           <template #default="{ row }">
             <el-button size="small" @click="handleView(row)">查看</el-button>
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button size="small" type="success" @click="handleSyncOne(row)">同步</el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -110,23 +132,23 @@
         <el-form-item label="统一社会信用代码" prop="creditCode">
           <el-input v-model="enterpriseFormData.creditCode" placeholder="请输入统一社会信用代码" />
         </el-form-item>
-        <el-form-item label="法定代表人" prop="legalPerson">
-          <el-input v-model="enterpriseFormData.legalPerson" placeholder="请输入法定代表人" />
+        <el-form-item label="法定代表人" prop="legalRepresentative">
+          <el-input v-model="enterpriseFormData.legalRepresentative" placeholder="请输入法定代表人" />
         </el-form-item>
         <el-form-item label="注册资本" prop="registeredCapital">
           <el-input v-model="enterpriseFormData.registeredCapital" placeholder="请输入注册资本" />
         </el-form-item>
-        <el-form-item label="成立日期" prop="establishDate">
+        <el-form-item label="成立日期" prop="establishmentDate">
           <el-date-picker
-            v-model="enterpriseFormData.establishDate"
+            v-model="enterpriseFormData.establishmentDate"
             type="date"
             placeholder="选择成立日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
           />
         </el-form-item>
-        <el-form-item label="企业地址" prop="address">
-          <el-input v-model="enterpriseFormData.address" placeholder="请输入企业地址" />
+        <el-form-item label="企业地址" prop="registerAddress">
+          <el-input v-model="enterpriseFormData.registerAddress" placeholder="请输入企业地址" />
         </el-form-item>
         <el-form-item label="经营范围" prop="businessScope">
           <el-input
@@ -136,8 +158,8 @@
             placeholder="请输入经营范围"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="enterpriseFormData.status">
+        <el-form-item label="状态" prop="enterpriseStatus">
+          <el-radio-group v-model="enterpriseFormData.enterpriseStatus">
             <el-radio label="1">正常</el-radio>
             <el-radio label="0">异常</el-radio>
           </el-radio-group>
@@ -147,24 +169,6 @@
         <span class="dialog-footer">
           <el-button @click="showAddDialog = false">取消</el-button>
           <el-button type="primary" @click="handleSubmit">确定</el-button>
-        </span>
-      </template>
-    </el-dialog>
-    
-    <!-- 同步企业信息对话框 -->
-    <el-dialog v-model="showSyncDialog" title="同步企业信息" width="500px">
-      <el-form :model="syncForm" label-width="120px">
-        <el-form-item label="企业名称">
-          <el-input v-model="syncForm.enterpriseName" placeholder="请输入企业名称" />
-        </el-form-item>
-        <el-form-item label="企业ID">
-          <el-input v-model="syncForm.enterpriseId" placeholder="请输入企业ID" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showSyncDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleSyncSubmit">确定</el-button>
         </span>
       </template>
     </el-dialog>
@@ -179,6 +183,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import api from '@/api'
 import AIChat from './AIChat.vue'
+import * as echarts from 'echarts'
+import { InfoFilled } from '@element-plus/icons-vue'
+import { getAIReportAnalysis } from '@/api/register.js'
 
 export default {
   name: 'EnterpriseManagement',
@@ -187,7 +194,8 @@ export default {
     Plus,
     Refresh,
     Search,
-    AIChat
+    AIChat,
+    InfoFilled
   },
   setup() {
     const loading = ref(false)
@@ -197,36 +205,54 @@ export default {
     const isEdit = ref(false)
     const enterpriseForm = ref(null)
     const showAIChat = ref(false)
-    
+
+    // AI分析数据
+    const aiStats = reactive({
+      total: 0,
+      normal: 0,
+      abnormal: 0,
+      trend: [],
+      days: ['周一','周二','周三','周四','周五','周六','周日'],
+      aiConclusion: ''
+    })
+
     const searchForm = reactive({
       enterpriseName: '',
       creditCode: '',
       status: ''
     })
-    
+
     const enterpriseFormData = reactive({
       id: '',
+      enterpriseId: '',
       enterpriseName: '',
       creditCode: '',
-      legalPerson: '',
+      legalRepresentative: '',
       registeredCapital: '',
-      establishDate: '',
-      address: '',
+      establishmentDate: '',
+      enterpriseType: '',
+      registerAddress: '',
       businessScope: '',
-      status: '1'
+      enterpriseStatus: '1',
+      registrationAuthority: '',
+      registrationDate: '',
+      approvalDate: '',
+      businessTerm: '',
+      createTime: '',
+      updateTime: ''
     })
-    
+
     const syncForm = reactive({
       enterpriseName: '',
       enterpriseId: ''
     })
-    
+
     const pagination = reactive({
       current: 1,
       size: 10,
       total: 0
     })
-    
+
     const enterpriseRules = {
       enterpriseName: [
         { required: true, message: '请输入企业名称', trigger: 'blur' }
@@ -234,34 +260,97 @@ export default {
       creditCode: [
         { required: true, message: '请输入统一社会信用代码', trigger: 'blur' }
       ],
-      legalPerson: [
+      legalRepresentative: [
         { required: true, message: '请输入法定代表人', trigger: 'blur' }
       ]
     }
-    
-    const loadEnterprises = async () => {
+
+    // 统计并分析企业数据
+    const analyzeEnterpriseData = () => {
+      const all = enterpriseList.value
+      aiStats.total = all.length
+      aiStats.normal = all.filter(e => e.enterpriseStatus === '1').length
+      aiStats.abnormal = all.filter(e => e.enterpriseStatus === '0').length
+      // 近7天企业创建趋势（按establishmentDate）
+      const today = new Date()
+      aiStats.trend = aiStats.days.map((d, i) => {
+        const day = new Date(today)
+        day.setDate(today.getDate() - (6 - i))
+        const dayStr = day.toISOString().slice(0, 10)
+        return all.filter(e => e.establishmentDate && e.establishmentDate.startsWith(dayStr)).length
+      })
+      // AI分析
+      const reportData = {
+        total: aiStats.total,
+        normal: aiStats.normal,
+        abnormal: aiStats.abnormal,
+        trend: aiStats.trend,
+        days: aiStats.days
+      }
+      getAIReportAnalysis(reportData).then(res => {
+        aiStats.aiConclusion = res.analysis || 'AI分析服务暂时不可用';
+      })
+      // 渲染趋势图
+      setTimeout(() => {
+        const chartDom = document.getElementById('enterprise-trend-chart')
+        if (chartDom) {
+          const myChart = echarts.init(chartDom)
+          myChart.setOption({
+            xAxis: { type: 'category', data: aiStats.days },
+            yAxis: { type: 'value', minInterval: 1 },
+            series: [{
+              data: aiStats.trend,
+              type: 'line',
+              smooth: true,
+              areaStyle: {},
+              lineStyle: { color: '#409EFF' },
+              itemStyle: { color: '#409EFF' }
+            }],
+            grid: { left: 40, right: 20, top: 20, bottom: 20 },
+            tooltip: { trigger: 'axis' }
+          })
+        }
+      }, 100)
+    }
+
+    // 统一风格：加载企业列表
+    const fetchEnterpriseList = async () => {
       loading.value = true
       try {
         const params = {
           page: pagination.current,
-          size: pagination.size,
+          pageSize: pagination.size,
           ...searchForm
         }
         const response = await api.enterprise.getEnterprises(params)
-        enterpriseList.value = response.data.data.records || []
-        pagination.total = response.data.data.total || 0
+        // 兼容不同后端返回结构
+        let records = []
+        let total = 0
+        if (response.data && response.data.data) {
+          records = response.data.data.records || []
+          total = response.data.data.total || 0
+        } else if (response.data) {
+          records = response.data.records || []
+          total = response.data.total || 0
+        } else if (response.records) {
+          records = response.records
+          total = response.total || 0
+        }
+        enterpriseList.value = records
+        pagination.total = total
+        analyzeEnterpriseData()
       } catch (error) {
         ElMessage.error('加载企业列表失败')
       } finally {
         loading.value = false
       }
     }
-    
+
     const handleSearch = () => {
       pagination.current = 1
-      loadEnterprises()
+      fetchEnterpriseList()
     }
-    
+
     const resetSearch = () => {
       Object.assign(searchForm, {
         enterpriseName: '',
@@ -270,17 +359,17 @@ export default {
       })
       handleSearch()
     }
-    
+
     const handleSizeChange = (size) => {
       pagination.size = size
-      loadEnterprises()
+      fetchEnterpriseList()
     }
-    
+
     const handleCurrentChange = (current) => {
       pagination.current = current
-      loadEnterprises()
+      fetchEnterpriseList()
     }
-    
+
     const handleView = (row) => {
       // 查看企业详情
       ElMessage.info('查看企业详情功能待实现')
@@ -292,10 +381,6 @@ export default {
       showAddDialog.value = true
     }
     
-    const handleSync = () => {
-      showSyncDialog.value = true
-    }
-
     // 导出Excel
     const handleExport = async () => {
       try {
@@ -327,25 +412,6 @@ export default {
       }
     }
     
-    const handleSyncOne = async (row) => {
-      try {
-        await ElMessageBox.confirm('确定要同步该企业信息吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-        
-        console.log('syncEnterpriseInfoById 参数（handleSyncOne）：', row.enterpriseId)
-        const response = await api.enterprise.syncEnterpriseInfoById(row.enterpriseId)
-        ElMessage.success('同步成功')
-        loadEnterprises()
-      } catch (error) {
-        if (error !== 'cancel') {
-          ElMessage.error('同步失败')
-        }
-      }
-    }
-    
     const handleDelete = async (row) => {
       try {
         await ElMessageBox.confirm('确定要删除该企业吗？', '提示', {
@@ -356,7 +422,7 @@ export default {
         
         await api.enterprise.deleteEnterprise(row.enterpriseId)
         ElMessage.success('删除成功')
-        loadEnterprises()
+        fetchEnterpriseList()
       } catch (error) {
         if (error !== 'cancel') {
           ElMessage.error('删除失败')
@@ -379,29 +445,9 @@ export default {
         }
         
         showAddDialog.value = false
-        loadEnterprises()
+        fetchEnterpriseList()
       } catch (error) {
         ElMessage.error(isEdit.value ? '更新失败' : '添加失败')
-      }
-    }
-    
-    const handleSyncSubmit = async () => {
-      try {
-        if (syncForm.enterpriseName) {
-          await api.enterprise.syncEnterpriseInfo(syncForm.enterpriseName)
-        } else if (syncForm.enterpriseId) {
-          console.log('syncEnterpriseInfoById 参数（handleSyncSubmit）：', syncForm.enterpriseId)
-          await api.enterprise.syncEnterpriseInfoById(syncForm.enterpriseId)
-        } else {
-          ElMessage.warning('请输入企业名称或企业ID')
-          return
-        }
-        
-        ElMessage.success('同步成功')
-        showSyncDialog.value = false
-        loadEnterprises()
-      } catch (error) {
-        ElMessage.error('同步失败')
       }
     }
     
@@ -410,18 +456,18 @@ export default {
         id: '',
         enterpriseName: '',
         creditCode: '',
-        legalPerson: '',
+        legalRepresentative: '',
         registeredCapital: '',
-        establishDate: '',
-        address: '',
+        establishmentDate: '',
+        registerAddress: '',
         businessScope: '',
-        status: '1'
+        enterpriseStatus: '1'
       })
       isEdit.value = false
     }
     
     onMounted(() => {
-      loadEnterprises()
+      fetchEnterpriseList()
     })
     
     return {
@@ -442,14 +488,12 @@ export default {
       handleCurrentChange,
       handleView,
       handleEdit,
-      handleSync,
       handleExport,
-      handleSyncOne,
       handleDelete,
       handleSubmit,
-      handleSyncSubmit,
       resetForm,
-      showAIChat
+      showAIChat,
+      aiStats
     }
   }
 }
@@ -518,5 +562,20 @@ export default {
   font-size: 18px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   cursor: pointer;
+}
+.ai-active-analysis-card {
+  background: #fafdff;
+}
+.ai-active-stats > div {
+  min-width: 120px;
+  text-align: center;
+}
+.ai-active-conclusion {
+  font-size: 15px;
+  background: #f4f8fb;
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
 }
 </style>
