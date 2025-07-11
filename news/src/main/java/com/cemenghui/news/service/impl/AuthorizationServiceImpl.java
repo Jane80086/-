@@ -260,4 +260,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         // isOwner(Long userId, Long newsId) 已经提供了你所需的功能。
         return false;
     }
+
+
 }
