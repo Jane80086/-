@@ -1,5 +1,32 @@
 <template>
   <div class="user-management">
+    <!-- AI自动分析用户活跃度区域 -->
+    <el-card class="ai-active-analysis-card" style="margin-bottom: 24px;">
+      <template #header>
+        <span>AI自动分析用户活跃度</span>
+      </template>
+      <div class="ai-active-stats" style="display: flex; gap: 40px; align-items: center;">
+        <div>
+          <div>总用户数</div>
+          <div style="font-size: 24px; font-weight: bold;">{{ activeStats.totalUsers }}</div>
+        </div>
+        <div>
+          <div>活跃用户数</div>
+          <div style="font-size: 24px; font-weight: bold; color: #67C23A;">{{ activeStats.activeUsers }}</div>
+        </div>
+        <div>
+          <div>活跃率</div>
+          <div style="font-size: 24px; font-weight: bold; color: #409EFF;">{{ activeStats.activeRate }}%</div>
+        </div>
+        <div style="flex: 1; min-width: 300px;">
+          <div id="active-trend-chart" style="width: 100%; height: 120px;"></div>
+        </div>
+      </div>
+      <div class="ai-active-conclusion" style="margin-top: 16px; color: #666;">
+        <el-icon style="vertical-align: middle;"><el-icon-info-filled /></el-icon>
+        <span style="margin-left: 8px;">{{ activeStats.aiConclusion }}</span>
+      </div>
+    </el-card>
     <h1 style="color: #409EFF; text-align: center; margin: 32px 0;">这里是用户管理页面</h1>
     <el-card>
       <template #header>
@@ -263,6 +290,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, Plus, Search, Refresh } from '@element-plus/icons-vue'
 import { userAPI } from '@/api/index.js'
 import AIChat from './AIChat.vue'
+import * as echarts from 'echarts'
+import { InfoFilled } from '@element-plus/icons-vue'
+import { getAIReportAnalysis } from '@/api/register.js'
 
 export default {
   name: 'UserManagement',
@@ -271,7 +301,8 @@ export default {
     Plus,
     Search,
     Refresh,
-    AIChat
+    AIChat,
+    InfoFilled
   },
   setup() {
     const loading = ref(false)
@@ -360,6 +391,30 @@ export default {
         if (response.code === 200) {
           userList.value = response.data.records || []
           pagination.total = response.data.total || 0
+          // 统计活跃度数据（示例：假设有isActive字段，实际请按后端数据结构调整）
+          const allUsers = userList.value
+          activeStats.totalUsers = pagination.total
+          activeStats.activeUsers = allUsers.filter(u => u.isActive).length
+          activeStats.activeRate = activeStats.totalUsers > 0 ? ((activeStats.activeUsers / activeStats.totalUsers) * 100).toFixed(1) : 0
+          // 统计近7天活跃趋势（示例：假设有lastActiveDate字段，实际请按后端数据结构调整）
+          const today = new Date()
+          activeStats.trend = activeStats.days.map((d, i) => {
+            const day = new Date(today)
+            day.setDate(today.getDate() - (6 - i))
+            const dayStr = day.toISOString().slice(0, 10)
+            return allUsers.filter(u => u.lastActiveDate && u.lastActiveDate.startsWith(dayStr)).length
+          })
+          // 调用AI分析接口
+          const reportData = {
+            totalUsers: activeStats.totalUsers,
+            activeUsers: activeStats.activeUsers,
+            activeRate: activeStats.activeRate,
+            trend: activeStats.trend,
+            days: activeStats.days
+          }
+          getAIReportAnalysis(reportData).then(res => {
+            activeStats.aiConclusion = res.analysis || 'AI分析服务暂时不可用';
+          })
         } else {
           ElMessage.error('用户列表接口异常：' + (response.msg || response.code || '未知错误'))
           userList.value = []
@@ -625,8 +680,43 @@ export default {
       }
     }
     
+    // 活跃度mock数据
+    const activeStats = reactive({
+      totalUsers: 0,
+      activeUsers: 0,
+      activeRate: 0,
+      aiConclusion: '',
+      trend: [],
+      days: ['周一','周二','周三','周四','周五','周六','周日']
+    })
+    
     onMounted(() => {
       fetchUserList()
+      // 渲染活跃趋势图
+      const chartDom = document.getElementById('active-trend-chart')
+      if (chartDom) {
+        const myChart = echarts.init(chartDom)
+        myChart.setOption({
+          xAxis: {
+            type: 'category',
+            data: activeStats.days
+          },
+          yAxis: {
+            type: 'value',
+            minInterval: 1
+          },
+          series: [{
+            data: activeStats.trend,
+            type: 'line',
+            smooth: true,
+            areaStyle: {},
+            lineStyle: { color: '#409EFF' },
+            itemStyle: { color: '#409EFF' }
+          }],
+          grid: { left: 40, right: 20, top: 20, bottom: 20 },
+          tooltip: { trigger: 'axis' }
+        })
+      }
     })
     
     return {
@@ -661,7 +751,8 @@ export default {
       getFieldNameLabel,
       getFieldNameTagType,
       handleRestore,
-      showAIChat
+      showAIChat,
+      activeStats
     }
   }
 }
@@ -721,5 +812,21 @@ export default {
   font-size: 18px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   cursor: pointer;
+}
+
+.ai-active-analysis-card {
+  background: #fafdff;
+}
+.ai-active-stats > div {
+  min-width: 120px;
+  text-align: center;
+}
+.ai-active-conclusion {
+  font-size: 15px;
+  background: #f4f8fb;
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
 }
 </style>
