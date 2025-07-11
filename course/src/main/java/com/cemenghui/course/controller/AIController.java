@@ -82,6 +82,11 @@ public class AIController {
         }
     }
 
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
+    }
+
     private String callDify(String prompt) throws Exception {
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/json");

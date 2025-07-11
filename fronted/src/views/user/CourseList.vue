@@ -6,14 +6,14 @@
         v-model="searchKeyword"
         placeholder="搜索课程/讲师/标签..."
         class="search-input"
-        @keyup.enter="searchCourses"
+        @keyup.enter="onSearch"
         clearable
       >
         <template #prefix>
           <el-icon><Search /></el-icon>
         </template>
         <template #append>
-          <el-button @click="searchCourses" type="primary">搜索</el-button>
+          <el-button @click="onSearch" type="primary">搜索</el-button>
         </template>
       </el-input>
       <div class="hot-trends-scroll">
@@ -92,6 +92,11 @@
           <div class="card-stats">
             <span><el-icon><View /></el-icon>{{ course.viewCount || 0 }}</span>
             <el-rate v-model="course.rating" disabled show-score text-color="#409eff" score-template="{value}" />
+          </div>
+          <div class="card-actions">
+            <el-button size="small" type="success" @click.stop="handleFavorite(course)">
+              {{ course.isFavorite ? '已收藏' : '收藏/加入我的课程' }}
+            </el-button>
           </div>
         </div>
       </div>
@@ -198,13 +203,14 @@ const loadHotKeywords = async () => {
     }
   } catch {}
 }
-const searchCourses = async () => {
-  await loadCourses(searchKeyword.value)
+const onSearch = () => {
+  currentPage.value = 1
+  loadCourses()
 }
 const searchByKeyword = (keyword) => {
   searchKeyword.value = keyword
-  router.push({ path: '/user/course', query: { keyword } })
-  loadCourses(keyword)
+  currentPage.value = 1
+  loadCourses()
 }
 const filterCourses = () => {}
 const sortCourses = () => {}
@@ -236,6 +242,19 @@ const handleCurrentChange = (page) => {
   currentPage.value = page
   loadCourses()
 }
+const handleFavorite = async (course) => {
+  try {
+    const response = await courseApi.toggleFavorite(course.id)
+    if (response.code === 200) {
+      course.isFavorite = !course.isFavorite
+      ElMessage.success(course.isFavorite ? '已收藏到我的课程' : '已取消收藏')
+    } else {
+      ElMessage.error(response.message || '操作失败')
+    }
+  } catch (error) {
+    ElMessage.error(error?.message || '网络错误，请稍后重试')
+  }
+}
 // 吸顶效果
 const handleScroll = () => {
   if (!searchBarRef.value) return
@@ -245,7 +264,7 @@ const handleScroll = () => {
 onMounted(() => {
   let kw = route.query.keyword || ''
   searchKeyword.value = kw
-  loadCourses(kw)
+  loadCourses()
   loadHotKeywords()
   window.addEventListener('scroll', handleScroll)
 })

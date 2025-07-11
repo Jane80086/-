@@ -149,16 +149,16 @@
           
           if (response && response.success) {
             ElMessage.success('登录成功')
-            const user = response.user
+            // 兼容后端 userType + adminUser/enterpriseUser/normalUser
+            let user = null
+            if (response.userType === 'admin') {
+              user = response.adminUser
+            } else if (response.userType === 'enterprise') {
+              user = response.enterpriseUser
+            } else if (response.userType === 'user') {
+              user = response.normalUser
+            }
             const token = response.token
-            
-            // 调试：打印完整的登录响应
-            console.log('=== 登录响应调试信息 ===')
-            console.log('完整响应:', response)
-            console.log('用户信息:', user)
-            console.log('Token:', token)
-            
-            // 保存token到localStorage
             if (token) {
               const trimmedToken = token.trim();
               // 打印 token 长度和内容前后10字符
@@ -179,28 +179,11 @@
             
             await nextTick()
             
-            // 根据用户角色判断跳转路径
-            // 后端返回的是 userType 字段，需要映射到 role
-            // 注意：后端返回的 userType 是大写的（如 "ENTERPRISE"），需要转换为小写
-            let userRole = user.role || user.userType || (user.account && String(user.account).startsWith('0000') ? 'admin' : 'user')
-            
-            // 将大写的用户类型转换为小写
-            if (userRole && typeof userRole === 'string') {
-              userRole = userRole.toLowerCase()
-            }
-            
-            console.log('用户角色判断:', {
-              userRole,
-              userRoleField: user.role,
-              userTypeField: user.userType,
-              account: user.account,
-              isAdminAccount: user.account && String(user.account).startsWith('0000')
-            })
-            
-            if (userRole === 'admin') {
+            // 跳转到对应首页
+            if (response.userType === 'admin') {
               console.log('跳转到管理员首页: /admin/dashboard')
               router.push('/admin/dashboard')
-            } else if (userRole === 'enterprise') {
+            } else if (response.userType === 'enterprise') {
               console.log('跳转到企业首页: /enterprise/home')
               router.push('/enterprise/home')
             } else {

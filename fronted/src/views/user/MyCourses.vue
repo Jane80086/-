@@ -268,12 +268,9 @@ const loading = ref(false)
 const courses = ref([])
 const stats = ref({
   totalCourses: 0,
-  totalTime: '0分钟',
-  completedCourses: 0,
-  avgProgress: 0,
-  totalSpent: 0,
   certificates: 0,
-  learningDays: 0
+  totalTime: 0,
+  avgProgress: 0
 })
 const selectedStatus = ref('')
 const selectedCategory = ref('')
@@ -379,36 +376,22 @@ const loadMyCourses = async () => {
 const loadStats = async () => {
   try {
     const response = await courseApi.getMyCourseStats()
-    if (response.code === 200) {
-      stats.value = response.data || {
-        totalCourses: courses.value.length,
-        totalTime: '0分钟',
-        completedCourses: 0,
-        avgProgress: 0,
-        totalSpent: 0,
-        certificates: 0,
-        learningDays: 0
+    if (response.code === 200 && response.data) {
+      stats.value = {
+        totalCourses: response.data.totalCourses || 0,
+        certificates: response.data.certificates || 0,
+        totalTime: response.data.totalTime || 0,
+        avgProgress: response.data.avgProgress || 0
       }
     }
   } catch (error) {
     console.error('加载统计数据失败:', error)
-    // 计算基础统计
-    const totalCourses = courses.value.length
-    const completedCourses = courses.value.filter(c => (c.progress || 0) >= 100).length
-    const avgProgress = totalCourses > 0 
-      ? Math.round(courses.value.reduce((sum, c) => sum + (c.progress || 0), 0) / totalCourses)
-      : 0
-    const certificates = courses.value.filter(c => c.certificate).length
-    const totalSpent = courses.value.reduce((sum, c) => sum + (c.price || 0), 0)
-    
+    // fallback 只保留后端四个字段，避免 undefined
     stats.value = {
-      totalCourses,
-      totalTime: '0分钟',
-      completedCourses,
-      avgProgress,
-      totalSpent,
-      certificates,
-      learningDays: 15
+      totalCourses: courses.value.length,
+      certificates: 0,
+      totalTime: 0,
+      avgProgress: 0
     }
   }
 }

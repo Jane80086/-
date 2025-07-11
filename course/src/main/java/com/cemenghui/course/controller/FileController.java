@@ -263,4 +263,9 @@ public class FileController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
+    }
 }

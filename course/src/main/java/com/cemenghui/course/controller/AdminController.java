@@ -251,4 +251,9 @@ public class AdminController {
             return Result.fail("获取仪表板数据失败: " + e.getMessage());
         }
     }
+
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
+    }
 } 

@@ -42,7 +42,9 @@
           <el-avatar :src="user.avatar" size="medium" class="avatar" />
           <el-tag class="role-tag" effect="plain" :color="roleColor">{{ roleName }}</el-tag>
           <el-dropdown @command="handleDropdownCommand">
-            <span class="el-dropdown-link">{{ user.nickname }}</span>
+            <span class="el-dropdown-link">
+              {{ user.nickname }}<template v-if="user.realName">（{{ user.realName }}）</template>
+            </span>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>

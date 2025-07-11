@@ -9,7 +9,7 @@ async def ai_qa(req: Request):
     question = data.get("question")
     context = data.get("context")
     result = ask_ai(question, context)
-    return result
+    return {"code": 200, "success": True, "data": result}
 
 @app.post("/ai/optimize")
 async def ai_optimize(req: Request):

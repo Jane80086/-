@@ -27,32 +27,31 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
-    
-    // 如果返回的状态码不是200，说明接口有问题，应该提示错误
-    if (res.code !== 200) {
-      ElMessage({
-        message: res.message || '请求失败',
-        type: 'error',
-        duration: 5 * 1000
-      })
-      
-      // 401: 未登录或token过期
-      if (res.code === 401) {
-        ElMessageBox.confirm(
-          '登录状态已过期，请重新登录',
-          '系统提示',
-          {
-            confirmButtonText: '重新登录',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }
-        ).then(() => {
-          localStorage.removeItem('token')
-          window.location.reload()
+    // 兼容后端无 code 字段，仅 success 字段
+    if (typeof res.code !== 'undefined') {
+      if (res.code !== 200) {
+        ElMessage({
+          message: res.message || '请求失败',
+          type: 'error',
+          duration: 5 * 1000
         })
+        return Promise.reject(new Error(res.message || '请求失败'))
+      } else {
+        return res
       }
-      return Promise.reject(new Error(res.message || '请求失败'))
+    } else if (typeof res.success !== 'undefined') {
+      if (!res.success) {
+        ElMessage({
+          message: res.message || '请求失败',
+          type: 'error',
+          duration: 5 * 1000
+        })
+        return Promise.reject(new Error(res.message || '请求失败'))
+      } else {
+        return res
+      }
     } else {
+      // 兜底
       return res
     }
   },

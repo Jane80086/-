@@ -4,7 +4,8 @@ import { useUserStore } from '@/store/user'
 // 课程相关API
 export const courseApi = {
   getCourseList(params) {
-    return request.get('/api/course/list', { params })
+    // 修正：调用 /api/course/search，参数为 keyword, page, size
+    return request.get('/api/course/search', { params })
   },
   getCourseDetail(id) {
     return request.get(`/api/course/${id}`)
@@ -74,9 +75,11 @@ export const courseApi = {
 
   // 收藏/取消收藏课程
   toggleFavorite(courseId) {
+    // 修正：调用 /api/course/{id}/record，body: { action: 'favorite' }
     return request({
-      url: `/api/course/${courseId}/favorite`,
-      method: 'post'
+      url: `/api/course/${courseId}/record`,
+      method: 'post',
+      data: { action: 'favorite' }
     })
   },
 
