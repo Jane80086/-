@@ -1,6 +1,6 @@
 package com.cemenghui.system.repository;
 
-import com.cemenghui.entity.EnterpriseUser;
+import com.cemenghui.system.entity.EnterpriseUser;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
@@ -64,7 +64,7 @@ public interface EnterpriseUserMapper {
     @Select("SELECT COUNT(*) FROM users WHERE enterprise_id = #{enterpriseId} AND user_type = 'ENTERPRISE' AND deleted = 0")
     int countByEnterpriseId(String enterpriseId);
 
-    void saveUser(com.cemenghui.system.entity.EnterpriseUser user);
-
-    void update(com.cemenghui.system.entity.EnterpriseUser user);
+//    void saveUser(com.cemenghui.system.entity.EnterpriseUser user);
+//
+//    void update(com.cemenghui.system.entity.EnterpriseUser user);
 }
