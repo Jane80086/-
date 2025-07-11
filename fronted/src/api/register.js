@@ -13,9 +13,19 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   config => {
-    const token = store.state.token
+    // 优先从 store 取，没有就从 localStorage 取
+    let token = ''
+    if (store && store.state && store.state.token) {
+      token = store.state.token
+    }
+    if (!token && typeof localStorage !== 'undefined') {
+      token = localStorage.getItem('token')
+    }
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      const trimmedToken = token.trim();
+      config.headers.Authorization = `Bearer ${trimmedToken}`;
+      // 打印即将发送的 Authorization 头
+      console.log('发送请求 Authorization:', config.headers.Authorization);
     }
     return config
   },
@@ -56,6 +66,11 @@ api.interceptors.response.use(
     } else {
       ElMessage.error('网络错误，请检查网络连接')
     }
+    if (error.response && error.response.status === 401) {
+      ElMessage.error('登录状态失效，请重新登录');
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
     return Promise.reject(error)
   }
 )
@@ -67,7 +82,7 @@ const auth = {
   getCaptcha: () => '/auth/captcha?' + Date.now()
 }
 
-const user = {
+export const user = {
   getCurrentUser: () => api.get('/user/current'),
   getUsers: (params) => api.get('/admin/users', { params }),
   createUser: (userData) => api.post('/admin/users', userData),

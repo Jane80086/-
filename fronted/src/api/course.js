@@ -6,19 +6,19 @@ export const courseApi = {
     return request.get('/course/list', { params })
   },
   getCourseDetail(id) {
-    return request.get(`/api/course/${id}`)
+    return request.get(`/course/${id}`)
   },
   createCourse(data) {
     return request.post('/course/create', data)
   },
   updateCourse(id, data) {
-    return request.put(`/api/course/${id}`, data)
+    return request.put(`/course/${id}`, data)
   },
   deleteCourse(id) {
-    return request.delete(`/api/course/${id}`)
+    return request.delete(`/course/${id}`)
   },
   getChapters(id) {
-    return request.get(`/api/course/${id}/chapters`)
+    return request.get(`/course/${id}/chapters`)
   },
 
   // 获取课程笔记
@@ -134,21 +134,6 @@ export const courseApi = {
   getLearningProgress(courseId) {
     return request({
       url: `/course/${courseId}/progress`,
-      method: 'get'
-    })
-  },
-
-  // 获取课程评论
-  getComments(courseId) {
-    return request({
-      url: `/course/${courseId}/comments`,
-      method: 'get'
-    })
-  },
-  // 获取AI问答历史
-  getAiQnaList(courseId) {
-    return request({
-      url: `/course/${courseId}/ai-qna`,
       method: 'get'
     })
   },

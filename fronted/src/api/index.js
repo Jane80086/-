@@ -25,40 +25,44 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   response => {
-    const { data } = response
+    // 兼容文件下载（blob）响应
+    if (response.config && response.config.responseType === 'blob') {
+      return response;
+    }
+    const { data } = response;
     // 后端成功状态码是200
     if (data.code === 200) {
-      return data
+      return data;
     } else {
-      ElMessage.error(data.msg || '请求失败')
-      return Promise.reject(new Error(data.msg || '请求失败'))
+      ElMessage.error(data.msg || '请求失败');
+      return Promise.reject(new Error(data.msg || '请求失败'));
     }
   },
   error => {
     if (error.response) {
-      const { status, data } = error.response
+      const { status, data } = error.response;
       switch (status) {
         case 401:
-          ElMessage.error('未授权，请重新登录')
-          localStorage.removeItem('token')
-          // 可以在这里跳转到登录页
-          break
+          ElMessage.error('登录状态失效，请重新登录');
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+          break;
         case 403:
-          ElMessage.error('拒绝访问')
-          break
+          ElMessage.error('拒绝访问');
+          break;
         case 404:
-          ElMessage.error('请求的资源不存在')
-          break
+          ElMessage.error('请求的资源不存在');
+          break;
         case 500:
-          ElMessage.error('服务器内部错误')
-          break
+          ElMessage.error('服务器内部错误');
+          break;
         default:
-          ElMessage.error(data?.msg || '网络错误')
+          ElMessage.error(data?.msg || '网络错误');
       }
     } else {
-      ElMessage.error('网络连接失败')
+      ElMessage.error('网络连接失败');
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
 )
 
@@ -103,22 +107,42 @@ export const courseAPI = {
 export const userAPI = {
   // 用户登录
   login(credentials) {
-    return request.post('/user/login', credentials)
+    return request.post('/api/user/login', credentials)
   },
   
   // 用户注册
   register(userData) {
-    return request.post('/user/register', userData)
+    return request.post('/api/user/register', userData)
   },
   
   // 获取用户信息
   getUserInfo() {
-    return request.get('/user/info')
+    return request.get('/api/user/info')
   },
   
   // 更新用户信息
   updateUserInfo(userData) {
-    return request.put('/user/info', userData)
+    return request.put('/api/user/info', userData)
+  },
+  // 获取用户列表
+  getUsers(params) {
+    return request.get('/api/admin/users', { params })
+  },
+  // 导出用户数据
+  exportUsers(params) {
+    return request.get('/api/admin/users/export', { params, responseType: 'blob' })
+  },
+  // 更新用户信息（根据ID）
+  updateUser(id, userData) {
+    return request.put(`/api/admin/users/${id}`, userData)
+  },
+  // 删除用户
+  deleteUser(id) {
+    return request.delete(`/api/admin/users/${id}`)
+  },
+  // 获取用户历史记录
+  getUserHistory(params) {
+    return request.get('/api/admin/users/history', { params })
   }
 }
 
@@ -172,17 +196,6 @@ export const fileAPI = {
   }
 }
 
-// AI助手接口
-export async function askAI(question) {
-  // 这里可根据实际后端API调整
-  // 示例：POST /api/ai/ask { question }
-  try {
-    const res = await request.post('/api/ai/ask', { question })
-    // 假设后端返回 { code: 200, answer: '...' }
-    return res
-  } catch (e) {
-    return { answer: 'AI服务暂时不可用' }
-  }
-}
+export { askAI } from './register.js';
 
 export default request 
