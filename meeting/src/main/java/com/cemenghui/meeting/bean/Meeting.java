@@ -54,12 +54,6 @@ public class Meeting {
     @TableField("image_url")
     private String imageUrl;
     
-    @TableField("location")
-    private String location;
-    
-    @TableField("participants")
-    private String participants;
-    
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     
