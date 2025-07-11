@@ -62,7 +62,7 @@
           </el-form-item>
           
           <div class="login-footer">
-            <el-link type="primary" @click="$router.push('/role-selection')">
+            <el-link type="primary" @click="$router.push('/register')">
               还没有账号？立即注册
             </el-link>
           </div>

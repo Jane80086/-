@@ -160,10 +160,13 @@ public class AdminController {
     @GetMapping("/courses/pending")
     public Result getPendingCourses() {
         try {
-            // 获取状态为待审核的课程
             List<Course> pendingCourses = courseService.getPendingCourses();
-            return Result.success(pendingCourses);
+            Map<String, Object> pageInfo = new HashMap<>();
+            pageInfo.put("content", pendingCourses);
+            pageInfo.put("totalElements", pendingCourses.size());
+            return Result.success(pageInfo);
         } catch (Exception e) {
+            e.printStackTrace();
             return Result.fail("获取待审核课程失败: " + e.getMessage());
         }
     }
@@ -172,18 +175,20 @@ public class AdminController {
      * 课程审核
      */
     @PostMapping("/course/{id}/review")
-    public Result reviewCourse(@PathVariable Long id, @RequestParam String status, @RequestParam(required = false) String reason) {
+    public Result reviewCourse(@PathVariable Long id, @RequestParam String status, @RequestParam(required = false) String reason, @RequestParam Long reviewerId) {
+        System.out.println("[审核接口] 收到参数: id=" + id + ", status=" + status + ", reason=" + reason + ", reviewerId=" + reviewerId);
         try {
             if ("approved".equalsIgnoreCase(status) || "PUBLISHED".equalsIgnoreCase(status)) {
-                reviewService.approveCourse(id, null); // reviewerId 可根据实际需求传
+                reviewService.approveCourse(id, reviewerId);
                 return Result.success("课程审核通过");
             } else if ("rejected".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
-                reviewService.rejectCourse(id, reason);
+                reviewService.rejectCourse(id, reviewerId, reason);
                 return Result.success("课程已驳回");
             } else {
                 return Result.fail("未知审核状态: " + status);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return Result.fail("课程审核失败: " + e.getMessage());
         }
     }

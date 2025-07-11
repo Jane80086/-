@@ -22,18 +22,27 @@
       <!-- 视频播放区域 -->
       <div class="video-section">
         <div class="video-player">
-          <video
-            ref="videoPlayer"
-            :src="currentVideoUrl"
-            controls
-            class="video-element"
-            @timeupdate="onTimeUpdate"
-            @ended="onVideoEnded"
-            @play="onVideoPlay"
-            @pause="onVideoPause"
-          >
-            您的浏览器不支持视频播放
-          </video>
+          <template v-if="currentVideoUrl">
+            <video
+              ref="videoPlayer"
+              :src="currentVideoUrl"
+              controls
+              class="video-element"
+              @timeupdate="onTimeUpdate"
+              @ended="onVideoEnded"
+              @play="onVideoPlay"
+              @pause="onVideoPause"
+            >
+              您的浏览器不支持视频播放
+            </video>
+          </template>
+          <template v-else>
+            <div class="video-placeholder">
+              <!-- <img src="/default-video.png" alt="暂无视频" style="width: 100%; max-width: 400px; margin: 0 auto;" /> -->
+              <img src="/test-video.mp4" alt="暂无视频" style="width: 100%; max-width: 400px; margin: 0 auto;" />
+              <div style="text-align: center; color: #888; margin-top: 12px;">暂无可播放视频</div>
+            </div>
+          </template>
         </div>
         
         <div class="video-info">
@@ -292,12 +301,17 @@ const currentChapter = computed(() => {
 
 const currentVideoUrl = computed(() => {
   const courseId = route.params.id
-  if (currentChapter.value?.videoUrl || course.value?.videoUrl) {
-    // 使用视频流接口
-    return `/api/course/${courseId}/video`
-  }
-  return ''
+  // 优先用后端流接口
+  return `/api/course/${courseId}/video`
 })
+
+const playVideo = () => {
+  if (!currentVideoUrl.value) {
+    ElMessage.error('未找到视频地址')
+    return
+  }
+  // 可扩展为弹窗或全屏播放
+}
 
 // 方法
 const loadCourseDetail = async () => {
@@ -493,9 +507,8 @@ const submitAiQuestion = async () => {
   
   try {
     aiLoading.value = true
-    const courseId = route.params.id
+    // const courseId = route.params.id // 不再传递courseId给aiAsk
     const response = await courseApi.aiAsk({ 
-      courseId, 
       question: aiQuestion.value 
     })
     
@@ -574,6 +587,14 @@ const formatDate = (date) => {
   if (!date) return '未知'
   return new Date(date).toLocaleDateString('zh-CN')
 }
+
+// 1. 课程不存在时自动跳转并提示
+watch(course, (val) => {
+  if (val === null) {
+    ElMessage.error('课程不存在或已被删除')
+    router.replace('/user/course')
+  }
+})
 
 onMounted(() => {
   loadCourseDetail()

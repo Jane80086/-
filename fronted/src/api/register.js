@@ -115,14 +115,22 @@ const enterprise = {
 }
 
 export function askAI(question) {
-  return fetch('/api/ai/ask', {
+  return fetch('/api/ai/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ message: question }),
   })
-    .then(res => res.json());
+    .then(res => res.json())
+    .then(res => {
+      // 兼容原有 answer 字段
+      if (res && res.code === 200 && res.data && res.data.response) {
+        return { answer: res.data.response };
+      } else {
+        return { answer: res?.message || 'AI无回复' };
+      }
+    });
 }
 
 export function getAIWelcome(userInfo) {

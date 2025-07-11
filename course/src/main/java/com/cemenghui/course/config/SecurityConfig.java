@@ -33,6 +33,7 @@ public class SecurityConfig {
             .and()
             // 配置请求授权
             .authorizeRequests()
+                .antMatchers("/api/admin/**").permitAll()
                 .anyRequest().permitAll()
             .and()
             // 添加JWT过滤器

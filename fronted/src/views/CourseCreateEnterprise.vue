@@ -21,7 +21,10 @@
         <video v-if="form.videoUrl" :src="form.videoUrl" controls style="width:200px;margin-top:8px;" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="submitCreate">创建</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitCreate">创建</el-button>
+      </el-form-item>
+      <el-form-item v-if="createdCourseId">
+        <el-button type="success" @click="submitReview">提交审核</el-button>
       </el-form-item>
     </el-form>
   </el-card>
@@ -31,6 +34,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import UploadMedia from '../components/UploadMedia.vue'
+import { ElMessage } from 'element-plus'
 const router = useRouter()
 const form = ref({ title: '', description: '', businessLicense: '', coverImage: '', videoUrl: '' })
 const licenseUploadUrl = 'http://localhost:9000/company-files/license'
@@ -39,10 +43,28 @@ const videoUploadUrl = 'http://localhost:9000/course-files/video'
 const onLicenseSuccess = (res) => { form.value.businessLicense = res.url || res.data?.url }
 const onCoverSuccess = (res) => { form.value.coverImage = res.url || res.data?.url }
 const onVideoSuccess = (res) => { form.value.videoUrl = res.url || res.data?.url }
+const submitting = ref(false)
+const createdCourseId = ref(null)
 const submitCreate = async () => {
   try {
+    submitting.value = true
     const res = await axios.post('/api/course/create', form.value)
-    router.push(`/course/${res.data.data.id}`)
-  } catch (e) {}
+    const courseId = res.data.data.course.id || res.data.data.id
+    createdCourseId.value = courseId
+    ElMessage.success('课程创建成功，请点击下方按钮提交审核！')
+  } catch (e) {
+    ElMessage.error('创建失败')
+  } finally {
+    submitting.value = false
+  }
+}
+const submitReview = async () => {
+  if (!createdCourseId.value) return
+  try {
+    await axios.post(`/api/course/${createdCourseId.value}/submit-review`)
+    ElMessage.success('课程已提交审核，等待管理员审核！')
+  } catch (e) {
+    ElMessage.error('提交审核失败')
+  }
 }
 </script> 

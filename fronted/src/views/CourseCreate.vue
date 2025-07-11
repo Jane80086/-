@@ -57,8 +57,13 @@ const aiOptimize = async () => {
 const submitCreate = async () => {
   try {
     const res = await axios.post('/api/course/create', form.value)
-    ElMessage.success('创建成功')
-    router.push(`/course/${res.data.data.id}`)
+    const courseId = res.data?.data?.course?.id || res.data?.data?.id
+    if (courseId) {
+      ElMessage.success('创建成功')
+      router.push(`/course/${courseId}`)
+    } else {
+      ElMessage.error('创建成功但未获取到课程ID')
+    }
   } catch (e) {
     ElMessage.error('创建失败')
   }

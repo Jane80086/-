@@ -1,4 +1,6 @@
 import request from '@/utils/request'
+import qs from 'qs'
+import { useUserStore } from '@/store/user'
 
 const adminApi = {
   // 获取用户列表
@@ -61,10 +63,26 @@ const adminApi = {
   },
   // 课程审核
   reviewCourse(courseId, status, reason = '') {
+    const userStore = useUserStore()
+    const reviewerId = userStore.user?.id || ''
+    let safeStatus = (status || '').toLowerCase().trim()
+    if (safeStatus === '通过' || safeStatus === 'publish' || safeStatus === 'published') safeStatus = 'approved'
+    if (safeStatus === '驳回' || safeStatus === 'reject' || safeStatus === 'rejected') safeStatus = 'rejected'
+    const url = `/api/admin/course/${courseId}/review`
+    const data = qs.stringify({ status: safeStatus, reason, reviewerId })
+    console.log('[adminApi.reviewCourse] 请求URL:', url)
+    console.log('[adminApi.reviewCourse] 表单参数:', data)
     return request({
-      url: `/api/admin/course/${courseId}/review`,
+      url,
       method: 'post',
-      params: { status, reason }
+      data,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    }).then(res => {
+      console.log('[adminApi.reviewCourse] 响应:', res)
+      return res
+    }).catch(err => {
+      console.error('[adminApi.reviewCourse] 请求异常:', err)
+      throw err
     })
   },
   // 评论审核

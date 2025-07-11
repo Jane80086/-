@@ -24,10 +24,9 @@ public class AiQuestionServiceImpl implements AiQuestionService {
     @Autowired
     private RestTemplate restTemplate;
     
-    @Value("${dify.workflow.url:http://localhost:8088/workflow/U7GxMeHuVNJC1Kd8}")
-    private String difyWorkflowUrl;
-    
-    @Value("${dify.api.key:app-Z4eFAVjcGNqXSDsJyP8ZA4bW}")
+    @Value("${dify.base-url:http://localhost:8088/v1}")
+    private String difyBaseUrl;
+    @Value("${dify.api-key:app-0aNJ1b5OVdl8fYZIW7f3K4WZ}")
     private String difyApiKey;
 
     @Override
@@ -111,38 +110,44 @@ public class AiQuestionServiceImpl implements AiQuestionService {
     }
 
     /**
-     * 调用Dify工作流获取AI回答
+     * 调用Dify v1/chat/completions获取AI回答
      */
     private String callDifyWorkflow(String question, Long courseId) {
         try {
-            // 构建请求头
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            // 构建请求体
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("question", question);
-            requestBody.put("context", courseId != null ? courseId.toString() : null);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            // 发送请求到本地Python AI服务
+            headers.set("Authorization", "Bearer " + difyApiKey);
+            Map<String, Object> body = new HashMap<>();
+            body.put("model", "gpt-3.5-turbo");
+            List<Map<String, String>> messages = new java.util.ArrayList<>();
+            messages.add(Map.of("role", "user", "content", question));
+            body.put("messages", messages);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                "http://localhost:5001/ai/qa",
+                difyBaseUrl + "/chat/completions",
                 entity,
                 Map.class
             );
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> result = response.getBody();
-                if (result.containsKey("answer")) {
-                    return (String) result.get("answer");
-                } else if (result.containsKey("output")) {
-                    return (String) result.get("output");
-                } else {
-                    return "抱歉，AI暂时无法回答这个问题，请稍后重试。";
+                if (result.containsKey("choices")) {
+                    Object choicesObj = result.get("choices");
+                    if (choicesObj instanceof List && !((List<?>) choicesObj).isEmpty()) {
+                        Object first = ((List<?>) choicesObj).get(0);
+                        if (first instanceof Map) {
+                            Map<?, ?> firstMap = (Map<?, ?>) first;
+                            Object messageObj = firstMap.get("message");
+                            if (messageObj instanceof Map) {
+                                Object content = ((Map<?, ?>) messageObj).get("content");
+                                if (content != null) return content.toString();
+                            }
+                        }
+                    }
                 }
-            } else {
-                return "AI服务暂时不可用，请稍后重试。";
             }
+            return "AI服务暂时不可用，请稍后重试。";
         } catch (Exception e) {
-            System.err.println("调用本地AI服务失败: " + e.getMessage());
+            System.err.println("调用Dify失败: " + e.getMessage());
             return "AI服务暂时不可用，请稍后重试。";
         }
     }

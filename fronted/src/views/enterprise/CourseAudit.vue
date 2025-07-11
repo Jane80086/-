@@ -22,6 +22,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { courseApi } from '@/api/course'
+import { useUserStore } from '@/store/user'
 const courses = ref([])
 const loadCourses = async () => {
   const res = await courseApi.getAuditCourses()
@@ -39,12 +40,15 @@ const getStatusText = (status) => {
   if (status === 'rejected') return '未通过'
   return '未知'
 }
+const userStore = useUserStore()
 const approve = async (row) => {
-  const res = await courseApi.approveCourse(row.id)
+  const reviewerId = userStore.user?.id || ''
+  const res = await courseApi.approveCourse(row.id, reviewerId)
   if (res.code === 200) { ElMessage.success('审核通过'); loadCourses() }
 }
 const reject = async (row) => {
-  const res = await courseApi.rejectCourse(row.id)
+  const reviewerId = userStore.user?.id || ''
+  const res = await courseApi.rejectCourse(row.id, reviewerId)
   if (res.code === 200) { ElMessage.success('已拒绝'); loadCourses() }
 }
 onMounted(loadCourses)

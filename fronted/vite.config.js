@@ -12,25 +12,42 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api/file': {
+      // 管理端审核接口，必须优先
+      '/api/admin': {
         target: 'http://localhost:8081',
         changeOrigin: true
       },
+      // 课程模块
       '/api/course': {
         target: 'http://localhost:8081',
         changeOrigin: true
       },
-      '/course': {
-        target: 'http://localhost:8081/api',
-        changeOrigin: true,
-        rewrite: path => path.replace(/^\/course/, '/course')
-      },
-      '/api': {
+      '/api/file': {
         target: 'http://localhost:8081',
-        changeOrigin: true,
-        rewrite: path => path.replace(/^\/api/, '/api')
-      }
-       '/api': {
+        changeOrigin: true
+      },
+      // 会议主模块
+      '/api/meeting': {
+        target: 'http://localhost:8083',
+        changeOrigin: true
+      },
+      // 会议子功能
+      '/api/meeting-part': {
+        target: 'http://localhost:8082',
+        changeOrigin: true
+      },
+      // 登录、个人中心
+      '/api/user': {
+        target: 'http://localhost:8084',
+        changeOrigin: true
+      },
+      // AI智能问答接口
+      '/ai': {
+        target: 'http://localhost:8090',
+        changeOrigin: true
+      },
+      // 通用 /api 兜底，必须放最后
+      '/api': {
         target: 'http://localhost:8084',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api/, '/api')

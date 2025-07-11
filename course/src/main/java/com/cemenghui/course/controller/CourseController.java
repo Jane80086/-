@@ -34,6 +34,13 @@ import com.cemenghui.course.service.impl.MinioServiceImpl;
 import com.cemenghui.course.service.ChapterService;
 import com.cemenghui.common.JWTUtil;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import com.cemenghui.course.entity.Review;
+import com.cemenghui.course.service.ReviewService;
 
 @RestController
 @RequestMapping("/api/course")
@@ -63,55 +70,32 @@ public class CourseController {
     @Autowired
     private JWTUtil jwtUtil;
 
+    @Autowired
+    private ReviewService reviewService;
+
     /**
-     * 创建新课程
-     * @param course 课程对象
-     * @param useAiOptimization 是否使用AI优化（可选，默认true）
+     * 创建新课程（支持视频文件上传）
      */
     @PostMapping("/create")
-    public ResponseEntity<Result> createCourse(@RequestBody @Valid Course course,
-                                               @RequestParam(value = "useAiOptimization", required = false, defaultValue = "true") boolean useAiOptimization) {
+    public ResponseEntity<Result> createCourseWithVideo(
+            @RequestPart("course") @Valid Course course,
+            @RequestPart(value = "videoFile", required = false) MultipartFile videoFile) {
         try {
-            // 校验视频/封面URL是否存在于MinIO（可选）
-            boolean videoExists = true;
-            boolean coverExists = true;
-            String videoUrl = course.getVideoUrl();
-            String imageUrl = course.getImageUrl();
-            // 仅校验非空URL
-            if (videoUrl != null && !videoUrl.isEmpty()) {
-                videoExists = minioServiceImpl.fileExists(videoUrl.replaceFirst("^.*/course-files/", ""));
+            // 1. 处理视频文件上传（改为上传到 MinIO）
+            if (videoFile != null && !videoFile.isEmpty()) {
+                // 使用 MinIO 上传视频，返回外链 URL
+                String videoUrl = minioServiceImpl.uploadCourseVideo(videoFile);
+                course.setVideoUrl(videoUrl);
             }
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                coverExists = minioServiceImpl.fileExists(imageUrl.replaceFirst("^.*/course-files/", ""));
-            }
-            if (!videoExists) {
-                return ResponseEntity.badRequest().body(Result.fail("视频文件在MinIO中不存在，请先上传！"));
-            }
-            if (!coverExists) {
-                return ResponseEntity.badRequest().body(Result.fail("封面图片在MinIO中不存在，请先上传！"));
-            }
-            // AI优化课程标题和简介（可选，失败不影响创建）
-            // if (useAiOptimization && course.getTitle() != null && course.getDescription() != null) {
-            //     try {
-            //         Map<String, String> optimizedInfo = courseOptimizationService.optimizeCourseInfo(
-            //             course.getTitle(),
-            //             course.getDescription(),
-            //             course.getCategory()
-            //         );
-            //         course.setTitle(optimizedInfo.getOrDefault("optimized_title", course.getTitle()));
-            //         course.setDescription(optimizedInfo.getOrDefault("optimized_description", course.getDescription()));
-            //     } catch (Exception aiEx) {
-            //         System.err.println("AI优化失败: " + aiEx.getMessage());
-            //     }
-            // }
+            course.setStatus("PENDING");
             Course createdCourse = courseManagerService.createCourse(course);
             Map<String, Object> result = new HashMap<>();
             result.put("course", createdCourse);
             result.put("videoUrl", createdCourse.getVideoUrl());
-            result.put("imageUrl", createdCourse.getImageUrl());
+            result.put("imageUrl", createdCourse.getCoverImage());
             return ResponseEntity.ok(Result.success("课程创建成功", result));
         } catch (Exception e) {
-            e.printStackTrace(); // 强制输出异常到控制台
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("课程创建失败: " + e.getMessage()));
         }
@@ -147,6 +131,9 @@ public class CourseController {
             }
             // 课程存在，返回 code=200, data=course
             return ResponseEntity.ok(Result.success("操作成功", course));
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Result.fail("课程不存在: " + e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("获取课程详情失败: " + e.getMessage()));
@@ -196,7 +183,9 @@ public class CourseController {
     public ResponseEntity<Result> getCourseList() {
         try {
             List<Course> courses = courseService.listCourses(); // 用数据库真实数据
-            return ResponseEntity.ok(Result.success("获取成功", courses));
+            // 只返回已发布课程
+            List<Course> published = courses.stream().filter(c -> "PUBLISHED".equals(c.getStatus())).toList();
+            return ResponseEntity.ok(Result.success("获取成功", published));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -213,7 +202,7 @@ public class CourseController {
         course1.setId(1L);
         course1.setTitle("Java基础教程");
         course1.setDescription("Java编程基础入门课程，适合零基础学习者");
-        course1.setImageUrl("https://via.placeholder.com/300x200");
+        course1.setCoverImage("https://via.placeholder.com/300x200");
         course1.setVideoUrl("https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4");
         course1.setDuration(120);
         course1.setPrice(new BigDecimal("0.0"));
@@ -226,7 +215,7 @@ public class CourseController {
         course2.setId(2L);
         course2.setTitle("Spring Boot实战");
         course2.setDescription("Spring Boot框架开发实战课程");
-        course2.setImageUrl("https://via.placeholder.com/300x200");
+        course2.setCoverImage("https://via.placeholder.com/300x200");
         course2.setVideoUrl("https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4");
         course2.setDuration(180);
         course2.setPrice(new BigDecimal("99.0"));
@@ -239,7 +228,7 @@ public class CourseController {
         course3.setId(3L);
         course3.setTitle("Vue.js前端开发");
         course3.setDescription("Vue.js前端框架开发教程");
-        course3.setImageUrl("https://via.placeholder.com/300x200");
+        course3.setCoverImage("https://via.placeholder.com/300x200");
         course3.setVideoUrl("https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4");
         course3.setDuration(150);
         course3.setPrice(new BigDecimal("79.0"));
@@ -282,11 +271,23 @@ public class CourseController {
      */
     @PostMapping("/{id}/approve")
     public ResponseEntity<Result> approveCourse(@PathVariable Long id, @RequestParam Long adminId) {
-        boolean success = courseService.approveCourse(id, adminId);
-        if (success) {
-            return ResponseEntity.ok(Result.success("课程审核通过", null));
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.fail("课程审核通过失败"));
+        try {
+            boolean success = courseService.approveCourse(id, adminId);
+            if (success) {
+                // 审核通过，设为已发布
+                Course course = courseService.getCourseDetail(id);
+                course.setStatus("PUBLISHED");
+                courseManagerService.editCourse(id, course);
+                return ResponseEntity.ok(Result.success("课程审核通过", null));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.fail("课程审核通过失败"));
+            }
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Result.fail("课程不存在: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.fail("课程审核通过失败: " + e.getMessage()));
         }
     }
 
@@ -295,11 +296,24 @@ public class CourseController {
      */
     @PostMapping("/{id}/reject")
     public ResponseEntity<Result> rejectCourse(@PathVariable Long id, @RequestParam Long adminId, @RequestParam String reason) {
-        boolean success = courseService.rejectCourse(id, adminId, reason);
-        if (success) {
-            return ResponseEntity.ok(Result.success("课程审核拒绝", null));
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.fail("课程审核拒绝失败"));
+        try {
+            boolean success = courseService.rejectCourse(id, adminId, reason);
+            if (success) {
+                // 审核拒绝，设为已驳回
+                Course course = courseService.getCourseDetail(id);
+                course.setStatus("REJECTED");
+                course.setDescription(course.getDescription() + "\n[驳回理由]: " + reason);
+                courseManagerService.editCourse(id, course);
+                return ResponseEntity.ok(Result.success("课程审核拒绝", null));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.fail("课程审核拒绝失败"));
+            }
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Result.fail("课程不存在: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.fail("课程审核拒绝失败: " + e.getMessage()));
         }
     }
 
@@ -618,6 +632,15 @@ public class CourseController {
     }
 
     /**
+     * 查询课程审核日志（新表 audit_records）
+     */
+    @GetMapping("/{id}/review-log")
+    public ResponseEntity<Result> getReviewLog(@PathVariable Long id) {
+        List<Review> log = reviewService.getReviewLog(id);
+        return ResponseEntity.ok(Result.success(log));
+    }
+
+    /**
      * 视频流接口，支持断点续传和权限校验
      */
     @GetMapping("/{id}/video")
@@ -712,5 +735,21 @@ public class CourseController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("获取热搜关键词失败: " + e.getMessage()));
         }
+    }
+
+    /**
+     * 获取课程评论列表（前端需要，暂返回空列表）
+     */
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<Result> getCourseComments(@PathVariable Long id) {
+        return ResponseEntity.ok(Result.success(new ArrayList<>()));
+    }
+
+    /**
+     * 获取课程AI问答列表（前端需要，暂返回空列表）
+     */
+    @GetMapping("/{id}/ai-qna-list")
+    public ResponseEntity<Result> getCourseAiQnaList(@PathVariable Long id) {
+        return ResponseEntity.ok(Result.success(new ArrayList<>())) ;
     }
 } 

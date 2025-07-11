@@ -132,25 +132,47 @@ const searchBarRef = ref(null)
 const courses = ref([])
 const loadCourses = async () => {
   loading.value = true
-  const params = {
-    page: currentPage.value, // 改为从1开始
-    size: pageSize.value,
-    keyword: searchKeyword.value,
-    category: selectedCategory.value,
-    level: selectedLevel.value,
-    sortBy: sortBy.value
+  try {
+    const params = {
+      page: currentPage.value, // 改为从1开始
+      size: pageSize.value,
+      keyword: searchKeyword.value,
+      category: selectedCategory.value,
+      level: selectedLevel.value,
+      sortBy: sortBy.value
+    }
+    const res = await courseApi.getCourseList(params)
+    if (res && res.code === 200) {
+      if (Array.isArray(res.data)) {
+        courses.value = res.data
+        totalCourses.value = res.data.length
+      } else if (res.data && Array.isArray(res.data.content)) {
+        courses.value = res.data.content
+        totalCourses.value = res.data.totalElements || res.data.content.length
+      } else {
+        courses.value = []
+        totalCourses.value = 0
+      }
+    } else {
+      courses.value = []
+      totalCourses.value = 0
+      ElMessage.error((res && res.message) || '获取课程列表失败')
+    }
+  } catch (e) {
+    courses.value = []
+    totalCourses.value = 0
+    ElMessage.error(e?.message || '网络错误，获取课程列表失败')
+  } finally {
+    loading.value = false
   }
-  const res = await courseApi.getCourseList(params)
-  if (res.code === 200) {
-    courses.value = res.data.content || res.data || []
-    totalCourses.value = res.data.totalElements || courses.value.length
-  } else {
-    ElMessage.error(res.message || '获取课程列表失败')
-  }
-  loading.value = false
 }
 const filteredCourses = computed(() => {
   let filtered = courses.value
+  // 只展示已审核通过/已发布的课程，兼容多种状态
+  filtered = filtered.filter(course => {
+    const status = (course.status || '').toLowerCase()
+    return status === 'published' || status === 'approved'
+  })
   if (searchKeyword.value) {
     const kw = searchKeyword.value.trim().toLowerCase()
     filtered = filtered.filter(course =>

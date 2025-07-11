@@ -1,5 +1,6 @@
 package com.cemenghui.course.controller;
 
+import com.cemenghui.course.common.Result;
 import com.cemenghui.course.entity.Question;
 import com.cemenghui.course.service.AiQuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,16 +15,23 @@ public class AiQuestionController {
     @Autowired
     private AiQuestionService aiQuestionService;
 
+    public static class QuestionRequest {
+        public Long courseId;
+        public Long userId;
+        public String question;
+    }
+
     /**
      * 提交问题并获取AI回答
      */
     @PostMapping("/ask")
-    public ResponseEntity<Question> askQuestion(
-            @RequestParam Long courseId,
-            @RequestParam Long userId,
-            @RequestParam String question) {
-        Question result = aiQuestionService.askQuestion(courseId, userId, question);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<Result> askQuestion(@RequestBody QuestionRequest req) {
+        try {
+            Question result = aiQuestionService.askQuestion(req.courseId, req.userId, req.question);
+            return ResponseEntity.ok(Result.success("AI问答成功", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Result.fail("AI问答失败: " + e.getMessage()));
+        }
     }
 
     /**

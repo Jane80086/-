@@ -18,10 +18,11 @@ public interface ReviewService {
     /**
      * 审核驳回
      * @param courseId 课程ID
+     * @param reviewerId 审核人ID
      * @param reason 驳回原因
      * @return 审核记录
      */
-    Review rejectCourse(Long courseId, String reason);
+    Review rejectCourse(Long courseId, Long reviewerId, String reason);
 
     /**
      * 查询历史审核记录
