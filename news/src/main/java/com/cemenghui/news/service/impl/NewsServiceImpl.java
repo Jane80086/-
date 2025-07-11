@@ -83,7 +83,7 @@ public class NewsServiceImpl implements NewsService {
         Long currentUserId = authorizationService.getCurrentUserId();
         // 此方法对应 @PreAuthorize("hasAnyRole('ADMIN', 'ENTERPRISE')")
         // 因此 checkEnterprisePermission 依然是必要的，除非控制器严格区分
-        authorizationService.checkEnterprisePermission(currentUserId);
+//        authorizationService.checkEnterprisePermission(currentUserId);
         News news = new News();
         BeanUtils.copyProperties(newsRequest, news);
         news.setUserId(currentUserId);
