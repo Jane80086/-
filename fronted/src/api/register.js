@@ -2,6 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import store from '@/store'
 import router from '@/router'
+import { useUserStore } from '@/store/user'
 
 // 创建axios实例
 const api = axios.create({
@@ -35,7 +36,9 @@ api.interceptors.response.use(
       switch (status) {
         case 401:
           ElMessage.error('登录已过期，请重新登录')
-          store.dispatch('logout')
+          // 在需要登出的地方使用
+          const userStore = useUserStore()
+          userStore.logout && userStore.logout()
           router.push('/login')
           break
         case 403:
