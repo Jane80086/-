@@ -146,21 +146,6 @@ public class UserManagementController {
     }
 
     /**
-     * 继承角色权限
-     */
-    @PostMapping("/{userId}/roles/{roleName}/permissions")
-    public ResponseEntity<ResultVO<Boolean>> inheritRolePermissions(@PathVariable Long userId,
-                                                                    @PathVariable String roleName,
-                                                                    @RequestHeader("Authorization") String token) {
-        if (!isSuperAdmin(token)) {
-            return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
-        }
-
-        boolean result = userManagementService.inheritRolePermissions(userId, roleName);
-        return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
-    }
-
-    /**
      * 获取所有用户模板
      */
     @GetMapping("/templates")

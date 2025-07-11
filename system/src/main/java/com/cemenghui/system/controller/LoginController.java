@@ -90,7 +90,7 @@ public class LoginController {
             }
             dto.setSuccess(true);
             dto.setMessage("登录成功");
-            String jwt = jwtUtil.generateToken(admin.getId(), admin.getAccount(), java.util.List.of(admin.getRole()));
+            String jwt = jwtUtil.generateToken(admin.getId(), admin.getAccount(), java.util.List.of("admin"));
             dto.setToken(jwt);
             dto.setUserType("admin");
             dto.setAdminUser(admin);
@@ -113,7 +113,7 @@ public class LoginController {
             }
             dto.setSuccess(true);
             dto.setMessage("登录成功");
-            String jwt = jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of(user.getRole()));
+            String jwt = jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of("enterprise"));
             dto.setToken(jwt);
             dto.setUserType("enterprise");
             dto.setEnterpriseUser(user);
