@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import enterpriseApi from './enterprise'
 
 // 创建axios实例
 const request = axios.create({
@@ -198,4 +199,12 @@ export const fileAPI = {
 
 export { askAI } from './register.js';
 
-export default request 
+const api = {
+  enterprise: enterpriseApi,
+  // 可继续聚合其他API，如userAPI、courseAPI等
+}
+
+export default api
+
+// 保留原有request等命名导出
+export { request } 
