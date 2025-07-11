@@ -46,6 +46,19 @@ export default defineConfig({
         target: 'http://localhost:8090',
         changeOrigin: true
       },
+      // 新闻模块
+      '/api/news': {
+        target: 'http://localhost:8083',
+        changeOrigin: true
+      },
+      '/api/enterprise/news': {
+        target: 'http://localhost:8083',
+        changeOrigin: true
+      },
+      '/api/admin/news': {
+        target: 'http://localhost:8083',
+        changeOrigin: true
+      },
       // 通用 /api 兜底，必须放最后
       '/api': {
         target: 'http://localhost:8084',
