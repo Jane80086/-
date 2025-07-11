@@ -15,22 +15,14 @@
         <processorPath useClasspath="false">
           <entry name="$USER_HOME$/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
         </processorPath>
-        <module name="main-app" />
+        <module name="news" />
         <module name="course" />
+        <module name="system" />
         <module name="course (1)" />
         <module name="-" />
-      </profile>
-      <profile name="Annotation profile for meeting" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$USER_HOME$/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
-          <entry name="$USER_HOME$/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
-        </processorPath>
         <module name="meeting" />
       </profile>
-      <profile name="Annotation profile for news" enabled="true">
+      <profile name="Annotation profile for main-app" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -38,17 +30,7 @@
           <entry name="$USER_HOME$/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
           <entry name="$USER_HOME$/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
         </processorPath>
-        <module name="news" />
-      </profile>
-      <profile name="Annotation profile for system" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$USER_HOME$/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
-          <entry name="$USER_HOME$/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
-        </processorPath>
-        <module name="system" />
+        <module name="main-app" />
       </profile>
     </annotationProcessing>
   </component>

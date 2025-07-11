@@ -29,6 +29,9 @@ spring:
       connection-test-query: SELECT 1
       validation-timeout: 5000
       pool-name: CourseHikariCP
+  web:
+    resources:
+      static-locations: classpath:/static/,classpath:/public/,classpath:/resources/,classpath:/META-INF/resources/
   security:
     user:
       name: admin
@@ -39,8 +42,8 @@ spring:
     database: 0
   servlet:
     multipart:
-      max-file-size: 200MB
-      max-request-size: 200MB
+      max-file-size: 512MB
+      max-request-size: 512MB
 
 mybatis-plus:
   configuration:
@@ -49,6 +52,9 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
   type-aliases-package: com.cemenghui.course.entity
 
 jwt:
@@ -67,7 +73,7 @@ mcp:
     auth-token: b78780b7f43d9d961b61bdc38227f01e2038491264231081120c505f6f90c8d8
 
 dify:
-  api-key: "your-dify-api-key"
+  api-key: "app-0aNJ1b5OVdl8fYZIW7f3K4WZ"
   base-url: "https://api.dify.ai/v1"
   workflow:
     url: http://localhost:8088/workflow/U7GxMeHuVNJC1Kd8

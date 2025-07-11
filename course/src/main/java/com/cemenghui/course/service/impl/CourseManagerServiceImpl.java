@@ -50,7 +50,7 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
         if (course == null) {
             throw new NotFoundException("课程未找到: " + id);
         }
-        course.edit(updated.getTitle(), updated.getDescription(), updated.getImageUrl());
+        course.edit(updated.getTitle(), updated.getDescription(), updated.getCoverImage());
         courseDao.updateById(course);
         return course;
     }

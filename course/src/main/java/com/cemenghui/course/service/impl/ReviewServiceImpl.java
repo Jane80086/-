@@ -50,24 +50,24 @@ public class ReviewServiceImpl implements ReviewService {
     /**
      * 审核驳回
      * @param courseId 课程ID
+     * @param reviewerId 审核人ID
      * @param reason 驳回原因
      * @return 审核记录
      */
     @Override
-    public Review rejectCourse(Long courseId, String reason) {
+    public Review rejectCourse(Long courseId, Long reviewerId, String reason) {
         Review review = new Review();
         review.setCourseId(courseId);
+        review.setReviewerId(reviewerId);
         review.setStatus(ReviewStatus.REJECTED.name());
         review.setComment(reason);
         reviewDao.insert(review);
-        
         // 更新课程状态
         Course course = courseDao.selectById(courseId);
         if (course != null) {
-            course.setStatus("REJECTED"); // 2表示已拒绝，改为字符串
+            course.setStatus("REJECTED");
             courseDao.updateById(course);
         }
-        
         onReviewRejected(courseId, reason);
         return review;
     }

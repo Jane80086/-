@@ -217,10 +217,11 @@ const loadCourseDetail = async () => {
       course.value = response.data
       await loadChapters()
     } else {
-      ElMessage.error('获取课程详情失败')
+      ElMessage.error(`获取课程详情失败，ID=${courseId}，后端返回：${response.message || response.code}`)
     }
   } catch (error) {
-    ElMessage.error('网络错误，请稍后重试')
+    const courseId = route.params.id
+    ElMessage.error(`网络错误或404，课程ID=${courseId}，${error?.message || error}`)
   } finally {
     loading.value = false
   }
@@ -249,7 +250,11 @@ const loadChapters = async () => {
   }
 }
 const goToPlay = () => {
-  router.push(`/admin/course/play/${course.value.id}`)
+  if (!course.value?.id) {
+    ElMessage.error('课程ID无效，无法跳转到播放页')
+    return
+  }
+  router.push(`/admin/course/${course.value.id}/play`)
 }
 const formatDuration = (min) => {
   if (!min) return '0分钟'

@@ -57,7 +57,10 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public List<Course> searchCourses(String keyword) {
         LambdaQueryWrapper<Course> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Course::getStatus, "PUBLISHED");
+        if (keyword != null && !keyword.isEmpty()) {
         wrapper.like(Course::getTitle, keyword);
+        }
         return courseDao.selectList(wrapper);
     }
 
@@ -67,10 +70,12 @@ public class CourseServiceImpl implements CourseService {
      * @return 课程详情
      * @throws NotFoundException 未找到课程时抛出
      */
-    @Cacheable(value = "courseDetail", key = "#courseId")
+    // @Cacheable(value = "courseDetail", key = "#courseId")
     @Override
     public Course getCourseDetail(Long courseId) throws NotFoundException {
+        System.out.println("DEBUG: 查询课程ID=" + courseId);
         Course course = courseDao.selectById(courseId);
+        System.out.println("DEBUG: 查询结果=" + course);
         if (course == null) {
             throw new NotFoundException("课程不存在: " + courseId);
         }
@@ -166,7 +171,7 @@ public class CourseServiceImpl implements CourseService {
             return false;
         }
         course.setStatus("PENDING"); // 待审核
-        course.setUpdateTime(java.time.LocalDateTime.now());
+        course.setUpdatedTime(java.time.LocalDateTime.now());
         courseDao.updateById(course);
         return true;
     }
@@ -184,7 +189,7 @@ public class CourseServiceImpl implements CourseService {
             return false;
         }
         course.setStatus("PUBLISHED"); // 已审核通过
-        course.setUpdateTime(java.time.LocalDateTime.now());
+        course.setUpdatedTime(java.time.LocalDateTime.now());
         courseDao.updateById(course);
         // 记录审核历史
         CourseReviewHistory history = new CourseReviewHistory();
@@ -209,7 +214,7 @@ public class CourseServiceImpl implements CourseService {
             return false;
         }
         course.setStatus("REJECTED"); // 已拒绝
-        course.setUpdateTime(java.time.LocalDateTime.now());
+        course.setUpdatedTime(java.time.LocalDateTime.now());
         courseDao.updateById(course);
         // 记录审核历史
         CourseReviewHistory history = new CourseReviewHistory();
@@ -226,7 +231,7 @@ public class CourseServiceImpl implements CourseService {
     public List<Course> getPendingCourses() {
         LambdaQueryWrapper<Course> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Course::getStatus, "PENDING"); // 0表示待审核状态
-        wrapper.orderByDesc(Course::getCreateTime);
+        wrapper.orderByDesc(Course::getCreatedTime);
         return courseDao.selectList(wrapper);
     }
 } 

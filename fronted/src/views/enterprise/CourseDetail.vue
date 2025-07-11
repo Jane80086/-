@@ -7,7 +7,7 @@
       <!-- 课程头部信息 -->
       <div class="course-header">
         <div class="course-banner">
-          <img :src="course.imageUrl || '/default-course.jpg'" :alt="course.title">
+          <img :src="course?.imageUrl || '/default-course.jpg'" :alt="course?.title">
           <div class="course-overlay">
             <el-button type="primary" size="large" @click="goToPlay">
               <el-icon><VideoPlay /></el-icon>
@@ -16,20 +16,20 @@
           </div>
         </div>
         <div class="course-info">
-          <h1 class="course-title">{{ course.title }}</h1>
-          <p class="course-description">{{ course.description }}</p>
+          <h1 class="course-title">{{ course?.title }}</h1>
+          <p class="course-description">{{ course?.description }}</p>
           <div class="course-meta">
             <div class="meta-item">
               <el-icon><User /></el-icon>
-              <span>讲师：{{ course.instructorName || '未知讲师' }}</span>
+              <span>讲师：{{ course?.instructorName || '未知讲师' }}</span>
             </div>
             <div class="meta-item">
               <el-icon><Clock /></el-icon>
-              <span>时长：{{ formatDuration(course.duration) }}</span>
+              <span>时长：{{ formatDuration(course?.duration) }}</span>
             </div>
             <div class="meta-item">
               <el-icon><View /></el-icon>
-              <span>{{ course.viewCount || 0 }} 次观看</span>
+              <span>{{ course?.viewCount || 0 }} 次观看</span>
             </div>
             <div class="meta-item">
               <el-icon><Star /></el-icon>
@@ -38,7 +38,7 @@
           </div>
           <div class="course-price-section">
             <div class="price-info">
-              <span v-if="course.price > 0" class="price">¥{{ course.price }}</span>
+              <span v-if="course?.price > 0" class="price">¥{{ course?.price }}</span>
               <span v-else class="free">免费</span>
             </div>
             <div class="action-buttons">
@@ -67,34 +67,34 @@
                 <h3>课程详情</h3>
                 <div class="detail-item">
                   <span class="label">课程分类：</span>
-                  <span>{{ course.category }}</span>
+                  <span>{{ course?.category }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="label">难度等级：</span>
-                  <span>{{ course.level }}</span>
+                  <span>{{ course?.level }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="label">更新时间：</span>
-                  <span>{{ formatDate(course.updateTime) }}</span>
+                  <span>{{ formatDate(course?.updateTime) }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="label">课程状态：</span>
-                  <el-tag :type="getStatusType(course.status)">
-                    {{ getStatusText(course.status) }}
+                  <el-tag :type="getStatusType(course?.status)">
+                    {{ getStatusText(course?.status) }}
                   </el-tag>
                 </div>
               </div>
               <div class="course-outline">
                 <h3>课程大纲</h3>
                 <div class="outline-content">
-                  <p>{{ course.outline || '暂无课程大纲' }}</p>
+                  <p>{{ course?.outline || '暂无课程大纲' }}</p>
                 </div>
               </div>
             </div>
           </el-tab-pane>
           <el-tab-pane label="课程章节" name="chapters">
             <div class="chapters-section">
-              <div class="chapters-list">
+              <div v-if="chapters && chapters.length" class="chapters-list">
                 <div v-for="(chapter, index) in chapters" :key="chapter.id" class="chapter-item">
                   <div class="chapter-info">
                     <div class="chapter-title">
@@ -108,18 +108,19 @@
                   </div>
                 </div>
               </div>
+              <div v-else>暂无章节</div>
             </div>
           </el-tab-pane>
           <el-tab-pane label="讲师信息" name="instructor">
             <div class="instructor-section">
               <div class="instructor-info">
                 <div class="instructor-avatar">
-                  <img :src="course.instructorAvatar || '/default-avatar.jpg'" :alt="course.instructorName">
+                  <img :src="course?.instructorAvatar || '/default-avatar.jpg'" :alt="course?.instructorName">
                 </div>
                 <div class="instructor-details">
-                  <h3>{{ course.instructorName || '未知讲师' }}</h3>
-                  <p class="instructor-title">{{ course.instructorTitle || '资深讲师' }}</p>
-                  <p class="instructor-bio">{{ course.instructorBio || '暂无讲师介绍' }}</p>
+                  <h3>{{ course?.instructorName || '未知讲师' }}</h3>
+                  <p class="instructor-title">{{ course?.instructorTitle || '资深讲师' }}</p>
+                  <p class="instructor-bio">{{ course?.instructorBio || '暂无讲师介绍' }}</p>
                 </div>
               </div>
             </div>
@@ -149,11 +150,13 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { VideoPlay, User, Clock, View, Star, Share } from '@element-plus/icons-vue'
+import { courseApi } from '@/api/course'
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
@@ -161,41 +164,39 @@ const course = ref(null)
 const chapters = ref([])
 const activeTab = ref('intro')
 const isFavorite = ref(false)
-// mock数据
-const mockCourse = {
-  id: 1,
-  title: '前端开发入门',
-  description: '学习HTML、CSS、JavaScript基础',
-  instructorName: '张老师',
-  instructorAvatar: '',
-  instructorTitle: '高级讲师',
-  instructorBio: '10年开发经验，专注前端教育',
-  duration: 120,
-  price: 0,
-  imageUrl: '',
-  viewCount: 1234,
-  rating: 4.5,
-  category: '前端开发',
-  level: '初级',
-  updateTime: '2024-07-01',
-  status: 'published',
-  outline: '1. HTML基础\n2. CSS基础\n3. JavaScript基础',
-}
-const mockChapters = [
-  { id: 1, title: 'HTML基础', duration: 40, description: 'HTML标签与结构' },
-  { id: 2, title: 'CSS基础', duration: 40, description: '样式与布局' },
-  { id: 3, title: 'JavaScript基础', duration: 40, description: '语法与交互' },
-]
-const loadCourseDetail = () => {
+const loadCourseDetail = async () => {
   loading.value = true
-  setTimeout(() => {
-    course.value = mockCourse
-    chapters.value = mockChapters
+  try {
+    const courseId = route.params.id
+    const res = await courseApi.getCourseDetail(courseId)
+    if (res && res.code === 200 && res.data) {
+      course.value = res.data
+      await loadChapters(courseId)
+    } else {
+      course.value = null
+      chapters.value = []
+    }
+  } catch (e) {
+    course.value = null
+    chapters.value = []
+  } finally {
     loading.value = false
-  }, 500)
+  }
+}
+const loadChapters = async (courseId) => {
+  try {
+    const res = await courseApi.getChapters(courseId)
+    if (res && res.code === 200 && Array.isArray(res.data)) {
+      chapters.value = res.data
+    } else {
+      chapters.value = []
+    }
+  } catch (e) {
+    chapters.value = []
+  }
 }
 const goToPlay = () => {
-  router.push(`/enterprise/course/${course.value.id}/play`)
+  router.push(`/enterprise/course/${course.value?.id}/play`)
 }
 const toggleFavorite = () => {
   isFavorite.value = !isFavorite.value
@@ -232,4 +233,5 @@ onMounted(() => {
   loadCourseDetail()
 })
 </script>
-<style src="../user/CourseDetail.css"></style> 
+
+<style src="../user/CourseDetail.css"></style>

@@ -130,10 +130,10 @@
           <div class="card-stats">
             <span class="chapters-count"><el-icon><Document /></el-icon>{{ course.chapters?.length || 0 }} 章节</span>
             <div class="card-actions">
-              <el-button v-if="course.status === 'pending'" type="success" size="small" @click.stop="approveCourse(course)">
+              <el-button v-if="(course.status || '').toLowerCase() === 'pending'" type="success" size="small" @click.stop="approveCourse(course)">
                 通过
               </el-button>
-              <el-button v-if="course.status === 'pending'" type="danger" size="small" @click.stop="rejectCourse(course)">
+              <el-button v-if="(course.status || '').toLowerCase() === 'pending'" type="danger" size="small" @click.stop="rejectCourse(course)">
                 驳回
               </el-button>
               <el-button size="small" @click.stop="viewCourseDetail(course.id)">
@@ -188,6 +188,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, StarFilled, View, User, Clock, Document } from '@element-plus/icons-vue'
 import { courseApi } from '@/api/course'
+import { useUserStore } from '@/store/user'
 
 const router = useRouter()
 const loading = ref(false)
@@ -208,20 +209,13 @@ const currentCourse = ref(null)
 const courses = ref([])
 const loadCourses = async () => {
   loading.value = true
-  const params = {
-    page: currentPage.value, // 改为从1开始
-    size: pageSize.value,
-    keyword: searchKeyword.value,
-    status: statusFilter.value,
-    category: selectedCategory.value,
-    sortBy: sortBy.value
-  }
-  const res = await courseApi.getCourseList(params)
+  const res = await courseApi.getAuditCourses()
   if (res.code === 200) {
-    courses.value = res.data.content || res.data || []
-    totalCourses.value = res.data.totalElements || courses.value.length
+    // 兼容 status 大小写，允许后端返回所有课程，前端统一过滤
+    const allCourses = res.data.content || res.data || []
+    courses.value = allCourses.filter(c => (c.status || '').toLowerCase() === 'pending')
   } else {
-    ElMessage.error(res.message || '获取课程列表失败')
+    courses.value = []
   }
   loading.value = false
 }
@@ -229,24 +223,20 @@ const loadCourses = async () => {
 // 计算属性
 const filteredCourses = computed(() => {
   let filtered = courses.value
-  
   if (searchKeyword.value) {
     const kw = searchKeyword.value.trim().toLowerCase()
     filtered = filtered.filter(course =>
-      course.title.toLowerCase().includes(kw) ||
-      course.creator.toLowerCase().includes(kw) ||
-      course.description.toLowerCase().includes(kw)
+      (course.title || '').toLowerCase().includes(kw) ||
+      (course.creator || '').toLowerCase().includes(kw) ||
+      (course.description || '').toLowerCase().includes(kw)
     )
   }
-  
   if (statusFilter.value) {
-    filtered = filtered.filter(course => course.status === statusFilter.value)
+    filtered = filtered.filter(course => (course.status || '').toLowerCase() === statusFilter.value.toLowerCase())
   }
-  
   if (selectedCategory.value) {
     filtered = filtered.filter(course => course.category === selectedCategory.value)
   }
-  
   switch (sortBy.value) {
     case 'latest':
       filtered = [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -255,13 +245,12 @@ const filteredCourses = computed(() => {
       filtered = [...filtered].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
       break
     case 'title':
-      filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title))
+      filtered = [...filtered].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
       break
     case 'creator':
-      filtered = [...filtered].sort((a, b) => a.creator.localeCompare(b.creator))
+      filtered = [...filtered].sort((a, b) => (a.creator || '').localeCompare(b.creator || ''))
       break
   }
-  
   return filtered
 })
 
@@ -308,48 +297,37 @@ const resetFilters = () => {
 }
 
 const viewCourseDetail = (courseId) => {
+  if (!courseId || isNaN(Number(courseId)) || Number(courseId) <= 0) {
+    ElMessage.error(`课程ID无效：${courseId}`)
+    return
+  }
   router.push(`/admin/course/${courseId}`)
 }
 
 const approveCourse = async (course) => {
   try {
-    await ElMessageBox.confirm(`确定要通过课程"${course.title}"吗？`, '确认通过', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'success'
-    })
-    
-    course.status = 'approved'
-    ElMessage.success('课程审核通过')
-  } catch {
-    // 用户取消操作
+    await courseApi.reviewCourse(course.id, 'approved')
+    ElMessage.success('审核通过！')
+    loadCourses()
+  } catch (e) {
+    ElMessage.error('审核失败')
   }
 }
 
 const rejectCourse = (course) => {
   currentCourse.value = course
-  rejectReason.value = ''
   rejectVisible.value = true
 }
 
 const confirmReject = async () => {
-  if (!rejectReason.value.trim()) {
-    ElMessage.warning('请输入驳回理由')
-    return
-  }
-  
   try {
-    await ElMessageBox.confirm(`确定要驳回课程"${currentCourse.value.title}"吗？`, '确认驳回', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    
-    currentCourse.value.status = 'rejected'
+    await courseApi.reviewCourse(currentCourse.value.id, 'rejected', rejectReason.value)
+    ElMessage.success('已驳回！')
     rejectVisible.value = false
-    ElMessage.success('课程已驳回')
-  } catch {
-    // 用户取消操作
+    rejectReason.value = ''
+    loadCourses()
+  } catch (e) {
+    ElMessage.error('驳回失败')
   }
 }
 
@@ -395,7 +373,9 @@ const handleCurrentChange = (page) => {
 }
 
 // 组件挂载
-onMounted(loadCourses)
+onMounted(() => {
+  loadCourses()
+})
 </script>
 
 <style scoped>

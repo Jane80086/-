@@ -38,17 +38,17 @@ public class Course implements Serializable {
     @TableField("duration")
     private Integer duration = 0;
 
-    @TableField("\"level\"")
-    private String level = "BEGINNER";
+    @TableField("course_level")
+    private String courseLevel = "BEGINNER";
+
+    @TableField("cover_image")
+    private String coverImage;
 
     @TableField("category")
     private String category;
 
     @TableField("status")
     private String status = "DRAFT";
-
-    @TableField("image_url")
-    private String imageUrl;
 
     @TableField("video_url")
     private String videoUrl;
@@ -65,11 +65,11 @@ public class Course implements Serializable {
     @TableField("favorite_count")
     private Integer favoriteCount = 0;
 
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    private LocalDateTime createdTime;
 
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedTime;
 
     @TableLogic
     @TableField("deleted")
@@ -101,8 +101,8 @@ public class Course implements Serializable {
         }
         this.title = title;
         this.description = description;
-        this.imageUrl = imageUrl;
-        this.updateTime = LocalDateTime.now();
+        this.coverImage = imageUrl;
+        this.updatedTime = LocalDateTime.now();
         onCourseEdited(this.id);
     }
 
@@ -112,8 +112,8 @@ public class Course implements Serializable {
      */
     @JsonIgnore
     public void submitForReview() throws Exception {
-        this.status = "DRAFT"; // 待审核
-        this.updateTime = LocalDateTime.now();
+        this.status = "PENDING"; // 正确：待审核
+        this.updatedTime = LocalDateTime.now();
         onCourseSubmitted(this.id);
     }
 
@@ -149,8 +149,8 @@ public class Course implements Serializable {
     public String getDescription() {
         return this.description;
     }
-    public String getImageUrl() {
-        return this.imageUrl;
+    public String getCoverImage() {
+        return this.coverImage;
     }
     public String getTitle() {
         return this.title;

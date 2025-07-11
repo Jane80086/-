@@ -222,6 +222,9 @@ async function loadCourses() {
     if (res.code === 200) {
       allCourses.value = res.data.content || res.data || []
       totalCourses.value = res.data.totalElements || allCourses.value.length
+      console.log('[MyCourses] allCourses:', allCourses.value)
+      // 课程加载完再加载发布记录
+      await loadAllReviewHistory()
     } else {
       ElMessage.error(res.message || '获取课程失败')
     }
@@ -403,7 +406,34 @@ function getVideoPreviewUrl(objectName) {
   // 只传对象名
   return `/api/file/stream?objectName=${encodeURIComponent(objectName)}`
 }
-onMounted(() => { loadCourses(); /* 可根据需要调用 loadReviewHistory(某课程id) */ })
+onMounted(() => {
+  console.log('企业端MyCourses页面挂载')
+  loadCourses();
+})
+
+// 批量加载所有课程的发布记录
+async function loadAllReviewHistory() {
+  console.log('[MyCourses] loadAllReviewHistory allCourses:', allCourses.value)
+  publishRecords.value = []
+  for (const course of allCourses.value) {
+    try {
+      const res = await courseApi.getReviewLog(course.id)
+      console.log(`[MyCourses] getReviewLog(${course.id}) 响应:`, res)
+      if (res.code === 200 && Array.isArray(res.data)) {
+        publishRecords.value.push(...res.data.map(item => ({
+          title: item.resource_name || '',
+          publishTime: item.audit_time || '',
+          reviewer: item.reviewer_name || (item.reviewer_id ? `ID:${item.reviewer_id}` : ''),
+          result: item.status === 'APPROVED' ? '通过' : item.status === 'REJECTED' ? '未通过' : '审核中',
+          remark: item.comment || ''
+        })))
+        console.log('[MyCourses] publishRecords after push:', publishRecords.value)
+      }
+    } catch (e) {
+      console.error(`[MyCourses] getReviewLog(${course.id}) error:`, e)
+    }
+  }
+}
 </script>
 <style scoped>
 .enterprise-courses-container {
