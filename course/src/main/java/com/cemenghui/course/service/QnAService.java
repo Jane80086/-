@@ -71,4 +71,9 @@ public interface QnAService {
      * 人工回复
      */
     boolean manualReply(Long id, String replyContent, Long replyUserId);
+
+    /**
+     * 自动补全问题（根据输入模糊匹配历史问题，仅返回问题文本）
+     */
+    List<String> autocompleteQuestions(String query);
 } 

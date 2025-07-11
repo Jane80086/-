@@ -24,7 +24,17 @@ const router = useRouter()
 const courses = ref([])
 const loadCourses = async () => {
   const res = await courseApi.getCourseList()
-  if (res.code === 200) courses.value = res.data.content || res.data || []
+  if (res.code === 200) {
+    if (Array.isArray(res.data)) {
+      courses.value = res.data
+    } else if (res.data && Array.isArray(res.data.content)) {
+      courses.value = res.data.content
+    } else {
+      courses.value = []
+    }
+  } else {
+    ElMessage.error(res.message || '获取课程失败')
+  }
 }
 const viewCourseDetail = (id) => router.push(`/enterprise/course/${id}`)
 onMounted(loadCourses)

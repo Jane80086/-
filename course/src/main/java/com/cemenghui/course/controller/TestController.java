@@ -11,7 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/test")
-@CrossOrigin(origins = "*")
+@CrossOrigin(originPatterns = "*")
 public class TestController {
 
     @GetMapping("/hello")

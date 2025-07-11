@@ -13,7 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor)
-                .addPathPatterns("/course/**") // 需要登录校验的接口路径
+                .addPathPatterns("/api/course/**") // 需要登录校验的接口路径
                 .excludePathPatterns("/auth/**", "/login", "/register"); // 登录、注册等放行
     }
 } 

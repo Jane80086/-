@@ -132,64 +132,45 @@ const searchBarRef = ref(null)
 const courses = ref([])
 const loadCourses = async () => {
   loading.value = true
-  const params = {
-    page: currentPage.value, // 改为从1开始
-    size: pageSize.value,
-    keyword: searchKeyword.value,
-    category: selectedCategory.value,
-    level: selectedLevel.value,
-    sortBy: sortBy.value
-  }
-  const res = await courseApi.getCourseList(params)
-  if (res.code === 200) {
-    courses.value = res.data.content || res.data || []
-    totalCourses.value = res.data.totalElements || courses.value.length
-  } else {
-    ElMessage.error(res.message || '获取课程列表失败')
+  try {
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+      keyword: searchKeyword.value,
+      category: selectedCategory.value,
+      level: selectedLevel.value,
+      sortBy: sortBy.value
+    }
+    const res = await courseApi.getCourseList(params)
+    if (res && res.code === 200) {
+      if (res.data && res.data.content) {
+        courses.value = res.data.content
+        totalCourses.value = res.data.totalElements || 0
+      } else if (Array.isArray(res.data)) {
+        courses.value = res.data
+        totalCourses.value = res.data.length
+      } else {
+        courses.value = []
+        totalCourses.value = 0
+      }
+    } else {
+      courses.value = []
+      totalCourses.value = 0
+      ElMessage.warning(res?.message || '暂无课程数据')
+    }
+  } catch (error) {
+    courses.value = []
+    totalCourses.value = 0
+    ElMessage.error('课程服务暂不可用，请稍后重试')
   }
   loading.value = false
 }
-const filteredCourses = computed(() => {
-  let filtered = courses.value
-  if (searchKeyword.value) {
-    const kw = searchKeyword.value.trim().toLowerCase()
-    filtered = filtered.filter(course =>
-      course.title.toLowerCase().includes(kw) ||
-      course.description.toLowerCase().includes(kw) ||
-      (course.instructorName && course.instructorName.toLowerCase().includes(kw))
-    )
-  }
-  if (selectedCategory.value) {
-    filtered = filtered.filter(course => course.category === selectedCategory.value)
-  }
-  if (selectedLevel.value) {
-    filtered = filtered.filter(course => course.level === selectedLevel.value)
-  }
-  switch (sortBy.value) {
-    case 'latest':
-      filtered = [...filtered].sort((a, b) => b.id - a.id)
-      break
-    case 'popular':
-      filtered = [...filtered].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
-      break
-    case 'rating':
-      filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0))
-      break
-    case 'price-asc':
-      filtered = [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0))
-      break
-    case 'price-desc':
-      filtered = [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0))
-      break
-  }
-  return filtered
-})
 const displayCourses = computed(() => {
-  totalCourses.value = filteredCourses.value.length
-  return filteredCourses.value.slice((currentPage.value-1)*pageSize.value, currentPage.value*pageSize.value)
+  return courses.value
 })
 const searchCourses = () => {
   currentPage.value = 1
+  loadCourses()
 }
 const searchByKeyword = (keyword) => {
   searchKeyword.value = keyword
@@ -197,9 +178,11 @@ const searchByKeyword = (keyword) => {
 }
 const filterCourses = () => {
   currentPage.value = 1
+  loadCourses()
 }
 const sortCourses = () => {
   currentPage.value = 1
+  loadCourses()
 }
 const resetFilters = () => {
   selectedCategory.value = ''
@@ -207,6 +190,7 @@ const resetFilters = () => {
   sortBy.value = 'latest'
   searchKeyword.value = ''
   currentPage.value = 1
+  loadCourses()
 }
 const viewCourseDetail = (courseId) => {
   router.push(`/enterprise/course/${courseId}`)
@@ -223,9 +207,11 @@ const formatDuration = (minutes) => {
 const handleSizeChange = (size) => {
   pageSize.value = size
   currentPage.value = 1
+  loadCourses()
 }
 const handleCurrentChange = (page) => {
   currentPage.value = page
+  loadCourses()
 }
 const handleScroll = () => {
   if (!searchBarRef.value) return

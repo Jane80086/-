@@ -12,13 +12,16 @@ import java.util.Arrays;
 
 @Configuration
 public class CorsConfig {
+    /**
+     * Spring MVC 全局 CORS 配置，支持通配符和携带凭证
+     */
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("*")
+                        .allowedOriginPatterns("*") // 允许所有来源，支持 allowCredentials
                         .allowCredentials(true)
                         .allowedMethods("*")
                         .allowedHeaders("*");
@@ -27,38 +30,24 @@ public class CorsConfig {
     }
 
     /**
-     * 配置CORS配置源
+     * Spring Security CORS 配置源，支持通配符和携带凭证
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // 允许的域名
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        
-        // 允许的请求方法
+        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // 允许所有来源
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        
-        // 允许的请求头
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        
-        // 允许的响应头
         configuration.setExposedHeaders(Arrays.asList(
             "Access-Control-Allow-Origin",
             "Access-Control-Allow-Credentials",
             "Access-Control-Allow-Headers",
             "Access-Control-Allow-Methods"
         ));
-        
-        // 是否允许携带cookie
-        configuration.setAllowCredentials(true);
-        
-        // 预检请求的有效期
+        configuration.setAllowCredentials(true); // 允许携带 cookie
         configuration.setMaxAge(3600L);
-        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        
         return source;
     }
 } 

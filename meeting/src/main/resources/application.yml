@@ -1,1 +1,7 @@
- 
+spring:
+  profiles:
+    active: meeting
+
+jwt:
+  secret: cemenghui-secret-key
+  expiration: 86400000 

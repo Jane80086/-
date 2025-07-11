@@ -40,9 +40,28 @@ const onLicenseSuccess = (res) => { form.value.businessLicense = res.url || res.
 const onCoverSuccess = (res) => { form.value.coverImage = res.url || res.data?.url }
 const onVideoSuccess = (res) => { form.value.videoUrl = res.url || res.data?.url }
 const submitCreate = async () => {
+  // 构造后端需要的payload
+  const payload = {
+    title: form.value.title,
+    description: form.value.description,
+    imageUrl: form.value.coverImage ? form.value.coverImage.replace(/^https?:\/\/[^/]+/, '') : '',
+    videoUrl: form.value.videoUrl ? form.value.videoUrl.replace(/^https?:\/\/[^/]+/, '') : '',
+    category: '编程开发', // 可根据实际需求让用户选择
+    instructorId: 1 // TODO: 替换为当前登录用户ID
+  }
+  if (!payload.title || !payload.description || !payload.imageUrl || !payload.videoUrl) {
+    alert('请填写所有必填项并上传封面和视频')
+    return
+  }
   try {
-    const res = await axios.post('/api/course/create', form.value)
-    router.push(`/course/${res.data.data.id}`)
-  } catch (e) {}
+    const res = await axios.post('/api/course/create', payload)
+    if (res.data && res.data.code === 200) {
+      router.push(`/course/${res.data.data.course.id}`)
+    } else {
+      alert(res.data?.message || '创建失败')
+    }
+  } catch (e) {
+    alert(e?.response?.data?.message || '请求失败')
+  }
 }
 </script> 

@@ -5,12 +5,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import com.cemenghui.course.config.JwtFilter;
+import com.cemenghui.course.config.JwtInterceptor;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ComponentScan(basePackages = "com.cemenghui.course", 
+    excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {JwtFilter.class, JwtInterceptor.class})
+    })
 public class ApiAutoTest {
     @Autowired
     private MockMvc mockMvc;
@@ -39,7 +47,9 @@ public class ApiAutoTest {
     @Test
     @DisplayName("PUT /api/user/info")
     void testUpdateUserInfo() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.put("/api/user/info"))
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/user/info")
+                .contentType("application/json")
+                .content("{\"name\":\"test\",\"email\":\"test@test.com\"}"))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
 

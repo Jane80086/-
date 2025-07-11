@@ -4,6 +4,9 @@
       <el-skeleton :rows="10" animated />
     </div>
     <div v-else-if="course" class="course-content">
+      <div v-if="course.status === 'REJECTED'">
+        <el-alert title="该课程已被驳回" type="error" :description="course.rejectReason || '无'" show-icon />
+      </div>
       <!-- 课程头部信息 -->
       <div class="course-header">
         <div class="course-banner">
@@ -140,6 +143,13 @@
         </div>
       </div>
     </div>
+    <div v-else-if="forbidden" class="not-found">
+      <el-result icon="warning" title="无权限访问该课程" sub-title="抱歉，您无权访问该课程">
+        <template #extra>
+          <el-button type="primary" @click="$router.push('/enterprise/courses')">返回课程列表</el-button>
+        </template>
+      </el-result>
+    </div>
     <div v-else class="not-found">
       <el-result icon="warning" title="课程不存在" sub-title="抱歉，您访问的课程不存在或已被删除">
         <template #extra>
@@ -161,6 +171,7 @@ const course = ref(null)
 const chapters = ref([])
 const activeTab = ref('intro')
 const isFavorite = ref(false)
+<<<<<<< HEAD
 // mock数据
 const mockCourse = {
   id: 1,
@@ -180,6 +191,14 @@ const mockCourse = {
   updateTime: '2024-07-01',
   status: 'published',
   outline: '1. HTML基础\n2. CSS基础\n3. JavaScript基础',
+=======
+const videoError = ref(false)
+const forbidden = ref(false)
+const userId = 1 // TODO: 替换为当前登录用户ID
+
+function onVideoError() {
+  videoError.value = true
+>>>>>>> a4b722f (本地临时保存)
 }
 const mockChapters = [
   { id: 1, title: 'HTML基础', duration: 40, description: 'HTML标签与结构' },
@@ -188,9 +207,42 @@ const mockChapters = [
 ]
 const loadCourseDetail = () => {
   loading.value = true
+<<<<<<< HEAD
   setTimeout(() => {
     course.value = mockCourse
     chapters.value = mockChapters
+=======
+  try {
+    const courseId = route.params.id
+    const res = await courseApi.getCourseDetail(courseId, userId)
+    if (res.code === 200 && res.data && Object.keys(res.data).length > 0) {
+      course.value = res.data
+      forbidden.value = false
+    } else if (res.code === 403) {
+      forbidden.value = true
+      course.value = null
+    } else {
+      course.value = null
+      forbidden.value = false
+      ElMessage.error(res.message || '获取课程详情失败')
+    }
+    // 获取章节（如有章节API）
+    if (courseId && courseApi.getChapters) {
+      try {
+        const chapterRes = await courseApi.getChapters(courseId)
+        if (chapterRes.code === 200) {
+          chapters.value = chapterRes.data || []
+        } else {
+          chapters.value = []
+        }
+      } catch (e) {
+        chapters.value = []
+      }
+    }
+  } catch (e) {
+    ElMessage.error('网络错误，请稍后重试')
+  } finally {
+>>>>>>> a4b722f (本地临时保存)
     loading.value = false
   }, 500)
 }
@@ -215,17 +267,17 @@ const formatDate = (date) => {
   return date
 }
 const getStatusType = (status) => {
-  if (status === 'published') return 'success'
-  if (status === 'draft') return 'info'
-  if (status === 'pending') return 'warning'
-  if (status === 'rejected') return 'danger'
+  if (status === 'PUBLISHED') return 'success'
+  if (status === 'DRAFT') return 'info'
+  if (status === 'PENDING') return 'warning'
+  if (status === 'REJECTED') return 'danger'
   return ''
 }
 const getStatusText = (status) => {
-  if (status === 'published') return '已发布'
-  if (status === 'draft') return '草稿'
-  if (status === 'pending') return '审核中'
-  if (status === 'rejected') return '未通过'
+  if (status === 'PUBLISHED') return '已发布'
+  if (status === 'DRAFT') return '草稿'
+  if (status === 'PENDING') return '审核中'
+  if (status === 'REJECTED') return '已驳回'
   return ''
 }
 onMounted(() => {

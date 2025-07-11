@@ -229,4 +229,20 @@ public class CourseServiceImpl implements CourseService {
         wrapper.orderByDesc(Course::getCreateTime);
         return courseDao.selectList(wrapper);
     }
+
+    @Override
+    public List<Course> listPublishedCourses() {
+        QueryWrapper<Course> wrapper = new QueryWrapper<>();
+        wrapper.eq("status", "PUBLISHED");
+        wrapper.eq("deleted", 0);
+        return courseDao.selectList(wrapper);
+    }
+
+    @Override
+    public List<Course> listCoursesByUser(Long userId) {
+        QueryWrapper<Course> wrapper = new QueryWrapper<>();
+        wrapper.eq("instructor_id", userId);
+        wrapper.eq("deleted", 0);
+        return courseDao.selectList(wrapper);
+    }
 } 

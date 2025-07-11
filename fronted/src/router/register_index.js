@@ -3,19 +3,19 @@ export const registerRoutes = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/RegisterAndLogin/Login.vue'),
+    component: () => import('@/views/register/Login.vue'),
     meta: { requiresAuth: false }
   },
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/RegisterAndLogin/Register.vue'),
+    component: () => import('@/views/register/Register.vue'),
     meta: { requiresAuth: false }
   },
   {
     path: '/enterprise-register',
     name: 'EnterpriseRegister',
-    component: () => import('@/views/RegisterAndLogin/EnterpriseRegister.vue'),
+    component: () => import('@/views/register/EnterpriseRegister.vue'),
     meta: { requiresAuth: false }
   }
 ] 

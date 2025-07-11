@@ -188,6 +188,10 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, StarFilled, View, User, Clock, Document } from '@element-plus/icons-vue'
 import { courseApi } from '@/api/course'
+<<<<<<< HEAD
+=======
+import adminApi from '@/api/admin'
+>>>>>>> a4b722f (本地临时保存)
 
 const router = useRouter()
 const loading = ref(false)
@@ -216,7 +220,7 @@ const loadCourses = async () => {
     category: selectedCategory.value,
     sortBy: sortBy.value
   }
-  const res = await courseApi.getCourseList(params)
+  const res = await adminApi.getCourses(params)
   if (res.code === 200) {
     courses.value = res.data.content || res.data || []
     totalCourses.value = res.data.totalElements || courses.value.length
@@ -308,7 +312,15 @@ const resetFilters = () => {
 }
 
 const viewCourseDetail = (courseId) => {
+<<<<<<< HEAD
   router.push(`/admin/course/${courseId}`)
+=======
+  if (courseId) {
+  router.push(`/admin/course/${courseId}`)
+  } else {
+    ElMessage.error('课程ID无效，无法跳转详情页')
+  }
+>>>>>>> a4b722f (本地临时保存)
 }
 
 const approveCourse = async (course) => {
@@ -318,9 +330,21 @@ const approveCourse = async (course) => {
       cancelButtonText: '取消',
       type: 'success'
     })
+<<<<<<< HEAD
     
     course.status = 'approved'
     ElMessage.success('课程审核通过')
+=======
+    // 调用后端审核接口
+    const res = await adminApi.reviewCourse(course.id, 'approved')
+    if (res.code === 200) {
+    course.status = 'approved'
+    ElMessage.success('课程审核通过')
+      loadCourses()
+    } else {
+      ElMessage.error(res.message || '审核失败')
+    }
+>>>>>>> a4b722f (本地临时保存)
   } catch {
     // 用户取消操作
   }
@@ -344,10 +368,23 @@ const confirmReject = async () => {
       cancelButtonText: '取消',
       type: 'warning'
     })
+<<<<<<< HEAD
     
     currentCourse.value.status = 'rejected'
     rejectVisible.value = false
     ElMessage.success('课程已驳回')
+=======
+    // 调用后端审核接口
+    const res = await adminApi.reviewCourse(currentCourse.value.id, 'rejected', rejectReason.value)
+    if (res.code === 200) {
+    currentCourse.value.status = 'rejected'
+    rejectVisible.value = false
+    ElMessage.success('课程已驳回')
+      loadCourses()
+    } else {
+      ElMessage.error(res.message || '驳回失败')
+    }
+>>>>>>> a4b722f (本地临时保存)
   } catch {
     // 用户取消操作
   }

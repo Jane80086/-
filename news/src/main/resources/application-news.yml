@@ -47,10 +47,6 @@ mybatis-plus:
       id-type: auto
   type-aliases-package: com.cemenghui.news.entity
 
-jwt:
-  secret: cemenghui-secret-key
-  expiration: 86400000
-
 minio:
   accessKey: minioadmin
   secretKey: minioadmin
@@ -65,9 +61,3 @@ mcp:
 dify:
   api-key: "your-dify-api-key"
   base-url: "https://api.dify.ai/v1"
-
-app:
-  jwt:
-    secret: your_jwt_secret_key_please_change
-    expiration: 86400000
-    refresh-expiration: 604800000
