@@ -1,8 +1,0 @@
-spring:
-  profiles:
-    active: system
-
-jwt:
-  secret: cemenghui-secret-key
-  access-expire: 86400000
-  refresh-expire: 604800000

@@ -1,0 +1,51 @@
+# 开发环境配置
+spring:
+  datasource:
+    url: jdbc:kingbase8://localhost:54321/course_manager
+    username: SYSTEM
+    password: 123456
+    driver-class-name: com.kingbase8.Driver
+
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+
+logging:
+  level:
+    com.cemenghui: debug
+    org.springframework.security: debug
+    org.springframework.web: debug
+
+# 开发环境多数据源配置 - 统一数据库
+course:
+  datasource:
+    url: jdbc:kingbase8://localhost:54321/course_manager
+    username: SYSTEM
+    password: 123456
+    driver-class-name: com.kingbase8.Driver
+  redis:
+    database: 1
+
+meeting:
+  datasource:
+    url: jdbc:kingbase8://localhost:54321/course_manager
+    username: SYSTEM
+    password: 123456
+    driver-class-name: com.kingbase8.Driver
+  redis:
+    database: 2
+
+news:
+  datasource:
+    url: jdbc:kingbase8://localhost:54321/course_manager
+    username: SYSTEM
+    password: 123456
+    driver-class-name: com.kingbase8.Driver
+  redis:
+    database: 3
+
+jwt:
+  secret: cemenghui-secret-key
+  expiration: 86400000
