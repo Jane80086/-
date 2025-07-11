@@ -41,12 +41,14 @@
         <div class="header-user">
           <el-avatar :src="user.avatar" size="medium" class="avatar" />
           <el-tag class="role-tag" effect="plain" color="#B7AFA3">普通用户</el-tag>
-          <el-dropdown>
-            <span class="el-dropdown-link">{{ user.nickname }}</span>
+          <el-dropdown @command="handleDropdownCommand">
+            <span class="el-dropdown-link">
+              <el-icon><arrow-down /></el-icon>
+            </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>个人中心</el-dropdown-item>
-                <el-dropdown-item>退出登录</el-dropdown-item>
+                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -63,8 +65,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
-import { ElMessage } from 'element-plus'
-import { HomeFilled, Document, Collection, Calendar, UserFilled, DataAnalysis, MoreFilled, Reading } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { HomeFilled, Document, Collection, Calendar, UserFilled, DataAnalysis, MoreFilled, Reading, ArrowDown } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -166,6 +168,56 @@ const handleMenuSelect = (index) => {
   } catch (error) {
     console.error('路由跳转异常:', error)
     ElMessage.error('页面跳转异常，请稍后重试')
+  }
+}
+
+// 处理下拉菜单命令
+const handleDropdownCommand = (command) => {
+  console.log('UserLayout 下拉菜单命令:', command)
+  
+  if (command === 'profile') {
+    handleProfile()
+  } else if (command === 'logout') {
+    handleLogout()
+  }
+}
+
+// 处理个人中心点击
+const handleProfile = () => {
+  console.log('点击个人中心')
+  router.push('/user/profile')
+}
+
+// 处理退出登录
+const handleLogout = async () => {
+  try {
+    console.log('开始退出登录')
+    
+    // 显示确认对话框
+    await ElMessageBox.confirm(
+      '确定要退出登录吗？',
+      '退出登录',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    // 调用store中的退出登录方法
+    await userStore.logout()
+    
+    // 显示成功消息
+    ElMessage.success('退出登录成功')
+    
+    // 跳转到登录页面
+    router.push('/login')
+    
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('退出登录失败:', error)
+      ElMessage.error('退出登录失败，请重试')
+    }
   }
 }
 </script>
