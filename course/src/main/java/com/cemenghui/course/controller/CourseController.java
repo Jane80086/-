@@ -30,6 +30,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.math.BigDecimal;
+import com.cemenghui.course.service.impl.MinioServiceImpl;
+import com.cemenghui.course.service.ChapterService;
+import com.cemenghui.common.JWTUtil;
+import org.springframework.beans.factory.annotation.Value;
 
 @RestController
 @RequestMapping("/api/course")
@@ -50,28 +54,64 @@ public class CourseController {
     @Autowired
     private CourseOptimizationService courseOptimizationService;
 
+    @Autowired
+    private MinioServiceImpl minioServiceImpl;
+
+    @Autowired
+    private ChapterService chapterService;
+
+    @Autowired
+    private JWTUtil jwtUtil;
+
     /**
      * 创建新课程
+     * @param course 课程对象
+     * @param useAiOptimization 是否使用AI优化（可选，默认true）
      */
     @PostMapping("/create")
-    public ResponseEntity<Result> createCourse(@RequestBody @Valid Course course) {
+    public ResponseEntity<Result> createCourse(@RequestBody @Valid Course course,
+                                               @RequestParam(value = "useAiOptimization", required = false, defaultValue = "true") boolean useAiOptimization) {
         try {
-            // AI优化课程标题和简介
-            if (course.getTitle() != null && course.getDescription() != null) {
-                Map<String, String> optimizedInfo = courseOptimizationService.optimizeCourseInfo(
-                    course.getTitle(), 
-                    course.getDescription(), 
-                    course.getCategory()
-                );
-                
-                // 使用优化后的标题和简介
-                course.setTitle(optimizedInfo.get("optimized_title"));
-                course.setDescription(optimizedInfo.get("optimized_description"));
+            // 校验视频/封面URL是否存在于MinIO（可选）
+            boolean videoExists = true;
+            boolean coverExists = true;
+            String videoUrl = course.getVideoUrl();
+            String imageUrl = course.getImageUrl();
+            // 仅校验非空URL
+            if (videoUrl != null && !videoUrl.isEmpty()) {
+                videoExists = minioServiceImpl.fileExists(videoUrl.replaceFirst("^.*/course-files/", ""));
             }
-            
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                coverExists = minioServiceImpl.fileExists(imageUrl.replaceFirst("^.*/course-files/", ""));
+            }
+            if (!videoExists) {
+                return ResponseEntity.badRequest().body(Result.fail("视频文件在MinIO中不存在，请先上传！"));
+            }
+            if (!coverExists) {
+                return ResponseEntity.badRequest().body(Result.fail("封面图片在MinIO中不存在，请先上传！"));
+            }
+            // AI优化课程标题和简介（可选，失败不影响创建）
+            // if (useAiOptimization && course.getTitle() != null && course.getDescription() != null) {
+            //     try {
+            //         Map<String, String> optimizedInfo = courseOptimizationService.optimizeCourseInfo(
+            //             course.getTitle(),
+            //             course.getDescription(),
+            //             course.getCategory()
+            //         );
+            //         course.setTitle(optimizedInfo.getOrDefault("optimized_title", course.getTitle()));
+            //         course.setDescription(optimizedInfo.getOrDefault("optimized_description", course.getDescription()));
+            //     } catch (Exception aiEx) {
+            //         System.err.println("AI优化失败: " + aiEx.getMessage());
+            //     }
+            // }
             Course createdCourse = courseManagerService.createCourse(course);
-            return ResponseEntity.ok(Result.success("课程创建成功（已AI优化）", createdCourse));
+            Map<String, Object> result = new HashMap<>();
+            result.put("course", createdCourse);
+            result.put("videoUrl", createdCourse.getVideoUrl());
+            result.put("imageUrl", createdCourse.getImageUrl());
+            return ResponseEntity.ok(Result.success("课程创建成功", result));
         } catch (Exception e) {
+            e.printStackTrace(); // 强制输出异常到控制台
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("课程创建失败: " + e.getMessage()));
         }
@@ -99,11 +139,14 @@ public class CourseController {
     @GetMapping("/{id}")
     public ResponseEntity<Result> getCourseDetail(@PathVariable Long id) {
         try {
-            Course course = courseService.getCourseDetail(id);
-            return ResponseEntity.ok(Result.success(course));
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Result.fail("课程不存在: " + e.getMessage()));
+            Course course = courseService.getCourseDetail(id); // 用数据库真实数据
+            if (course == null) {
+                // 课程不存在，返回 code=404, data=null
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Result.success("课程不存在", null));
+            }
+            // 课程存在，返回 code=200, data=course
+            return ResponseEntity.ok(Result.success("操作成功", course));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("获取课程详情失败: " + e.getMessage()));
@@ -152,13 +195,12 @@ public class CourseController {
     @GetMapping("/list")
     public ResponseEntity<Result> getCourseList() {
         try {
-            // 直接返回模拟数据，避免数据库连接问题
-            List<Course> mockCourses = createMockCourses();
-            return ResponseEntity.ok(Result.success("使用模拟数据", mockCourses));
+            List<Course> courses = courseService.listCourses(); // 用数据库真实数据
+            return ResponseEntity.ok(Result.success("获取成功", courses));
         } catch (Exception e) {
             e.printStackTrace();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(Result.fail("获取课程列表失败: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.fail("获取课程列表失败: " + e.getMessage()));
         }
     }
 
@@ -177,7 +219,7 @@ public class CourseController {
         course1.setPrice(new BigDecimal("0.0"));
         course1.setInstructorId(1L);
         course1.setCategory("编程开发");
-        course1.setStatus(1); // 1表示已发布
+        course1.setStatus("PUBLISHED"); // 1表示已发布
         courses.add(course1);
 
         Course course2 = new Course();
@@ -190,7 +232,7 @@ public class CourseController {
         course2.setPrice(new BigDecimal("99.0"));
         course2.setInstructorId(2L);
         course2.setCategory("框架开发");
-        course2.setStatus(1); // 1表示已发布
+        course2.setStatus("PUBLISHED"); // 1表示已发布
         courses.add(course2);
 
         Course course3 = new Course();
@@ -203,7 +245,7 @@ public class CourseController {
         course3.setPrice(new BigDecimal("79.0"));
         course3.setInstructorId(3L);
         course3.setCategory("前端开发");
-        course3.setStatus(1); // 1表示已发布
+        course3.setStatus("PUBLISHED"); // 1表示已发布
         courses.add(course3);
         return courses;
     }
@@ -487,6 +529,47 @@ public class CourseController {
     }
 
     /**
+     * 获取我的课程统计
+     */
+    @GetMapping("/my/stats")
+    public Result getMyCourseStats(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        Long userId = null;
+        try {
+            userId = jwtUtil.getUserIdFromToken(token);
+        } catch (Exception e) {
+            return Result.fail("无法解析用户身份，请重新登录");
+        }
+        // 统计我的课程数
+        int totalCourses = 0;
+        try {
+            totalCourses = courseHistoryService.getUserHistory(userId).size();
+        } catch (Exception e) {}
+        // 证书数（如有证书表可查，否则先 mock）
+        int certificates = 0; // TODO: 查询证书表
+        // 学习时长、平均进度（如有学习记录表可查，否则先 mock）
+        int totalTime = 0; // TODO: 查询学习时长
+        int avgProgress = 0; // TODO: 查询平均进度
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalCourses", totalCourses);
+        stats.put("certificates", certificates);
+        stats.put("totalTime", totalTime);
+        stats.put("avgProgress", avgProgress);
+        return Result.success("操作成功", stats);
+    }
+
+    /**
+     * 获取课程章节
+     */
+    @GetMapping("/{id}/chapters")
+    public ResponseEntity<Result> getCourseChapters(@PathVariable Long id) {
+        return ResponseEntity.ok(Result.success(chapterService.getChaptersByCourseId(id)));
+    }
+
+    /**
      * 处理参数校验异常
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -557,50 +640,77 @@ public class CourseController {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        // 2. 仅支持本地文件或本地服务器路径（如为云存储请用签名URL方案）
-        Resource videoResource;
+        
+        // 从MinIO获取视频文件
+        String objectName;
+        if (videoUrl.contains("/course-files/")) {
+            // 如果是完整的MinIO URL，提取对象名
+            objectName = videoUrl.replaceFirst("^.*/course-files/", "");
+        } else {
+            // 如果只是对象名，直接使用
+            objectName = videoUrl;
+        }
+        
         try {
-            videoResource = new UrlResource(videoUrl);
-        } catch (MalformedURLException e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            return;
-        }
-        if (!videoResource.exists()) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
-        // 3. 支持 HTTP Range
-        long fileLength = videoResource.contentLength();
-        String range = request.getHeader("Range");
-        long start = 0, end = fileLength - 1;
-        if (range != null && range.startsWith("bytes=")) {
-            String[] parts = range.replace("bytes=", "").split("-");
-            try {
-                start = Long.parseLong(parts[0]);
-                if (parts.length > 1 && !parts[1].isEmpty()) {
-                    end = Long.parseLong(parts[1]);
-                }
-            } catch (NumberFormatException ignore) {}
-        }
-        long contentLength = end - start + 1;
-        response.setStatus(range == null ? 200 : 206);
-        response.setContentType("video/mp4");
-        response.setHeader("Accept-Ranges", "bytes");
-        response.setHeader("Content-Length", String.valueOf(contentLength));
-        response.setHeader("Content-Range", String.format("bytes %d-%d/%d", start, end, fileLength));
-        // 4. 读取并输出视频流
-        try (InputStream is = videoResource.getInputStream(); OutputStream os = response.getOutputStream()) {
-            is.skip(start);
-            byte[] buffer = new byte[8192];
-            long toRead = contentLength;
-            int len;
-            while (toRead > 0 && (len = is.read(buffer, 0, (int)Math.min(buffer.length, toRead))) != -1) {
-                os.write(buffer, 0, len);
-                toRead -= len;
+            // 获取文件大小
+            long fileSize = minioServiceImpl.getFileSize(objectName);
+            if (fileSize == 0) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
             }
-            os.flush();
+            
+            // 支持 HTTP Range
+            String range = request.getHeader("Range");
+            long start = 0, end = fileSize - 1;
+            if (range != null && range.startsWith("bytes=")) {
+                String[] parts = range.replace("bytes=", "").split("-");
+                try {
+                    start = Long.parseLong(parts[0]);
+                    if (parts.length > 1 && !parts[1].isEmpty()) {
+                        end = Long.parseLong(parts[1]);
+                    }
+                } catch (NumberFormatException ignore) {}
+            }
+            if (end >= fileSize) end = fileSize - 1;
+            if (start > end) start = 0;
+            
+            long contentLength = end - start + 1;
+            response.setStatus(range == null ? 200 : 206);
+            response.setContentType("video/mp4");
+            response.setHeader("Accept-Ranges", "bytes");
+            response.setHeader("Content-Length", String.valueOf(contentLength));
+            response.setHeader("Content-Range", String.format("bytes %d-%d/%d", start, end, fileSize));
+            
+            // 从MinIO读取并输出视频流
+            try (InputStream is = minioServiceImpl.downloadFile(objectName, start, end); 
+                 OutputStream os = response.getOutputStream()) {
+                byte[] buffer = new byte[8192];
+                long toRead = contentLength;
+                int len;
+                while (toRead > 0 && (len = is.read(buffer, 0, (int)Math.min(buffer.length, toRead))) != -1) {
+                    os.write(buffer, 0, len);
+                    toRead -= len;
+                }
+                os.flush();
+            }
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Video streaming error: " + e.getMessage());
         }
-        // 5. 可记录播放日志
-        // log.info("用户请求播放课程视频: courseId={}, range={}", id, range);
+    }
+
+    /**
+     * 获取热门搜索关键词
+     */
+    @GetMapping("/search/hot-keywords")
+    public ResponseEntity<Result> getHotKeywords() {
+        try {
+            // 临时返回默认数据，避免 500 错误
+            List<String> keywords = java.util.Arrays.asList("Java", "前端", "AI", "大数据", "Python");
+            return ResponseEntity.ok(Result.success(keywords));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.fail("获取热搜关键词失败: " + e.getMessage()));
+        }
     }
 } 

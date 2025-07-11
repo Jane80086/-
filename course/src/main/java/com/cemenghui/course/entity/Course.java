@@ -38,14 +38,14 @@ public class Course implements Serializable {
     @TableField("duration")
     private Integer duration = 0;
 
-    @TableField("level")
+    @TableField("\"level\"")
     private String level = "BEGINNER";
 
     @TableField("category")
     private String category;
 
     @TableField("status")
-    private Integer status = 0;
+    private String status = "DRAFT";
 
     @TableField("image_url")
     private String imageUrl;
@@ -112,7 +112,7 @@ public class Course implements Serializable {
      */
     @JsonIgnore
     public void submitForReview() throws Exception {
-        this.status = 0; // 待审核
+        this.status = "DRAFT"; // 待审核
         this.updateTime = LocalDateTime.now();
         onCourseSubmitted(this.id);
     }
@@ -154,5 +154,9 @@ public class Course implements Serializable {
     }
     public String getTitle() {
         return this.title;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 } 

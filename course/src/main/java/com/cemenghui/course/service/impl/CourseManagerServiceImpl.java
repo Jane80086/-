@@ -29,8 +29,12 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
      */
     @Override
     public Course createCourse(Course course) {
+        if (course.getStatus() == null || course.getStatus().isEmpty()) {
+            course.setStatus("DRAFT");
+        }
         courseDao.insert(course);
-        return course;
+        // 插入后用主键查一遍，返回数据库真实数据
+        return courseDao.selectById(course.getId());
     }
 
     /**
@@ -166,7 +170,7 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
     public boolean unpublishCourse(Long courseId) {
         Course course = courseDao.selectById(courseId);
         if (course == null) return false;
-        course.setStatus(0); // 0表示下架状态
+        course.setStatus("DRAFT"); // 0表示下架状态，改为字符串
         courseDao.updateById(course);
         return true;
     }

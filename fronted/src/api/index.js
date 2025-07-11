@@ -172,4 +172,17 @@ export const fileAPI = {
   }
 }
 
+// AI助手接口
+export async function askAI(question) {
+  // 这里可根据实际后端API调整
+  // 示例：POST /api/ai/ask { question }
+  try {
+    const res = await request.post('/api/ai/ask', { question })
+    // 假设后端返回 { code: 200, answer: '...' }
+    return res
+  } catch (e) {
+    return { answer: 'AI服务暂时不可用' }
+  }
+}
+
 export default request 

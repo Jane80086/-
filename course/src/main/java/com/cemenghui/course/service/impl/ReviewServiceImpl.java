@@ -39,7 +39,7 @@ public class ReviewServiceImpl implements ReviewService {
         // 更新课程状态
         Course course = courseDao.selectById(courseId);
         if (course != null) {
-            course.setStatus(1); // 1表示已发布
+            course.setStatus("PUBLISHED"); // 1表示已发布，改为字符串
             courseDao.updateById(course);
         }
         
@@ -64,7 +64,7 @@ public class ReviewServiceImpl implements ReviewService {
         // 更新课程状态
         Course course = courseDao.selectById(courseId);
         if (course != null) {
-            course.setStatus(2); // 2表示已拒绝
+            course.setStatus("REJECTED"); // 2表示已拒绝，改为字符串
             courseDao.updateById(course);
         }
         

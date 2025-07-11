@@ -154,6 +154,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { VideoPlay, User, Clock, View, Star, Share } from '@element-plus/icons-vue'
+import { courseApi } from '@/api/course'
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
@@ -161,41 +162,51 @@ const course = ref(null)
 const chapters = ref([])
 const activeTab = ref('intro')
 const isFavorite = ref(false)
-// mock数据
-const mockCourse = {
-  id: 1,
-  title: '前端开发入门',
-  description: '学习HTML、CSS、JavaScript基础',
-  instructorName: '张老师',
-  instructorAvatar: '',
-  instructorTitle: '高级讲师',
-  instructorBio: '10年开发经验，专注前端教育',
-  duration: 120,
-  price: 0,
-  imageUrl: '',
-  viewCount: 1234,
-  rating: 4.5,
-  category: '前端开发',
-  level: '初级',
-  updateTime: '2024-07-01',
-  status: 'published',
-  outline: '1. HTML基础\n2. CSS基础\n3. JavaScript基础',
+const videoError = ref(false)
+
+function onVideoError() {
+  videoError.value = true
 }
-const mockChapters = [
-  { id: 1, title: 'HTML基础', duration: 40, description: 'HTML标签与结构' },
-  { id: 2, title: 'CSS基础', duration: 40, description: '样式与布局' },
-  { id: 3, title: 'JavaScript基础', duration: 40, description: '语法与交互' },
-]
-const loadCourseDetail = () => {
+function getVideoPreviewUrl(objectName) {
+  return `/api/file/stream?objectName=${encodeURIComponent(objectName)}`
+}
+
+const loadCourseDetail = async () => {
   loading.value = true
-  setTimeout(() => {
-    course.value = mockCourse
-    chapters.value = mockChapters
+  try {
+    const courseId = route.params.id
+    const res = await courseApi.getCourseDetail(courseId)
+    console.log('courseId', courseId, res)
+    // 新增判断：data 为空对象也视为无效
+    if (res.code === 200 && res.data && Object.keys(res.data).length > 0) {
+      course.value = res.data
+    } else {
+      course.value = null
+      ElMessage.error(res.message || '获取课程详情失败')
+    }
+    // 获取章节（如有章节API）
+    if (courseId && courseApi.getChapters) {
+      try {
+        const chapterRes = await courseApi.getChapters(courseId)
+        if (chapterRes.code === 200) {
+          chapters.value = chapterRes.data || []
+        } else {
+          chapters.value = []
+        }
+      } catch (e) {
+        chapters.value = []
+      }
+    }
+  } catch (e) {
+    ElMessage.error('网络错误，请稍后重试')
+  } finally {
     loading.value = false
-  }, 500)
+  }
 }
 const goToPlay = () => {
-  router.push(`/enterprise/course/${course.value.id}/play`)
+  if (course.value && course.value.id) {
+    router.push(`/user/course/${course.value.id}/play`)
+  }
 }
 const toggleFavorite = () => {
   isFavorite.value = !isFavorite.value

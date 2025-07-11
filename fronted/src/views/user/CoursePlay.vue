@@ -47,7 +47,7 @@
         <h3>课程章节</h3>
         <div class="chapters-list">
           <div
-            v-for="(chapter, index) in chapters"
+            v-for="(chapter, index) in chapters || []"
             :key="chapter.id"
             class="chapter-item"
             :class="{ 
@@ -104,7 +104,7 @@
                   <el-empty description="暂无历史问答" />
                 </div>
                 <div v-else class="history-list">
-                  <div v-for="item in aiQnaList" :key="item.id" class="aiqna-item">
+                  <div v-for="item in aiQnaList || []" :key="item.id" class="aiqna-item">
                     <div class="question">Q: {{ item.question }}</div>
                     <div class="answer">A: <span class="ai-label">AI</span> {{ item.answer }}</div>
                     <div class="meta">{{ item.userName }} · {{ item.createTime }}</div>
@@ -156,7 +156,7 @@
                 </div>
                 
                 <div v-else class="note-items">
-                  <div v-for="note in notes" :key="note.id" class="note-item">
+                  <div v-for="note in notes || []" :key="note.id" class="note-item">
                     <div class="note-header">
                       <h4>{{ note.title }}</h4>
                       <div class="note-actions">
@@ -205,7 +205,7 @@
                 </div>
                 
                 <div v-else class="comment-items">
-                  <div v-for="comment in comments" :key="comment.id" class="comment-item">
+                  <div v-for="comment in comments || []" :key="comment.id" class="comment-item">
                     <div class="comment-user">
                       <img :src="comment.userAvatar || '/default-avatar.jpg'" :alt="comment.userName" class="user-avatar">
                       <div class="user-info">
@@ -291,7 +291,12 @@ const currentChapter = computed(() => {
 })
 
 const currentVideoUrl = computed(() => {
-  return currentChapter.value?.videoUrl || course.value?.videoUrl || ''
+  const courseId = route.params.id
+  if (currentChapter.value?.videoUrl || course.value?.videoUrl) {
+    // 使用视频流接口
+    return `/api/course/${courseId}/video`
+  }
+  return ''
 })
 
 // 方法

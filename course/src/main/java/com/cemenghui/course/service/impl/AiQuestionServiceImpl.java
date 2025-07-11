@@ -118,27 +118,19 @@ public class AiQuestionServiceImpl implements AiQuestionService {
             // 构建请求头
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer " + difyApiKey);
-            
             // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("inputs", Map.of(
-                "question", question,
-                "course_id", courseId.toString()
-            ));
-            
+            requestBody.put("question", question);
+            requestBody.put("context", courseId != null ? courseId.toString() : null);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            
-            // 发送请求到Dify工作流
+            // 发送请求到本地Python AI服务
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                difyWorkflowUrl, 
-                entity, 
+                "http://localhost:5001/ai/qa",
+                entity,
                 Map.class
             );
-            
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> result = response.getBody();
-                // 根据Dify返回格式解析答案
                 if (result.containsKey("answer")) {
                     return (String) result.get("answer");
                 } else if (result.containsKey("output")) {
@@ -149,9 +141,8 @@ public class AiQuestionServiceImpl implements AiQuestionService {
             } else {
                 return "AI服务暂时不可用，请稍后重试。";
             }
-            
         } catch (Exception e) {
-            System.err.println("调用Dify工作流失败: " + e.getMessage());
+            System.err.println("调用本地AI服务失败: " + e.getMessage());
             return "AI服务暂时不可用，请稍后重试。";
         }
     }

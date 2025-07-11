@@ -15,7 +15,7 @@
         <el-input-number v-model="form.price" :min="0" />
       </el-form-item>
       <el-form-item label="封面">
-        <el-input v-model="form.coverImage" placeholder="图片URL" />
+        <el-input v-model="form.imageUrl" placeholder="图片URL" />
       </el-form-item>
       <el-form-item label="视频">
         <el-input v-model="form.videoUrl" placeholder="视频URL" />
@@ -40,7 +40,7 @@ const form = ref({
   description: '',
   category: '',
   price: 0,
-  coverImage: '',
+  imageUrl: '',
   videoUrl: ''
 })
 

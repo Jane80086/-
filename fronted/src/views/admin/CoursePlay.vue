@@ -47,7 +47,7 @@
         <h3>课程章节</h3>
         <div class="chapters-list">
           <div
-            v-for="(chapter, index) in chapters"
+            v-for="(chapter, index) in chapters || []"
             :key="chapter.id"
             class="chapter-item"
             :class="{ 
@@ -100,11 +100,11 @@
               
               <div class="aiqna-history">
                 <h4>历史问答</h4>
-                <div v-if="aiQnaList.length === 0" class="no-history">
+                <div v-if="(aiQnaList || []).length === 0" class="no-history">
                   <el-empty description="暂无历史问答" />
                 </div>
                 <div v-else class="history-list">
-                  <div v-for="item in aiQnaList" :key="item.id" class="aiqna-item">
+                  <div v-for="item in aiQnaList || []" :key="item.id" class="aiqna-item">
                     <div class="question">Q: {{ item.question }}</div>
                     <div class="answer">A: <span class="ai-label">AI</span> {{ item.answer }}</div>
                     <div class="meta">{{ item.userName }} · {{ item.createTime }}</div>
@@ -151,12 +151,12 @@
               
               <!-- 笔记列表 -->
               <div class="notes-list">
-                <div v-if="notes.length === 0" class="no-notes">
+                <div v-if="(notes || []).length === 0" class="no-notes">
                   <el-empty description="暂无笔记，开始记录您的学习心得吧" />
                 </div>
                 
                 <div v-else class="note-items">
-                  <div v-for="note in notes" :key="note.id" class="note-item">
+                  <div v-for="note in notes || []" :key="note.id" class="note-item">
                     <div class="note-header">
                       <h4>{{ note.title }}</h4>
                       <div class="note-actions">
@@ -182,7 +182,7 @@
             <div class="comments-section">
               <div class="comments-header">
                 <h3>课程评论</h3>
-                <span class="comment-count">{{ comments.length }} 条评论</span>
+                <span class="comment-count">{{ (comments || []).length }} 条评论</span>
               </div>
               
               <div class="comment-input">
@@ -200,11 +200,11 @@
               </div>
               
               <div class="comments-list">
-                <div v-if="comments.length === 0" class="no-comments">
+                <div v-if="(comments || []).length === 0" class="no-comments">
                   <el-empty description="暂无评论" />
                 </div>
                 <div v-else class="comment-items">
-                  <div v-for="comment in comments" :key="comment.id" class="comment-item">
+                  <div v-for="comment in comments || []" :key="comment.id" class="comment-item">
                     <div class="comment-header">
                       <span class="user">{{ comment.userName }}</span>
                       <span class="time">{{ formatDate(comment.createTime) }}</span>
@@ -248,12 +248,27 @@ const loading = ref(false)
 const course = ref(null)
 const chapters = ref([])
 const currentChapterIndex = ref(0)
-const currentVideoUrl = ref('')
+const currentVideoUrl = computed(() => {
+  const courseId = route.params.id
+  if (currentChapter.value?.videoUrl || course.value?.videoUrl) {
+    // 使用视频流接口
+    return `/api/course/${courseId}/video`
+  }
+  return '/default-video.mp4'
+})
 const activeTab = ref('info')
 const showRejectDialog = ref(false)
-const rejectForm = ref({
-  reason: ''
-})
+const rejectForm = ref({ reason: '' })
+// 新增：评论、笔记、AI问答等全部初始化为空数组
+const comments = ref([])
+const notes = ref([])
+const aiQnaList = ref([])
+const newComment = ref('')
+const showAddNote = ref(false)
+const noteForm = ref({ title: '', content: '', timestamp: '' })
+const aiQuestion = ref('')
+const aiAnswer = ref('')
+const aiLoading = ref(false)
 
 // 模拟审核记录
 const auditRecords = ref([
@@ -299,9 +314,6 @@ const loadChapters = async () => {
     const response = await courseApi.getChapters(courseId)
     if (response.code === 200) {
       chapters.value = response.data || []
-      if (chapters.value.length > 0) {
-        currentVideoUrl.value = chapters.value[0].videoUrl || '/default-video.mp4'
-      }
     } else {
       chapters.value = [{
         id: 1,
@@ -310,7 +322,6 @@ const loadChapters = async () => {
         duration: course.value.duration,
         videoUrl: '/default-video.mp4'
       }]
-      currentVideoUrl.value = '/default-video.mp4'
     }
   } catch (error) {
     chapters.value = [{
@@ -320,14 +331,11 @@ const loadChapters = async () => {
       duration: course.value.duration,
       videoUrl: '/default-video.mp4'
     }]
-    currentVideoUrl.value = '/default-video.mp4'
   }
 }
 
 const selectChapter = (index) => {
   currentChapterIndex.value = index
-  const chapter = chapters.value[index]
-  currentVideoUrl.value = chapter.videoUrl || '/default-video.mp4'
 }
 
 const onTimeUpdate = () => {
@@ -449,6 +457,33 @@ const formatDuration = (minutes) => {
 const formatDate = (date) => {
   if (!date) return '未知'
   return new Date(date).toLocaleString('zh-CN')
+}
+
+// 新增：补全所有模板用到但未实现的方法，防止 _withKeys 报错
+const submitAiQuestion = () => {
+  ElMessage.info('AI问答功能暂未实现')
+}
+const addNote = () => {
+  ElMessage.info('添加笔记功能暂未实现')
+  showAddNote.value = false
+}
+const editNote = (note) => {
+  ElMessage.info('编辑笔记功能暂未实现')
+}
+const deleteNote = (id) => {
+  ElMessage.info('删除笔记功能暂未实现')
+}
+const submitComment = () => {
+  ElMessage.info('评论功能暂未实现')
+  newComment.value = ''
+}
+const formatTime = (timestamp) => {
+  if (!timestamp) return ''
+  const sec = parseInt(timestamp)
+  if (isNaN(sec)) return ''
+  const min = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${min}:${s.toString().padStart(2, '0')}`
 }
 
 onMounted(() => {

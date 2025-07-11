@@ -5,6 +5,7 @@ import com.cemenghui.entity.User;
 import com.cemenghui.course.entity.Course;
 import com.cemenghui.course.service.CourseService;
 import com.cemenghui.course.service.QnAService;
+import com.cemenghui.course.service.ReviewService;
 import com.cemenghui.course.service.impl.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,8 @@ public class AdminController {
     private CourseService courseService;
     @Autowired
     private QnAService qnaService;
+    @Autowired
+    private ReviewService reviewService;
 
     /**
      * 用户分页
@@ -128,14 +131,24 @@ public class AdminController {
     }
 
     /**
-     * 课程分页
+     * 课程分页（支持 page/size 参数，返回标准分页结构）
      */
     @GetMapping("/courses")
-    public Result getCourses(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+    public Result getCourses(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "12") int size) {
         try {
-        // 这里只做示例，实际应实现分页
-            List<Course> courses = courseService.listCourses();
-            return Result.success(courses);
+            int offset = (page - 1) * size;
+            List<Course> all = courseService.listCourses();
+            int total = all.size();
+            List<Course> pageList = all.stream().skip(offset).limit(size).toList();
+            Map<String, Object> pageInfo = new HashMap<>();
+            pageInfo.put("content", pageList);
+            pageInfo.put("totalElements", total);
+            pageInfo.put("totalPages", (int) Math.ceil((double) total / size));
+            pageInfo.put("currentPage", page);
+            pageInfo.put("pageSize", size);
+            pageInfo.put("hasNext", offset + size < total);
+            pageInfo.put("hasPrevious", page > 1);
+            return Result.success("获取成功", pageInfo);
         } catch (Exception e) {
             return Result.fail("获取课程列表失败: " + e.getMessage());
         }
@@ -161,13 +174,15 @@ public class AdminController {
     @PostMapping("/course/{id}/review")
     public Result reviewCourse(@PathVariable Long id, @RequestParam String status, @RequestParam(required = false) String reason) {
         try {
-            // 这里应该实现实际的审核逻辑
-            Map<String, Object> result = new HashMap<>();
-            result.put("courseId", id);
-            result.put("status", status);
-            result.put("reason", reason);
-            result.put("reviewTime", System.currentTimeMillis());
-            return Result.success("课程审核操作成功", result);
+            if ("approved".equalsIgnoreCase(status) || "PUBLISHED".equalsIgnoreCase(status)) {
+                reviewService.approveCourse(id, null); // reviewerId 可根据实际需求传
+                return Result.success("课程审核通过");
+            } else if ("rejected".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+                reviewService.rejectCourse(id, reason);
+                return Result.success("课程已驳回");
+            } else {
+                return Result.fail("未知审核状态: " + status);
+            }
         } catch (Exception e) {
             return Result.fail("课程审核失败: " + e.getMessage());
         }

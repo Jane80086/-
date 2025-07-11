@@ -161,11 +161,11 @@ public class CourseServiceImpl implements CourseService {
             System.err.println("提交审核失败：课程不存在，id=" + courseId);
             return false;
         }
-        if (course.getStatus() != 3) { // 3表示草稿状态
+        if (!"DRAFT".equals(course.getStatus())) { // 草稿状态
             System.err.println("提交审核失败：课程状态不是DRAFT，当前状态=" + course.getStatus());
             return false;
         }
-                    course.setStatus(0); // 0表示待审核
+        course.setStatus("PENDING"); // 待审核
         course.setUpdateTime(java.time.LocalDateTime.now());
         courseDao.updateById(course);
         return true;
@@ -179,11 +179,11 @@ public class CourseServiceImpl implements CourseService {
             System.err.println("审核通过失败：课程不存在，id=" + courseId);
             return false;
         }
-        if (course.getStatus() != 0) { // 0表示待审核状态
+        if (!"PENDING".equals(course.getStatus())) { // 待审核状态
             System.err.println("审核通过失败：课程状态不是PENDING，当前状态=" + course.getStatus());
             return false;
         }
-                    course.setStatus(1); // 1表示已审核通过
+        course.setStatus("PUBLISHED"); // 已审核通过
         course.setUpdateTime(java.time.LocalDateTime.now());
         courseDao.updateById(course);
         // 记录审核历史
@@ -204,11 +204,11 @@ public class CourseServiceImpl implements CourseService {
             System.err.println("审核拒绝失败：课程不存在，id=" + courseId);
             return false;
         }
-        if (course.getStatus() != 0) { // 0表示待审核状态
+        if (!"PENDING".equals(course.getStatus())) { // 待审核状态
             System.err.println("审核拒绝失败：课程状态不是PENDING，当前状态=" + course.getStatus());
             return false;
         }
-                    course.setStatus(2); // 2表示已拒绝
+        course.setStatus("REJECTED"); // 已拒绝
         course.setUpdateTime(java.time.LocalDateTime.now());
         courseDao.updateById(course);
         // 记录审核历史
@@ -225,7 +225,7 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public List<Course> getPendingCourses() {
         LambdaQueryWrapper<Course> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Course::getStatus, 0); // 0表示待审核状态
+        wrapper.eq(Course::getStatus, "PENDING"); // 0表示待审核状态
         wrapper.orderByDesc(Course::getCreateTime);
         return courseDao.selectList(wrapper);
     }
