@@ -2,6 +2,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import MeetingList from '../components/MeetingList.vue'; 
+import meetingService from '../api/meeting.js';
+import fileService from '../api/file.js';
 
 const router = useRouter();
 const meetings = ref([]);
@@ -45,14 +47,13 @@ const isEnterprise = computed(() => currentUser.value?.userType === 'ENTERPRISE'
 // 获取用户信息
 const fetchUserInfo = async () => {
   try {
-    // 假设 meetingService 仍然可用，但实际调用已被删除
-    // const response = await meetingService.getUserInfo();
-    // console.log('用户信息原始数据:', response.data); // 添加调试信息
-    // if (response.data.code === 200) {
-    //   currentUser.value = response.data.data;
-    //   console.log('当前用户信息:', currentUser.value); // 添加调试信息
-    //   console.log('用户类型:', currentUser.value?.userType); // 添加调试信息
-    // }
+    const response = await meetingService.getUserInfo();
+    console.log('用户信息原始数据:', response.data); // 添加调试信息
+    if (response.data.code === 200) {
+      currentUser.value = response.data.data;
+      console.log('当前用户信息:', currentUser.value); // 添加调试信息
+      console.log('用户类型:', currentUser.value?.userType); // 添加调试信息
+    }
   } catch (err) {
     console.error('获取用户信息失败:', err);
   }
@@ -71,14 +72,13 @@ const fetchMeetings = async () => {
     };
     
     console.log('查询参数:', query); // 添加调试信息
-    // 假设 meetingService 仍然可用，但实际调用已被删除
-    // const response = await meetingService.getMeetings(query);
-    // console.log('会议列表原始数据:', response.data); // 添加调试信息
-    // if (response.data.code === 200) {
-    //   meetings.value = response.data.data.meetings || [];
-    //   console.log('会议列表对象:', meetings.value); // 添加调试信息
-    //   filteredMeetings.value = meetings.value;
-    // }
+    const response = await meetingService.getMeetings(query);
+    console.log('会议列表原始数据:', response.data); // 添加调试信息
+    if (response.data.code === 200) {
+      meetings.value = response.data.data.meetings || [];
+      console.log('会议列表对象:', meetings.value); // 添加调试信息
+      filteredMeetings.value = meetings.value;
+    }
   } catch (err) {
     error.value = '加载会议列表失败，请稍后重试';
     console.error(err);
@@ -93,22 +93,19 @@ const fetchReviewRecords = async () => {
     let response;
     if (isAdmin.value) {
       // 管理员查看自己的审核记录
-      // 假设 meetingService 仍然可用，但实际调用已被删除
-      // response = await meetingService.getReviewRecordsByReviewer();
+      response = await meetingService.getReviewRecordsByReviewer();
     } else if (isEnterprise.value) {
       // 企业用户查看自己的申请记录
-      // 假设 meetingService 仍然可用，但实际调用已被删除
-      // response = await meetingService.getReviewRecordsByCreator();
+      response = await meetingService.getReviewRecordsByCreator();
     } else {
       // 普通用户没有审核记录
       reviewRecords.value = [];
       return;
     }
     
-    // 假设 meetingService 仍然可用，但实际调用已被删除
-    // if (response.data.code === 200) {
-    //   reviewRecords.value = response.data.data || [];
-    // }
+    if (response.data.code === 200) {
+      reviewRecords.value = response.data.data || [];
+    }
   } catch (err) {
     console.error('获取审核记录失败:', err);
   }
@@ -130,8 +127,7 @@ const searchMeetings = async () => {
 // 添加会议
 const handleAdd = async () => {
   try {
-    // 假设 meetingService 仍然可用，但实际调用已被删除
-    // await meetingService.createMeeting(newMeeting.value);
+    await meetingService.createMeeting(newMeeting.value);
     showAddModal.value = false;
     newMeeting.value = {
       meetingName: '',
@@ -154,8 +150,7 @@ const handleDelete = async (id) => {
   }
   
   try {
-    // 假设 meetingService 仍然可用，但实际调用已被删除
-    // await meetingService.deleteMeeting(id, true);
+    await meetingService.deleteMeeting(id, true);
     await fetchMeetings();
   } catch (err) {
     error.value = err.response?.data?.message || '删除会议失败，请重试';
@@ -166,8 +161,7 @@ const handleDelete = async (id) => {
 // 更新会议
 const handleUpdate = async (updatedMeeting) => {
   try {
-    // 假设 meetingService 仍然可用，但实际调用已被删除
-    // await meetingService.updateMeeting(updatedMeeting);
+    await meetingService.updateMeeting(updatedMeeting);
     await fetchMeetings();
   } catch (err) {
     error.value = err.response?.data?.message || '更新会议失败，请重试';
@@ -178,8 +172,7 @@ const handleUpdate = async (updatedMeeting) => {
 // 审核会议
 const handleReview = async () => {
   try {
-    // 假设 meetingService 仍然可用，但实际调用已被删除
-    // await meetingService.reviewMeeting(reviewForm.value);
+    await meetingService.reviewMeeting(reviewForm.value);
     showReviewModal.value = false;
     reviewForm.value = {
       meetingId: null,
@@ -267,21 +260,19 @@ const onAddImageChange = async (event) => {
   
   addUploading.value = true;
   try {
-    // 假设 meetingService 仍然可用，但实际调用已被删除
-    // const res = await meetingService.uploadMeetingImage(file);
-    // // 处理后端ApiResponse格式
-    // if (res.data && res.data.code === 200 && res.data.data) {
-    //   // 对于私有bucket，返回的是对象名称，需要获取预签名URL
-    //   if (!res.data.data.startsWith('http://') && !res.data.data.startsWith('https://')) {
-    //     // 假设 fileService 仍然可用，但实际调用已被删除
-    //     // const presignedUrl = await fileService.getImageUrl(res.data.data);
-    //     // newMeeting.value.imageUrl = presignedUrl || res.data.data;
-    //   } else {
-    //     newMeeting.value.imageUrl = res.data.data;
-    //   }
-    // } else {
-    //   alert('图片上传失败: ' + (res.data.message || '未知错误'));
-    // }
+    const res = await meetingService.uploadMeetingImage(file);
+    // 处理后端ApiResponse格式
+    if (res.data && res.data.code === 200 && res.data.data) {
+      // 对于私有bucket，返回的是对象名称，需要获取预签名URL
+      if (!res.data.data.startsWith('http://') && !res.data.data.startsWith('https://')) {
+        const presignedUrl = await fileService.getImageUrl(res.data.data);
+        newMeeting.value.imageUrl = presignedUrl || res.data.data;
+      } else {
+        newMeeting.value.imageUrl = res.data.data;
+      }
+    } else {
+      alert('图片上传失败: ' + (res.data.message || '未知错误'));
+    }
   } catch (e) {
     console.error('图片上传错误:', e);
     if (e.response?.status === 413) {

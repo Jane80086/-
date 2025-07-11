@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-// import meetingService from '../services/meetingService';
+import meetingService from '../api/meeting.js';
+import fileService from '../api/file.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -14,19 +15,20 @@ const error = ref(null);
 // 获取会议详情
 const fetchMeetingDetail = async () => {
   try {
-    // const response = await meetingService.getMeetingDetail(route.params.id);
-    // 临时使用模拟数据
-    meeting.value = {
-      meetingName: '示例会议',
-      meetingContent: '这是一个示例会议内容',
-      startTime: new Date().toISOString(),
-      endTime: new Date(Date.now() + 3600000).toISOString(),
-      creator: '示例用户',
-      status: 1,
-      createTime: new Date().toISOString(),
-      updateTime: new Date().toISOString()
-    };
+    const response = await meetingService.getMeetingDetail(route.params.id);
+    console.log('会议详情原始数据:', response.data);
+    if (response.data.code === 200) {
+      meeting.value = response.data.data;
       console.log('会议详情对象:', meeting.value);
+      console.log('会议名称:', meeting.value?.meetingName);
+      console.log('会议内容:', meeting.value?.meetingContent);
+      console.log('开始时间:', meeting.value?.startTime);
+      console.log('结束时间:', meeting.value?.endTime);
+      console.log('创建人:', meeting.value?.creator);
+      console.log('状态:', meeting.value?.status);
+    } else {
+      error.value = response.data.message || '获取会议详情失败';
+    }
   } catch (err) {
     error.value = '获取会议详情失败，请稍后重试';
     console.error(err);
@@ -38,9 +40,10 @@ const fetchMeetingDetail = async () => {
 // 获取审核记录
 const fetchReviewRecords = async () => {
   try {
-    // const response = await meetingService.getReviewRecordsByMeeting(route.params.id);
-    // 临时使用模拟数据
-    reviewRecords.value = [];
+    const response = await meetingService.getReviewRecordsByMeeting(route.params.id);
+    if (response.data.code === 200) {
+      reviewRecords.value = response.data.data || [];
+    }
   } catch (err) {
     console.error('获取审核记录失败:', err);
   }
@@ -49,13 +52,10 @@ const fetchReviewRecords = async () => {
 // 获取用户信息
 const fetchUserInfo = async () => {
   try {
-    // const response = await meetingService.getUserInfo();
-    // 临时使用模拟数据
-    currentUser.value = {
-      id: 1,
-      username: '示例用户',
-      role: 'user'
-    };
+    const response = await meetingService.getUserInfo();
+    if (response.data.code === 200) {
+      currentUser.value = response.data.data;
+    }
   } catch (err) {
     console.error('获取用户信息失败:', err);
   }
@@ -95,10 +95,10 @@ const formatDateTime = (dateTime) => {
 const processMeetingImageUrl = async (meeting) => {
   if (meeting.imageUrl && !meeting.imageUrl.startsWith('http://') && !meeting.imageUrl.startsWith('https://')) {
     try {
-      // const presignedUrl = await fileService.getImageUrl(meeting.imageUrl); // Removed fileService
-      // if (presignedUrl) {
-      //   meeting.imageUrl = presignedUrl;
-      // }
+      const presignedUrl = await fileService.getImageUrl(meeting.imageUrl);
+      if (presignedUrl) {
+        meeting.imageUrl = presignedUrl;
+      }
     } catch (error) {
       console.error('获取会议图片URL失败:', error);
     }

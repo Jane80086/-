@@ -148,11 +148,12 @@
 
     <build>
         <plugins>
+            <!-- Spring Boot插件，但禁用repackage -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.cemenghui.CourseManagerApplication</mainClass>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>

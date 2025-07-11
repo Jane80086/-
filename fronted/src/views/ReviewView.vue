@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import meetingService from '../api/meeting';
 
 const router = useRouter();
 const currentUser = ref(null);
@@ -23,10 +24,10 @@ const isAdmin = computed(() => currentUser.value?.userType === 'ADMIN');
 // 获取用户信息
 const fetchUserInfo = async () => {
   try {
-    // const response = await meetingService.getUserInfo(); // Original line commented out
-    // if (response.data.code === 200) { // Original line commented out
-    //   currentUser.value = response.data.data; // Original line commented out
-    // } // Original line commented out
+    const response = await meetingService.getUserInfo();
+    if (response.data.code === 200) {
+      currentUser.value = response.data.data;
+    }
   } catch (err) {
     console.error('获取用户信息失败:', err);
   }
@@ -35,10 +36,10 @@ const fetchUserInfo = async () => {
 // 获取待审核会议
 const fetchPendingMeetings = async () => {
   try {
-    // const response = await meetingService.getPendingMeetings(); // Original line commented out
-    // if (response.data.code === 200) { // Original line commented out
-    //   pendingMeetings.value = response.data.data || []; // Original line commented out
-    // } // Original line commented out
+    const response = await meetingService.getPendingMeetings();
+    if (response.data.code === 200) {
+      pendingMeetings.value = response.data.data || [];
+    }
   } catch (err) {
     error.value = '加载待审核会议失败，请稍后重试';
     console.error(err);
@@ -48,10 +49,10 @@ const fetchPendingMeetings = async () => {
 // 获取审核记录
 const fetchReviewRecords = async () => {
   try {
-    // const response = await meetingService.getReviewRecordsByReviewer(); // Original line commented out
-    // if (response.data.code === 200) { // Original line commented out
-    //   reviewRecords.value = response.data.data || []; // Original line commented out
-    // } // Original line commented out
+    const response = await meetingService.getReviewRecordsByReviewer();
+    if (response.data.code === 200) {
+      reviewRecords.value = response.data.data || [];
+    }
   } catch (err) {
     error.value = '加载审核记录失败，请稍后重试';
     console.error(err);
@@ -63,7 +64,7 @@ const fetchReviewRecords = async () => {
 // 审核会议
 const handleReview = async () => {
   try {
-    // await meetingService.reviewMeeting(reviewForm.value); // Original line commented out
+    await meetingService.reviewMeeting(reviewForm.value);
     reviewForm.value = {
       meetingId: null,
       status: 1,
