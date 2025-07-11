@@ -98,11 +98,15 @@ public interface EnterpriseMapper {
     /**
      * 分页+条件筛选企业列表
      */
-    List<Enterprise> selectEnterpriseListPaged(@Param("enterpriseName") String enterpriseName,
-                                               @Param("creditCode") String creditCode,
-                                               @Param("status") String status,
-                                               @Param("offset") int offset,
-                                               @Param("size") int size);
+    List<Enterprise> selectEnterpriseListPaged(
+        @Param("enterpriseName") String enterpriseName,
+        @Param("creditCode") String creditCode,
+        @Param("status") String status,
+        @Param("offset") int offset,
+        @Param("size") int size,
+        @Param("sortField") String sortField,
+        @Param("sortOrder") String sortOrder
+    );
 
     /**
      * 条件筛选企业总数
