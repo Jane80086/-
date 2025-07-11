@@ -9,12 +9,9 @@ import com.cemenghui.system.dto.LoginResponseDTO; // 改用DTO
 public interface LoginService {
 
     /**
-     * 用户登录方法
-     * @param username  账号
-     * @param password 密码
-     * @return LoginResponseDTO 登录结果（含用户信息、token等）
+     * 用户登录方法（多类型支持）
      */
-    LoginResponseDTO login(String username, String password);
+    LoginResponseDTO login(String username, String password, String userType, boolean rememberMe, String dynamicCode);
 
     /**
      * 校验动态验证码（若需要）

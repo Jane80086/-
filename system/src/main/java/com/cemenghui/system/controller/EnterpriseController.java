@@ -86,9 +86,12 @@ public class EnterpriseController {
     // 辅助方法：验证是否为超级管理员
     private boolean isSuperAdmin(String token) {
         try {
-            if (token != null) token = token.trim();
-            String account = jwtUtil.getAccountFromToken(token);
-            System.out.println("isSuperAdmin校验，token: [" + token + "]，解析账号: [" + account + "]");
+            String cleanToken = jwtUtil.extractTokenFromHeader(token);
+            if (cleanToken == null) {
+                return false;
+            }
+            String account = jwtUtil.getAccountFromToken(cleanToken);
+            System.out.println("isSuperAdmin校验，token: [" + cleanToken + "]，解析账号: [" + account + "]");
             return account != null && account.startsWith("0000");
         } catch (Exception e) {
             e.printStackTrace();

@@ -51,4 +51,8 @@ public class User {
     @TableLogic
     @TableField("deleted")
     private Integer deleted = 0;
+
+    public String getAccount() {
+        return this.username;
+    }
 }

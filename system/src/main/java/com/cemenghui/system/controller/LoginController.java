@@ -130,25 +130,46 @@ public class LoginController {
             // 企业用户
             com.cemenghui.system.entity.EnterpriseUser user = userMapper.findEnterpriseByAccount(account);
             System.out.println("SQL查到的企业用户: " + user);
-            if (user == null) {
-                dto.setSuccess(false);
-                dto.setMessage("用户账号不存在");
+            if (user != null) {
+                System.out.println("数据库密码: [" + user.getPassword() + "]");
+                if (!password.equals(user.getPassword())) {
+                    dto.setSuccess(false);
+                    dto.setMessage("密码错误");
+                    return ResponseEntity.ok(dto);
+                }
+                dto.setSuccess(true);
+                dto.setMessage("登录成功");
+                String jwt = jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of("enterprise"));
+                dto.setToken(jwt);
+                dto.setUserType("enterprise");
+                dto.setEnterpriseUser(user);
+                dto.setAdminUser(null);
+                return ResponseEntity.ok(dto);
+            } else {
+                // 查普通用户
+                com.cemenghui.system.entity.User normalUser = userMapper.findByAccount(account);
+                System.out.println("SQL查到的普通用户: " + normalUser);
+                if (normalUser == null) {
+                    dto.setSuccess(false);
+                    dto.setMessage("用户账号不存在");
+                    return ResponseEntity.ok(dto);
+                }
+                System.out.println("数据库密码: [" + normalUser.getPassword() + "]");
+                if (!password.equals(normalUser.getPassword())) {
+                    dto.setSuccess(false);
+                    dto.setMessage("密码错误");
+                    return ResponseEntity.ok(dto);
+                }
+                dto.setSuccess(true);
+                dto.setMessage("登录成功");
+                String jwt = jwtUtil.generateToken(normalUser.getId(), normalUser.getAccount(), java.util.List.of("normal"));
+                dto.setToken(jwt);
+                dto.setUserType("user");
+                dto.setNormalUser(normalUser); // 关键：设置normalUser
+                dto.setEnterpriseUser(null);
+                dto.setAdminUser(null);
                 return ResponseEntity.ok(dto);
             }
-            System.out.println("数据库密码: [" + user.getPassword() + "]");
-            if (!password.equals(user.getPassword())) {
-                dto.setSuccess(false);
-                dto.setMessage("密码错误");
-                return ResponseEntity.ok(dto);
-            }
-            dto.setSuccess(true);
-            dto.setMessage("登录成功");
-            String jwt = jwtUtil.generateToken(user.getId(), user.getAccount(), java.util.List.of("enterprise"));
-            dto.setToken(jwt);
-            dto.setUserType("enterprise");
-            dto.setEnterpriseUser(user);
-            dto.setAdminUser(null);
-            return ResponseEntity.ok(dto);
         }
     }
 }

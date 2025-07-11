@@ -1,6 +1,6 @@
 package com.cemenghui.system.repository;
 
-import com.cemenghui.system.entity.EnterpriseUser;
+import com.cemenghui.entity.EnterpriseUser;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
@@ -18,11 +18,12 @@ public interface EnterpriseUserMapper {
 
     /**
      * 根据账号查询企业用户
+     *
      * @param username 账号
      * @return 企业用户实体
      */
     @Select("SELECT * FROM users WHERE username = #{username} AND user_type = 'ENTERPRISE' AND deleted = 0")
-    EnterpriseUser findByAccount(String username);
+    com.cemenghui.system.entity.EnterpriseUser findByAccount(String username);
 
     /**
      * 根据用户ID查询企业用户
@@ -48,11 +49,12 @@ public interface EnterpriseUserMapper {
 
     /**
      * 根据企业ID查询企业用户
+     *
      * @param enterpriseId 企业ID
      * @return 企业用户列表
      */
     @Select("SELECT * FROM users WHERE enterprise_id = #{enterpriseId} AND user_type = 'ENTERPRISE' AND deleted = 0")
-    List<EnterpriseUser> findByEnterpriseId(String enterpriseId);
+    List<com.cemenghui.system.entity.EnterpriseUser> findByEnterpriseId(String enterpriseId);
 
     /**
      * 根据企业ID统计企业用户数量
@@ -61,4 +63,8 @@ public interface EnterpriseUserMapper {
      */
     @Select("SELECT COUNT(*) FROM users WHERE enterprise_id = #{enterpriseId} AND user_type = 'ENTERPRISE' AND deleted = 0")
     int countByEnterpriseId(String enterpriseId);
+
+    void saveUser(com.cemenghui.system.entity.EnterpriseUser user);
+
+    void update(com.cemenghui.system.entity.EnterpriseUser user);
 }

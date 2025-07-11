@@ -33,7 +33,8 @@ public class DatabaseInitializer implements CommandLineRunner {
                 System.out.println("检测到数据库表不存在，正在初始化数据库...");
                 initializeDatabase();
             } else {
-                System.out.println("数据库表已存在，跳过初始化。");
+                System.out.println("数据库表已存在，检查表结构...");
+                checkAndFixTableStructure();
             }
             
         } catch (Exception e) {
@@ -59,6 +60,97 @@ public class DatabaseInitializer implements CommandLineRunner {
             return true;
         } catch (Exception e) {
             return false;
+        }
+    }
+    
+    private void checkAndFixTableStructure() {
+        try {
+            // 检查enterprise表是否存在credit_code字段
+            boolean creditCodeExists = checkColumnExists("enterprise", "credit_code");
+            if (!creditCodeExists) {
+                System.out.println("检测到enterprise表缺少credit_code字段，正在修复...");
+                fixEnterpriseTable();
+            } else {
+                System.out.println("enterprise表结构正常");
+            }
+        } catch (Exception e) {
+            System.err.println("检查表结构失败: " + e.getMessage());
+        }
+    }
+    
+    private boolean checkColumnExists(String tableName, String columnName) {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns WHERE table_name = ? AND column_name = ?", 
+                Integer.class, 
+                tableName, columnName
+            );
+            return count != null && count > 0;
+        } catch (Exception e) {
+            System.err.println("检查字段存在性失败: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    private void fixEnterpriseTable() {
+        try {
+            System.out.println("开始修复enterprise表结构...");
+            
+            // 添加缺失的字段
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS credit_code VARCHAR(30)");
+            System.out.println("已添加 credit_code 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS register_address VARCHAR(200)");
+            System.out.println("已添加 register_address 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS legal_representative VARCHAR(50)");
+            System.out.println("已添加 legal_representative 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS registration_date DATE");
+            System.out.println("已添加 registration_date 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS enterprise_type VARCHAR(50)");
+            System.out.println("已添加 enterprise_type 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS registered_capital VARCHAR(50)");
+            System.out.println("已添加 registered_capital 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS business_scope TEXT");
+            System.out.println("已添加 business_scope 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS establishment_date DATE");
+            System.out.println("已添加 establishment_date 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS business_term VARCHAR(100)");
+            System.out.println("已添加 business_term 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS registration_authority VARCHAR(100)");
+            System.out.println("已添加 registration_authority 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS approval_date DATE");
+            System.out.println("已添加 approval_date 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS enterprise_status VARCHAR(30)");
+            System.out.println("已添加 enterprise_status 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+            System.out.println("已添加 create_time 字段");
+            
+            jdbcTemplate.execute("ALTER TABLE enterprise ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+            System.out.println("已添加 update_time 字段");
+            
+            // 尝试添加唯一约束（如果不存在）
+            try {
+                jdbcTemplate.execute("ALTER TABLE enterprise ADD CONSTRAINT enterprise_social_credit_code_key UNIQUE (credit_code)");
+                System.out.println("已添加 credit_code 唯一约束");
+            } catch (Exception e) {
+                System.out.println("credit_code 唯一约束可能已存在: " + e.getMessage());
+            }
+            
+            System.out.println("enterprise表结构修复完成");
+        } catch (Exception e) {
+            System.err.println("修复enterprise表结构失败: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     

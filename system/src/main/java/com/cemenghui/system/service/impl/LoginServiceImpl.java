@@ -73,10 +73,32 @@ public class LoginServiceImpl implements LoginService {
         return LoginResponseDTO.success(token, admin);
     }
 
-
-    @Override
-    public LoginResponseDTO login(String username, String password) {
-        return null;
+    // 新增：通用登录方法，按 userType 区分三类用户
+    public LoginResponseDTO login(String username, String password, String userType, boolean rememberMe, String dynamicCode) {
+        if (userType == null) {
+            // 自动识别：0000开头为管理员，企业用户/普通用户可根据账号或前端传参
+            if (username != null && username.startsWith("0000")) {
+                userType = "admin";
+            } else {
+                userType = "user";
+            }
+        }
+        switch (userType.toLowerCase()) {
+            case "admin":
+                return adminLogin(username, password, dynamicCode);
+            case "enterprise":
+                return enterpriseLogin(username, password, rememberMe, dynamicCode);
+            case "user":
+            default:
+                // 普通用户登录
+                com.cemenghui.system.entity.User user = userMapper.findByAccount(username);
+                if (user == null) return LoginResponseDTO.fail("用户不存在");
+                if (!passwordUtil.matches(password, user.getPassword())) {
+                    return LoginResponseDTO.fail("密码错误");
+                }
+                String token = jwtUtil.generateToken(user.getId(), user.getUsername(), java.util.List.of("user"));
+                return LoginResponseDTO.success(token, user);
+        }
     }
 
     @Override
@@ -100,7 +122,11 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public String getUserFromToken(String token) {
-        return jwtUtil.getAccountFromToken(token);
+        String cleanToken = jwtUtil.extractTokenFromHeader(token);
+        if (cleanToken == null) {
+            return null;
+        }
+        return jwtUtil.getAccountFromToken(cleanToken);
     }
 
     // 自动注册第三方用户

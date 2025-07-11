@@ -54,10 +54,20 @@ public class RegisterRequestDTO {
     // 验证码UUID
     private String uuid;
 
+    // 用户类型（user/enterprise/admin）
+    private String userType;
+
     public String getUuid() {
         return uuid;
     }
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getUserType() {
+        return userType;
+    }
+    public void setUserType(String userType) {
+        this.userType = userType;
     }
 }

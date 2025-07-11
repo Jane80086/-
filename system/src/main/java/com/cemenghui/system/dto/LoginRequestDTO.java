@@ -25,4 +25,14 @@ public class LoginRequestDTO {
 
     // 验证码UUID
     private String uuid;
+
+    // 用户类型（user/enterprise/admin）
+    private String userType;
+
+    public String getUserType() {
+        return userType;
+    }
+    public void setUserType(String userType) {
+        this.userType = userType;
+    }
 }

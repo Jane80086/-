@@ -21,7 +21,7 @@ public class Enterprise {
     @TableField("legal_representative")
     private String legalRepresentative;
     @TableField("registration_date")
-    private LocalDateTime registrationDate;
+    private java.time.LocalDate registrationDate;
     @TableField("enterprise_type")
     private String enterpriseType;
     @TableField("registered_capital")
@@ -29,13 +29,13 @@ public class Enterprise {
     @TableField("business_scope")
     private String businessScope;
     @TableField("establishment_date")
-    private LocalDateTime establishmentDate;
+    private java.time.LocalDate establishmentDate;
     @TableField("business_term")
     private String businessTerm;
     @TableField("registration_authority")
     private String registrationAuthority;
     @TableField("approval_date")
-    private LocalDateTime approvalDate;
+    private java.time.LocalDate approvalDate;
     @TableField("enterprise_status")
     private String enterpriseStatus;
     @TableField("create_time")

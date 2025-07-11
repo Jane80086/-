@@ -4,8 +4,6 @@ package com.cemenghui.system.controller;
 
 import com.cemenghui.system.entity.EnterpriseUser;
 
-import com.cemenghui.system.entity.User;
-
 import com.cemenghui.system.service.UserManagementService;
 
 import com.cemenghui.common.JWTUtil;
@@ -38,9 +36,17 @@ public class ProfileController {
 
     @GetMapping("/current")
 
-    public ResultVO<EnterpriseUser> getCurrentUser(@RequestHeader("Authorization") String token) {
+    public ResultVO<? extends Object> getCurrentUser(@RequestHeader("Authorization") String token) {
 
-        String account = jwtUtil.getAccountFromToken(token);
+        String cleanToken = jwtUtil.extractTokenFromHeader(token);
+
+        if (cleanToken == null) {
+
+            return ResultVO.error("无效的token");
+
+        }
+
+        String account = jwtUtil.getAccountFromToken(cleanToken);
 
         EnterpriseUser enterpriseUser = userService.getUserByAccount(account);
 
@@ -54,7 +60,15 @@ public class ProfileController {
 
     public ResultVO<Boolean> updateCurrentUser(@RequestBody EnterpriseUser user, @RequestHeader("Authorization") String token) {
 
-        String account = jwtUtil.getAccountFromToken(token);
+        String cleanToken = jwtUtil.extractTokenFromHeader(token);
+
+        if (cleanToken == null) {
+
+            return ResultVO.error("无效的token");
+
+        }
+
+        String account = jwtUtil.getAccountFromToken(cleanToken);
 
         user.setUsername(account);
 

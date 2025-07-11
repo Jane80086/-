@@ -13,6 +13,8 @@ import javax.servlet.http.HttpSession;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -85,5 +87,29 @@ public class AuthController {
                 response.getWriter().write("验证码生成失败，请联系管理员");
             } catch (IOException ignored) {}
         }
+    }
+
+    /**
+     * 用户登录
+     */
+    @PostMapping("/login")
+    public LoginResponseDTO login(@RequestBody LoginRequestDTO loginRequest) {
+        String username = loginRequest.getAccount();
+        String password = loginRequest.getPassword();
+        String userType = loginRequest.getUserType();
+        boolean rememberMe = loginRequest.isRememberMe();
+        String dynamicCode = loginRequest.getDynamicCode();
+        return loginService.login(username, password, userType, rememberMe, dynamicCode);
+    }
+
+    /**
+     * 用户登出
+     */
+    @PostMapping("/logout")
+    public Map<String, Object> logout() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", "登出成功");
+        return result;
     }
 }

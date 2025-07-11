@@ -8,6 +8,10 @@ public class ResultVO<T> {
     private String message;// 提示信息
     private T data;        // 返回数据
 
+    public static ResultVO<Boolean> error(String 无效的token) {
+        return null;
+    }
+
     // 手动添加getter和setter方法
     public int getCode() {
         return code;

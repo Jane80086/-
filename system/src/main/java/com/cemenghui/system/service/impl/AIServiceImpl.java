@@ -59,11 +59,10 @@ public class AIServiceImpl implements AIService {
         ObjectMapper mapper = new ObjectMapper();
         try {
             String nickname = userInfo.getOrDefault("nickname", "用户");
-            String role = userInfo.getOrDefault("role", "成员");
             String enterprise = userInfo.getOrDefault("enterprise", "本系统");
             String prompt = String.format(
                     "请用一句温暖、积极的话欢迎名为%s的%s，他/她来自%s。内容不超过30字。",
-                    nickname, role, enterprise
+                    nickname, enterprise
             );
             ObjectNode requestBody = mapper.createObjectNode();
             requestBody.put("model", "gpt-3.5-turbo");

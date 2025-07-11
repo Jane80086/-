@@ -35,15 +35,19 @@ public class UserManagementController {
      * 获取用户列表（仅超级管理员可访问）
      */
     @GetMapping
-    public ResponseEntity<ResultVO<UserListDTO>> getUserList(@Valid UserQueryDTO query,
+    public Object getUserList(@Valid UserQueryDTO query,
                                                              @RequestHeader("Authorization") String token) {
         // 验证超级管理员权限
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限访问"), HttpStatus.UNAUTHORIZED);
         }
-
-        UserListDTO userList = userManagementService.getUserList(query);
-        return new ResponseEntity<>(ResultVO.success(userList), HttpStatus.OK);
+        try {
+            UserListDTO userList = userManagementService.getUserList(query);
+            return new ResponseEntity<>(ResultVO.success(userList), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ResultVO.error("获取用户列表失败：" + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -65,13 +69,18 @@ public class UserManagementController {
      * 普通添加用户（不依赖模板）
      */
     @PostMapping
-    public ResponseEntity<ResultVO<Long>> createUser(@Valid @RequestBody EnterpriseUser user,
+    public Object createUser(@Valid @RequestBody EnterpriseUser user,
                                                        @RequestHeader("Authorization") String token) {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
-        Long userId = userManagementService.createUser(user);
-        return new ResponseEntity<>(ResultVO.success(userId), HttpStatus.CREATED);
+        try {
+            Long userId = userManagementService.createUser(user);
+            return new ResponseEntity<>(ResultVO.success(userId), HttpStatus.CREATED);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ResultVO.error("创建用户失败：" + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -83,8 +92,15 @@ public class UserManagementController {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
-        boolean result = userManagementService.updateUser(user);
-        return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
+        try {
+            System.out.println("收到更新用户请求: " + user);
+            boolean result = userManagementService.updateUser(user);
+            System.out.println("更新结果: " + result);
+            return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ResultVO.error("更新用户失败：" + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -166,8 +182,13 @@ public class UserManagementController {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
-        boolean result = userManagementService.deleteUser(id);
-        return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
+        try {
+            boolean result = userManagementService.deleteUser(id);
+            return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ResultVO.error("删除用户失败：" + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -180,15 +201,24 @@ public class UserManagementController {
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
-        user.setId(userId); // 确保userId正确
-        boolean result = userManagementService.updateUser(user);
-        return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
+        try {
+            user.setId(userId); // 确保userId正确
+            boolean result = userManagementService.updateUser(user);
+            return new ResponseEntity<>(ResultVO.success(result), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ResultVO.error("更新用户失败：" + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // 辅助方法：从令牌中获取用户ID
     private String getUserIdFromToken(String token) {
         try {
-            String account = jwtUtil.getAccountFromToken(token);
+            String cleanToken = jwtUtil.extractTokenFromHeader(token);
+            if (cleanToken == null) {
+                return null;
+            }
+            String account = jwtUtil.getAccountFromToken(cleanToken);
             // 实际项目中应通过account查询userId
             return "admin_123"; // 示例返回值
         } catch (Exception e) {
@@ -199,9 +229,12 @@ public class UserManagementController {
     // 辅助方法：验证是否为超级管理员
     private boolean isSuperAdmin(String token) {
         try {
-            if (token != null) token = token.trim();
-            String account = jwtUtil.getAccountFromToken(token);
-            System.out.println("isSuperAdmin校验，token: [" + token + "]，解析账号: [" + account + "]");
+            String cleanToken = jwtUtil.extractTokenFromHeader(token);
+            if (cleanToken == null) {
+                return false;
+            }
+            String account = jwtUtil.getAccountFromToken(cleanToken);
+            System.out.println("isSuperAdmin校验，token: [" + cleanToken + "]，解析账号: [" + account + "]");
             return account != null && account.startsWith("0000");
         } catch (Exception e) {
             e.printStackTrace();
