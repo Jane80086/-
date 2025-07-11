@@ -22,4 +22,7 @@ public class LoginRequestDTO {
 
     // 动态验证码（超级管理员登录专用）
     private String dynamicCode;
+
+    // 验证码UUID
+    private String uuid;
 }

@@ -50,4 +50,14 @@ public class RegisterRequestDTO {
 
     // 部门（管理员注册时可用）
     private String department;
+
+    // 验证码UUID
+    private String uuid;
+
+    public String getUuid() {
+        return uuid;
+    }
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 }

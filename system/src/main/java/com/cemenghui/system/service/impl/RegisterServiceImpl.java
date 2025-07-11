@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.regex.Pattern;
+import java.util.UUID;
 
 @Service
 public class RegisterServiceImpl implements RegisterService {
@@ -80,17 +81,51 @@ public class RegisterServiceImpl implements RegisterService {
         }
         // 验证码校验（从Redis获取）
         String verificationCode = requestDTO.getVerificationCode();
-        String uuid = username; // 可根据实际前端传递的uuid调整
-        String storedCaptcha = redisUtil.get("captcha:" + uuid);
-        if (verificationCode == null || storedCaptcha == null || !captchaUtil.validateCaptcha(verificationCode, storedCaptcha)) {
+        String uuid = requestDTO.getUuid(); // 使用前端传递的uuid
+        System.out.println("注册验证码校验 - 验证码: [" + verificationCode + "], UUID: [" + uuid + "]");
+        
+        try {
+            String storedCaptcha = redisUtil.get("captcha:" + uuid);
+            System.out.println("从Redis获取的验证码: [" + storedCaptcha + "]");
+            
+            if (verificationCode == null || verificationCode.isEmpty()) {
+                responseDTO.setSuccess(false);
+                responseDTO.setMessage("验证码不能为空");
+                return responseDTO;
+            }
+            
+            if (storedCaptcha == null || storedCaptcha.isEmpty()) {
+                responseDTO.setSuccess(false);
+                responseDTO.setMessage("验证码已过期，请重新获取");
+                return responseDTO;
+            }
+            
+            boolean isValid = captchaUtil.validateCaptcha(verificationCode, storedCaptcha);
+            System.out.println("验证码验证结果: [" + isValid + "]");
+            
+            if (!isValid) {
+                responseDTO.setSuccess(false);
+                responseDTO.setMessage("验证码错误");
+                return responseDTO;
+            }
+        } catch (Exception e) {
+            System.out.println("验证码校验异常: " + e.getMessage());
+            e.printStackTrace();
             responseDTO.setSuccess(false);
-            responseDTO.setMessage("验证码错误或已过期");
+            responseDTO.setMessage("验证码校验失败: " + e.getMessage());
             return responseDTO;
         }
 
         // 2. 判断账号前4位，决定注册为管理员还是普通用户
         try {
             if (isAdmin) {
+                // 注册前查重
+                AdminUser exist = adminUserMapper.findAdminByAccount(username);
+                if (exist != null) {
+                    responseDTO.setSuccess(false);
+                    responseDTO.setMessage("账号已存在，请更换账号");
+                    return responseDTO;
+                }
                 // 注册为管理员
                 AdminUser adminUser = new AdminUser();
                 adminUser.setId(null); // 让数据库自动生成ID
@@ -106,7 +141,7 @@ public class RegisterServiceImpl implements RegisterService {
                 adminUserMapper.save(adminUser);
                 responseDTO.setSuccess(true);
                 responseDTO.setMessage("注册成功（管理员）");
-                responseDTO.setUserId(adminUser.getId().toString());
+                responseDTO.setUserId(adminUser.getId() == null ? UUID.randomUUID().toString() : adminUser.getId().toString());
             } else {
                 // 注册为普通用户
                 EnterpriseUser user = new EnterpriseUser();
@@ -123,7 +158,7 @@ public class RegisterServiceImpl implements RegisterService {
                 enterpriseUserMapper.saveUser(user);
                 responseDTO.setSuccess(true);
                 responseDTO.setMessage("注册成功");
-                responseDTO.setUserId(user.getId().toString());
+                responseDTO.setUserId(user.getId() == null ? UUID.randomUUID().toString() : user.getId().toString());
             }
         } catch (Exception e) {
             responseDTO.setSuccess(false);
