@@ -74,65 +74,65 @@
   </el-container>
 </template>
 
-<script>
+<script setup>
 import { computed, ref, onMounted } from 'vue'
-import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { useStore } from 'vuex'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { getAIReportAnalysis } from '../api/index.js'
 
-export default {
-  name: 'Dashboard',
-  setup() {
-    const store = useStore()
-    const router = useRouter()
-    const currentUser = computed(() => store.getters.currentUser)
-    const userAvatar = computed(() => currentUser.value?.avatar || '')
-    const analysisText = ref('')
-    // 示例报表数据（实际应从后端获取）
-    const reportData = {
-      企业本月注册数: 12,
-      企业上月注册数: 10,
-      用户本月活跃数: 50,
-      用户上月活跃数: 40
-    }
-    onMounted(async () => {
+const router = useRouter()
+const store = useStore()
+
+const currentUser = computed(() => store.getters.currentUser)
+const userAvatar = computed(() => currentUser.value?.avatar || '')
+const analysisText = ref('')
+
+// 示例报表数据（实际应从后端获取）
+const reportData = {
+  企业本月注册数: 12,
+  企业上月注册数: 10,
+  用户本月活跃数: 50,
+  用户上月活跃数: 40
+}
+
+onMounted(async () => {
+  try {
+    const res = await getAIReportAnalysis(reportData)
+    analysisText.value = res.analysis || ''
+  } catch (e) {
+    analysisText.value = ''
+  }
+})
+
+const handleCommand = async (command) => {
+  switch (command) {
+    case 'profile':
+      router.push('/profile')
+      break
+    case 'settings':
+      // 跳转到系统设置页面
+      break
+    case 'logout':
       try {
-        const res = await getAIReportAnalysis(reportData)
-        analysisText.value = res.analysis || ''
-      } catch (e) {
-        analysisText.value = ''
+        await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        
+        // 使用Vuex store的logout方法
+        await store.dispatch('logout')
+        
+        ElMessage.success('退出登录成功')
+        router.push('/login')
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('退出登录失败:', error)
+          ElMessage.error('退出登录失败，请重试')
+        }
       }
-    })
-    const handleCommand = async (command) => {
-      switch (command) {
-        case 'profile':
-          router.push('/profile')
-          break
-        case 'settings':
-          // 跳转到系统设置页面
-          break
-        case 'logout':
-          try {
-            await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-              confirmButtonText: '确定',
-              cancelButtonText: '取消',
-              type: 'warning'
-            })
-            await store.dispatch('logout')
-            router.push('/login')
-          } catch {
-            // 用户取消
-          }
-          break
-      }
-    }
-    return {
-      currentUser,
-      userAvatar,
-      handleCommand,
-      analysisText
-    }
+      break
   }
 }
 </script>
