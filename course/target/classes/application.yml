@@ -1,0 +1,5 @@
+spring:
+  profiles:
+    active: course
+jwt:
+  secret: cemenghui-secret-key
