@@ -87,4 +87,22 @@ public class JWTUtil {
     public Claims getAllClaimsFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(SIGNING_KEY).build().parseClaimsJws(token).getBody();
     }
+
+    /**
+     * 从Authorization头中提取JWT token，移除"Bearer "前缀
+     * @param authorizationHeader Authorization头
+     * @return 清理后的token，如果格式不正确返回null
+     */
+    public String extractTokenFromHeader(String authorizationHeader) {
+        if (authorizationHeader == null || authorizationHeader.trim().isEmpty()) {
+            return null;
+        }
+        
+        String token = authorizationHeader.trim();
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        
+        return token;
+    }
 }
