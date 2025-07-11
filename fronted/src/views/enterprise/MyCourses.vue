@@ -182,11 +182,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh, Calendar, Medal } from '@element-plus/icons-vue'
 import { courseApi } from '@/api/course'
 import { useUserStore } from '@/store/user'
-import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
 const currentUser = userStore.user
-const router = useRouter()
 
 const allCourses = ref([])
 const searchKeyword = ref('')
@@ -250,7 +248,6 @@ async function saveCourse() {
       instructorId: currentUser.id,
       instructorName: currentUser.nickname || currentUser.username || '',
       createdBy: currentUser.id
-      // 不传 status 字段，由后端自动设为 pending
     }
     if (editingId) {
       res = await courseApi.updateCourse(editingId, data)
@@ -258,7 +255,7 @@ async function saveCourse() {
       res = await courseApi.createCourse(data)
     }
     if (res.code === 200) {
-      ElMessage.success(editingId ? '课程编辑成功' : '课程添加成功，等待管理员审核')
+      ElMessage.success(editingId ? '课程编辑成功' : '课程添加成功')
       showAddDialog.value = false
       editingId = null
       loadCourses()
@@ -405,13 +402,6 @@ function handleVideoSuccess(res, file) {
 function getVideoPreviewUrl(objectName) {
   // 只传对象名
   return `/api/file/stream?objectName=${encodeURIComponent(objectName)}`
-}
-const viewCourseDetail = (course) => {
-  if (course.status === 'approved') {
-    router.push(`/enterprise/course/${course.id}`)
-  } else {
-    ElMessage.warning('课程尚未发布，无法查看详情')
-  }
 }
 onMounted(() => { loadCourses(); /* 可根据需要调用 loadReviewHistory(某课程id) */ })
 </script>

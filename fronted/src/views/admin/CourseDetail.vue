@@ -249,7 +249,7 @@ const loadChapters = async () => {
   }
 }
 const goToPlay = () => {
-  router.push(`/admin/course/${course.value.id}/play`)
+  router.push(`/admin/course/play/${course.value.id}`)
 }
 const formatDuration = (min) => {
   if (!min) return '0分钟'

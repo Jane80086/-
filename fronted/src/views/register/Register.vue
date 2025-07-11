@@ -2,8 +2,8 @@
     <div class="register-container">
       <div class="register-box">
         <div class="register-header">
-          <h2>用户注册</h2>
-          <p>创建您的账户</p>
+          <h2>企业用户注册</h2>
+          <p>创建您的企业账户</p>
         </div>
         
         <el-form
@@ -106,11 +106,11 @@
   
   <script>
   import { ref, reactive, onMounted, computed, watch } from 'vue'
-  import { useUserStore } from '@/store/user'
-  import { useRouter } from 'vue-router'
-  import { ElMessage } from 'element-plus'
-  import { register } from '@/api/auth'
-  import { v4 as uuidv4 } from 'uuid'
+import { useUserStore } from '@/store/user'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { register } from '@/api/auth'
+import { v4 as uuidv4 } from 'uuid'
 
   
   export default {
@@ -118,7 +118,9 @@
     setup() {
       const userStore = useUserStore()
       const router = useRouter()
+      const route = useRoute()
       const registerFormRef = ref(null)
+      
       const registerForm = reactive({
         account: '',
         realName: '',
@@ -129,7 +131,8 @@
         phone: '',
         email: '',
         department: '',
-        verificationCode: ''
+        verificationCode: '',
+        userType: 'ENTERPRISE' // 企业用户类型
       })
       const uuid = ref(uuidv4())
       const captchaUrl = ref(`/api/auth/captcha?uuid=${uuid.value}&t=${Date.now()}`)
@@ -159,10 +162,10 @@
             }, trigger: ['blur', 'change'] }
         ],
         enterpriseId: [
-          { required: !isAdmin.value, message: '请输入企业ID', trigger: 'blur' }
+          { required: true, message: '请输入企业ID', trigger: 'blur' }
         ],
         enterpriseType: [
-          { required: !isAdmin.value, message: '请选择企业类型', trigger: 'change' }
+          { required: true, message: '请选择企业类型', trigger: 'change' }
         ],
         phone: [
           { required: true, message: '请输入手机号', trigger: 'blur' },
@@ -197,7 +200,15 @@
           console.log('注册返回：', res);
           if (res && res.success) {
             ElMessage.success('注册成功');
-            router.push('/login');
+            // 根据用户类型决定跳转路径
+            if (registerForm.userType === 'ENTERPRISE') {
+              // 企业用户注册成功后跳转到登录页面
+              ElMessage.success('企业用户注册成功，请登录');
+              router.push('/login');
+            } else {
+              // 其他用户注册成功后跳转到登录页面
+              router.push('/login');
+            }
           } else {
             if (res && res.message && res.message.includes('企业不存在')) {
               ElMessage.error('企业不存在，请先注册企业信息');
@@ -217,6 +228,10 @@
       }
       onMounted(() => {
         refreshCaptcha()
+        // 如果是从企业注册页面跳转过来的，设置企业ID
+        if (route.query.enterpriseId) {
+          registerForm.enterpriseId = route.query.enterpriseId;
+        }
       })
       return {
         registerFormRef,

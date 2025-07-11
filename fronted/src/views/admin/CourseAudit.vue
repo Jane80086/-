@@ -115,7 +115,7 @@
             type="primary"
             circle
             size="large"
-            @click.stop="playCourse(course.id)"
+            @click.stop="viewCourseDetail(course.id)"
           >
             <el-icon><View /></el-icon>
           </el-button>
@@ -130,15 +130,15 @@
           <div class="card-stats">
             <span class="chapters-count"><el-icon><Document /></el-icon>{{ course.chapters?.length || 0 }} 章节</span>
             <div class="card-actions">
-              <template v-if="course.status === 'pending'">
-                <el-button type="success" size="small" @click.stop="approveCourse(course)">通过</el-button>
-                <el-button type="danger" size="small" @click.stop="rejectCourse(course)">驳回</el-button>
-              </template>
-              <template v-else>
-                <el-tag v-if="course.status === 'approved'" type="success" effect="plain">已通过</el-tag>
-                <el-tag v-if="course.status === 'rejected'" type="danger" effect="plain">已驳回</el-tag>
-              </template>
-              <el-button size="small" @click.stop="viewCourseDetail(course.id)">查看详情</el-button>
+              <el-button v-if="course.status === 'pending'" type="success" size="small" @click.stop="approveCourse(course)">
+                通过
+              </el-button>
+              <el-button v-if="course.status === 'pending'" type="danger" size="small" @click.stop="rejectCourse(course)">
+                驳回
+              </el-button>
+              <el-button size="small" @click.stop="viewCourseDetail(course.id)">
+                查看详情
+              </el-button>
             </div>
           </div>
         </div>
@@ -188,7 +188,6 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, StarFilled, View, User, Clock, Document } from '@element-plus/icons-vue'
 import { courseApi } from '@/api/course'
-import { adminApi } from '@/api/course'
 
 const router = useRouter()
 const loading = ref(false)
@@ -309,11 +308,7 @@ const resetFilters = () => {
 }
 
 const viewCourseDetail = (courseId) => {
-  if (courseId) {
-    router.push(`/admin/course/${courseId}`)
-  } else {
-    ElMessage.error('课程ID无效，无法跳转详情页')
-  }
+  router.push(`/admin/course/${courseId}`)
 }
 
 const approveCourse = async (course) => {
@@ -323,15 +318,9 @@ const approveCourse = async (course) => {
       cancelButtonText: '取消',
       type: 'success'
     })
-    // 调用后端审核接口
-    const res = await adminApi.reviewCourse(course.id, 'approved')
-    if (res.code === 200) {
-      course.status = 'approved'
-      ElMessage.success('课程审核通过')
-      loadCourses()
-    } else {
-      ElMessage.error(res.message || '审核失败')
-    }
+    
+    course.status = 'approved'
+    ElMessage.success('课程审核通过')
   } catch {
     // 用户取消操作
   }
@@ -348,22 +337,17 @@ const confirmReject = async () => {
     ElMessage.warning('请输入驳回理由')
     return
   }
+  
   try {
     await ElMessageBox.confirm(`确定要驳回课程"${currentCourse.value.title}"吗？`, '确认驳回', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-    // 调用后端审核接口
-    const res = await adminApi.reviewCourse(currentCourse.value.id, 'rejected', rejectReason.value)
-    if (res.code === 200) {
-      currentCourse.value.status = 'rejected'
-      rejectVisible.value = false
-      ElMessage.success('课程已驳回')
-      loadCourses()
-    } else {
-      ElMessage.error(res.message || '驳回失败')
-    }
+    
+    currentCourse.value.status = 'rejected'
+    rejectVisible.value = false
+    ElMessage.success('课程已驳回')
   } catch {
     // 用户取消操作
   }
@@ -408,14 +392,6 @@ const handleSizeChange = (size) => {
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
-}
-
-const playCourse = (courseId) => {
-  if (courseId) {
-    router.push(`/admin/course/play/${courseId}`)
-  } else {
-    ElMessage.error('课程ID无效，无法跳转播放页')
-  }
 }
 
 // 组件挂载

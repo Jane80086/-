@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { askAI } from '../api/index.js';
+import { askAI } from '@/api/index.js';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 export default {
   name: 'AIChat',

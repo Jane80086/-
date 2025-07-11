@@ -52,7 +52,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import api from '@/api';
+import api from '@/api/register';
 
 const route = useRoute();
 const router = useRouter();
@@ -101,15 +101,44 @@ onMounted(() => {
 const handleSubmit = async () => {
   try {
     await enterpriseFormRef.value.validate();
-    const res = await api.enterprise.createEnterprise(enterpriseForm);
+    
+    // 准备提交的数据，确保字段名称与后端实体类匹配
+    const submitData = {
+      enterpriseId: enterpriseForm.enterpriseId || String(Date.now()),
+      enterpriseName: enterpriseForm.enterpriseName,
+      enterpriseType: enterpriseForm.enterpriseType,
+      legalRepresentative: enterpriseForm.legalRepresentative,
+      registeredCapital: enterpriseForm.registeredCapital,
+      registerAddress: enterpriseForm.registerAddress,
+      creditCode: enterpriseForm.creditCode,
+      // 将字符串日期转换为后端期望的格式 - 添加时间组件以兼容LocalDateTime
+      establishmentDate: enterpriseForm.establishmentDate ? `${enterpriseForm.establishmentDate}T00:00:00` : null,
+      // 设置默认值
+      businessScope: '',
+      businessTerm: '',
+      registrationAuthority: '',
+      enterpriseStatus: '1'
+    };
+    
+    console.log('提交企业注册数据:', submitData);
+    
+    const res = await api.enterprise.createEnterprise(submitData);
+    console.log('企业注册响应:', res);
+    
     if (res.data && res.data.success) {
-      ElMessage.success('企业注册成功，请返回用户注册页面继续注册');
-      router.push('/register');
+      ElMessage.success('企业注册成功，请继续注册企业用户');
+      // 跳转到企业用户注册页面，并传递企业ID
+      router.push({ 
+        path: '/register/enterprise', 
+        query: { enterpriseId: submitData.enterpriseId } 
+      });
     } else {
-      ElMessage.error(res.data.message || '企业注册失败');
+      ElMessage.error(res.data?.message || '企业注册失败');
     }
   } catch (error) {
-    ElMessage.error('企业注册失败');
+    console.error('企业注册错误:', error);
+    console.error('错误详情:', error.response?.data);
+    ElMessage.error(error.response?.data?.message || error.message || '企业注册失败');
   }
 };
 </script>

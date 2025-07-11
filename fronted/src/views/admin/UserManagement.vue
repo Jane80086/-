@@ -1,5 +1,6 @@
 <template>
   <div class="user-management">
+    <h1 style="color: #409EFF; text-align: center; margin: 32px 0;">这里是用户管理页面</h1>
     <el-card>
       <template #header>
         <div class="card-header">
@@ -63,13 +64,13 @@
         border
         style="width: 100%"
       >
-        <el-table-column prop="userId" label="用户ID" width="120" />
+        <el-table-column prop="id" label="用户ID" width="120" />
         <el-table-column prop="realName" label="真实姓名" width="120" />
-        <el-table-column prop="account" label="账号" width="120" />
+        <el-table-column prop="username" label="账号" width="120" />
         <el-table-column prop="nickname" label="昵称" width="120" />
         <el-table-column prop="enterpriseId" label="企业ID" width="120" />
         <el-table-column prop="enterpriseName" label="企业名称" width="200" />
-        <el-table-column prop="enterpriseType" label="企业类型" width="120" />
+        <el-table-column prop="userType" label="用户类型" width="120" />
         <el-table-column prop="phone" label="手机号码" width="130" />
         <el-table-column prop="email" label="邮箱" width="180" />
         <el-table-column prop="createTime" label="创建时间" width="180" />
@@ -113,8 +114,8 @@
         <el-form-item label="真实姓名" prop="realName">
           <el-input v-model="userFormData.realName" placeholder="请输入真实姓名" />
         </el-form-item>
-        <el-form-item label="账号" prop="account">
-          <el-input v-model="userFormData.account" placeholder="请输入账号" />
+        <el-form-item label="账号" prop="username">
+          <el-input v-model="userFormData.username" placeholder="请输入账号" />
         </el-form-item>
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="userFormData.nickname" placeholder="请输入昵称" />
@@ -125,8 +126,8 @@
         <el-form-item label="企业名称" prop="enterpriseName">
           <el-input v-model="userFormData.enterpriseName" placeholder="请输入企业名称" />
         </el-form-item>
-        <el-form-item label="企业类型" prop="enterpriseType">
-          <el-select v-model="userFormData.enterpriseType" placeholder="请选择企业类型" style="width: 100%">
+        <el-form-item label="企业类型" prop="userType">
+          <el-select v-model="userFormData.userType" placeholder="请选择企业类型" style="width: 100%">
             <el-option label="科技企业" value="科技企业" />
             <el-option label="制造企业" value="制造企业" />
             <el-option label="服务企业" value="服务企业" />
@@ -172,12 +173,12 @@
           <el-form-item label="修改字段">
             <el-select v-model="historySearchForm.fieldName" placeholder="请选择修改字段" clearable>
               <el-option label="真实姓名" value="realName" />
-              <el-option label="账号" value="account" />
+              <el-option label="账号" value="username" />
               <el-option label="手机号码" value="phone" />
               <el-option label="邮箱" value="email" />
               <el-option label="企业ID" value="enterpriseId" />
               <el-option label="企业名称" value="enterpriseName" />
-              <el-option label="企业类型" value="enterpriseType" />
+              <el-option label="企业类型" value="userType" />
             </el-select>
           </el-form-item>
           <el-form-item label="开始时间">
@@ -260,7 +261,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, Plus, Search, Refresh } from '@element-plus/icons-vue'
-import api from '@/api'
+import { userAPI } from '@/api/index.js'
 import AIChat from './AIChat.vue'
 
 export default {
@@ -290,13 +291,13 @@ export default {
     })
     
     const userFormData = reactive({
-      userId: '',
+      id: '',
       realName: '',
-      account: '',
+      username: '',
       nickname: '',
       enterpriseId: '',
       enterpriseName: '',
-      enterpriseType: '',
+      userType: '',
       phone: '',
       email: '',
       password: ''
@@ -354,10 +355,15 @@ export default {
           pageSize: pagination.size,
           ...searchForm
         }
-        const response = await api.user.getUsers(params)
-        if (response.data.code === 200) {
-          userList.value = response.data.data.records || []
-          pagination.total = response.data.data.total || 0
+        const response = await userAPI.getUsers(params)
+        console.log('用户列表接口返回：', response)
+        if (response.code === 200) {
+          userList.value = response.data.records || []
+          pagination.total = response.data.total || 0
+        } else {
+          ElMessage.error('用户列表接口异常：' + (response.msg || response.code || '未知错误'))
+          userList.value = []
+          pagination.total = 0
         }
       } catch (error) {
         console.error('获取用户列表失败:', error)
@@ -402,7 +408,7 @@ export default {
         const params = {
           ...searchForm
         }
-        const response = await api.user.exportUsers(params)
+        const response = await userAPI.exportUsers(params)
         
         // 创建下载链接
         const blob = new Blob([response.data], {
@@ -445,9 +451,9 @@ export default {
             type: 'warning'
           }
         )
-        
-        const response = await api.user.deleteUser(row.userId)
-        if (response.data.code === 200) {
+        // 修正：用row.id作为用户ID
+        const response = await userAPI.deleteUser(row.id)
+        if (response.code === 200) {
           ElMessage.success('删除成功')
           fetchUserList()
         }
@@ -467,15 +473,15 @@ export default {
         await userForm.value.validate()
         
         if (isEdit.value) {
-          const response = await api.user.updateUser(userFormData.userId, userFormData)
-          if (response.data.code === 200) {
+          const response = await userAPI.updateUser(userFormData.id, userFormData)
+          if (response.code === 200) {
             ElMessage.success('更新成功')
             showAddDialog.value = false
             fetchUserList()
           }
         } else {
-          const response = await api.user.createUser(userFormData)
-          if (response.data.code === 200) {
+          const response = await userAPI.createUser(userFormData)
+          if (response.code === 200) {
             ElMessage.success('创建成功')
             showAddDialog.value = false
             fetchUserList()
@@ -521,7 +527,7 @@ export default {
           pageSize: historyPagination.size,
           ...historySearchForm
         }
-        const response = await api.user.getUserHistory(params)
+        const response = await userAPI.getUserHistory(params)
         if (response.data.code === 200) {
           historyList.value = response.data.data.records || []
           historyPagination.total = response.data.data.total || 0
@@ -566,12 +572,12 @@ export default {
     const getFieldNameLabel = (fieldName) => {
       const fieldMap = {
         'realName': '真实姓名',
-        'account': '账号',
+        'username': '账号',
         'phone': '手机号码',
         'email': '邮箱',
         'enterpriseId': '企业ID',
         'enterpriseName': '企业名称',
-        'enterpriseType': '企业类型'
+        'userType': '企业类型'
       }
       return fieldMap[fieldName] || fieldName
     }
@@ -580,12 +586,12 @@ export default {
     const getFieldNameTagType = (fieldName) => {
       const typeMap = {
         'realName': 'primary',
-        'account': 'success',
+        'username': 'success',
         'phone': 'warning',
         'email': 'info',
         'enterpriseId': 'danger',
         'enterpriseName': 'primary',
-        'enterpriseType': 'success'
+        'userType': 'success'
       }
       return typeMap[fieldName] || 'info'
     }
@@ -603,7 +609,7 @@ export default {
           }
         )
         
-        const response = await api.user.restoreUserHistory(row.historyId)
+        const response = await userAPI.restoreUserHistory(row.historyId)
         if (response.data.code === 200) {
           ElMessage.success('恢复成功')
           // 刷新历史记录列表

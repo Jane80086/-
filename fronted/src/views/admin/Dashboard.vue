@@ -4,21 +4,8 @@
       <template #header>
         <span>管理员仪表盘</span>
       </template>
-      <div class="debug-info">
-        <h3>调试信息</h3>
-        <p><strong>当前角色:</strong> {{ userStore.user.role }}</p>
-        <p><strong>用户信息:</strong> {{ JSON.stringify(userStore.user, null, 2) }}</p>
-        <p><strong>当前路径:</strong> {{ $route.path }}</p>
-      </div>
       
-      <!-- 路由测试按钮 -->
-      <div class="route-test">
-        <h3>路由测试</h3>
-        <el-button @click="testRoute('/admin/course-search')" type="primary">测试课程搜索</el-button>
-        <el-button @click="testRoute('/admin/my-courses')" type="success">测试我的课程</el-button>
-        <el-button @click="testRoute('/admin/courses')" type="warning">测试课程审核</el-button>
-        <el-button @click="testRoute('/admin/users')" type="info">测试用户管理</el-button>
-      </div>
+      <!-- 删除路由测试按钮区域 -->
       
       <div class="dashboard-content">
         <h2>欢迎来到管理员仪表盘</h2>

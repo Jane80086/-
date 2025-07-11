@@ -62,7 +62,7 @@
           </el-form-item>
           
           <div class="login-footer">
-            <el-link type="primary" @click="$router.push('/register')">
+            <el-link type="primary" @click="$router.push('/role-selection')">
               还没有账号？立即注册
             </el-link>
           </div>
@@ -152,9 +152,24 @@
             const user = response.user
             const token = response.token
             
+            // 调试：打印完整的登录响应
+            console.log('=== 登录响应调试信息 ===')
+            console.log('完整响应:', response)
+            console.log('用户信息:', user)
+            console.log('Token:', token)
+            
             // 保存token到localStorage
             if (token) {
-              localStorage.setItem('token', token)
+              const trimmedToken = token.trim();
+              // 打印 token 长度和内容前后10字符
+              console.log('Token长度:', trimmedToken.length, '前10:', trimmedToken.slice(0, 10), '后10:', trimmedToken.slice(-10));
+              // 检查格式
+              if (!/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(trimmedToken)) {
+                ElMessage.error('登录返回的token格式不合法，请联系管理员！');
+                localStorage.removeItem('token');
+                return;
+              }
+              localStorage.setItem('token', trimmedToken);
             }
             
             // 保存用户信息到Pinia store
@@ -164,11 +179,33 @@
             
             await nextTick()
             
-            // 根据用户账号判断跳转路径
-            if (user && String(user.account).startsWith('0000')) {
-              router.push('/dashboard/users')
+            // 根据用户角色判断跳转路径
+            // 后端返回的是 userType 字段，需要映射到 role
+            // 注意：后端返回的 userType 是大写的（如 "ENTERPRISE"），需要转换为小写
+            let userRole = user.role || user.userType || (user.account && String(user.account).startsWith('0000') ? 'admin' : 'user')
+            
+            // 将大写的用户类型转换为小写
+            if (userRole && typeof userRole === 'string') {
+              userRole = userRole.toLowerCase()
+            }
+            
+            console.log('用户角色判断:', {
+              userRole,
+              userRoleField: user.role,
+              userTypeField: user.userType,
+              account: user.account,
+              isAdminAccount: user.account && String(user.account).startsWith('0000')
+            })
+            
+            if (userRole === 'admin') {
+              console.log('跳转到管理员首页: /admin/dashboard')
+              router.push('/admin/dashboard')
+            } else if (userRole === 'enterprise') {
+              console.log('跳转到企业首页: /enterprise/home')
+              router.push('/enterprise/home')
             } else {
-              router.push('/profile')
+              console.log('跳转到普通用户首页: /user/home')
+              router.push('/user/home')
             }
           } else {
             // 登录失败，弹出后端返回的错误信息
