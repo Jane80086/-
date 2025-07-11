@@ -4,7 +4,6 @@ import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
@@ -18,18 +17,11 @@ import java.util.stream.Collectors;
 @Component
 public class JWTUtil {
     private static final Logger log = LoggerFactory.getLogger(JWTUtil.class);
-    private static Key SIGNING_KEY;
-    @Value("${jwt.secret}")
-    public void setSecret(String secret) {
-        // 检查密钥是否为Base64编码，如果不是则直接使用字符串
-        try {
-            byte[] keyBytes = Base64.getDecoder().decode(secret);
-            SIGNING_KEY = new SecretKeySpec(keyBytes, SignatureAlgorithm.HS256.getJcaName());
-        } catch (IllegalArgumentException e) {
-            // 如果不是Base64编码，直接使用字符串的字节
-            SIGNING_KEY = new SecretKeySpec(secret.getBytes(), SignatureAlgorithm.HS256.getJcaName());
-        }
-    }
+    private static final String BASE64_SECRET_KEY = "3lO/GEOWLL88qmv3i97FrRdrYltYOSFq016I7+Uecgc=";
+    private static final Key SIGNING_KEY = new SecretKeySpec(
+            Base64.getDecoder().decode(BASE64_SECRET_KEY),
+            SignatureAlgorithm.HS256.getJcaName()
+    );
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 24小时
     private static final long REFRESH_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 7; // 7天
 

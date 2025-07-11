@@ -9,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/qna")
@@ -200,90 +198,6 @@ public class QnAController {
             }
         } catch (Exception e) {
             return Result.fail("人工回复失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 问题自动补全（根据输入模糊匹配历史问题）
-     */
-    @GetMapping("/autocomplete")
-    public Result autocompleteQuestions(@RequestParam String query) {
-        try {
-            List<String> suggestions = qnaService.autocompleteQuestions(query);
-            return Result.success("操作成功", suggestions);
-        } catch (Exception e) {
-            return Result.fail("自动补全失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 课程AI问答接口
-     */
-    @PostMapping("/course/{courseId}/ai-ask")
-    public Result askCourseQuestion(@PathVariable Long courseId, @RequestBody Map<String, Object> request) {
-        try {
-            String questionContent = (String) request.get("question");
-            Long userId = Long.valueOf(request.get("userId").toString());
-            
-            if (questionContent == null || questionContent.trim().isEmpty()) {
-                return Result.fail("问题内容不能为空");
-            }
-            
-            // 创建问题对象
-            Question question = new Question();
-            question.setCourseId(courseId);
-            question.setUserId(userId);
-            question.setQuestion(questionContent);
-            question.setCreatedAt(java.time.LocalDateTime.now());
-            
-            // 保存问题
-            Question savedQuestion = qnaService.askQuestion(question);
-            
-            // 生成AI回复
-            String aiReply = qnaService.autoReply(savedQuestion);
-            
-            // 构建响应
-            Map<String, Object> response = new HashMap<>();
-            response.put("question", savedQuestion);
-            response.put("aiReply", aiReply);
-            
-            return Result.success("AI问答成功", response);
-        } catch (Exception e) {
-            return Result.fail("AI问答失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 获取课程AI问答历史
-     */
-    @GetMapping("/course/{courseId}/ai-history")
-    public Result getCourseAIHistory(@PathVariable Long courseId,
-                                    @RequestParam(defaultValue = "1") long current,
-                                    @RequestParam(defaultValue = "10") long size) {
-        try {
-            Page<Question> page = new Page<>(current, size);
-            IPage<Question> questions = qnaService.getQuestionsByCoursePaged(courseId, page);
-            return Result.success("获取AI问答历史成功", questions);
-        } catch (Exception e) {
-            return Result.fail("获取AI问答历史失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 重新生成AI回复
-     */
-    @PostMapping("/{id}/regenerate-ai-reply")
-    public Result regenerateAIReply(@PathVariable Long id) {
-        try {
-            Question question = qnaService.getQuestionById(id);
-            if (question == null) {
-                return Result.fail("问题不存在");
-            }
-            
-            String newReply = qnaService.autoReply(question);
-            return Result.success("重新生成AI回复成功", newReply);
-        } catch (Exception e) {
-            return Result.fail("重新生成AI回复失败: " + e.getMessage());
         }
     }
 } 

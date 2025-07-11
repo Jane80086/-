@@ -1,1 +1,0 @@
-ALTER TABLE course_history ADD COLUMN IF NOT EXISTS viewed_at TIMESTAMP; 

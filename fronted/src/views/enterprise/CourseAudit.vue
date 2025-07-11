@@ -9,48 +9,34 @@
           <el-tag :type="getStatusType(scope.row.status)">{{ getStatusText(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column v-if="hasRejected" prop="rejectReason" label="驳回原因" min-width="180">
-        <template #default="scope">
-          <span v-if="scope.row.status === 'REJECTED'">{{ scope.row.rejectReason || '无' }}</span>
-        </template>
-      </el-table-column>
       <el-table-column label="操作" min-width="180">
         <template #default="scope">
-          <el-button v-if="scope.row.status === 'PENDING'" size="small" type="primary" @click="approve(scope.row)">通过</el-button>
-          <el-button v-if="scope.row.status === 'PENDING'" size="small" type="danger" @click="reject(scope.row)">拒绝</el-button>
+          <el-button size="small" type="primary" @click="approve(scope.row)">通过</el-button>
+          <el-button size="small" type="danger" @click="reject(scope.row)">拒绝</el-button>
         </template>
       </el-table-column>
     </el-table>
   </div>
 </template>
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { ElMessage, ElPrompt } from 'element-plus'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { courseApi } from '@/api/course'
 const courses = ref([])
-const userId = 1 // TODO: 替换为当前登录用户ID
 const loadCourses = async () => {
-  try {
-    const res = await courseApi.getMyCourses({ userId })
-    if (res.code === 200) courses.value = res.data || []
-  } catch (e) {
-    ElMessage.error('课程加载失败: ' + (e?.message || '未知错误'))
-    console.error('课程加载失败', e)
-  }
+  const res = await courseApi.getAuditCourses()
+  if (res.code === 200) courses.value = res.data.content || res.data || []
 }
-const hasRejected = computed(() => courses.value.some(c => c.status === 'REJECTED'))
 const getStatusType = (status) => {
-  if (status === 'PENDING') return 'info'
-  if (status === 'PUBLISHED') return 'success'
-  if (status === 'REJECTED') return 'danger'
-  if (status === 'DRAFT') return 'warning'
+  if (status === 'pending') return 'info'
+  if (status === 'approved') return 'success'
+  if (status === 'rejected') return 'danger'
   return 'default'
 }
 const getStatusText = (status) => {
-  if (status === 'PENDING') return '审核中'
-  if (status === 'PUBLISHED') return '已发布'
-  if (status === 'REJECTED') return '已驳回'
-  if (status === 'DRAFT') return '草稿'
+  if (status === 'pending') return '审核中'
+  if (status === 'approved') return '已通过'
+  if (status === 'rejected') return '未通过'
   return '未知'
 }
 const approve = async (row) => {
@@ -58,15 +44,8 @@ const approve = async (row) => {
   if (res.code === 200) { ElMessage.success('审核通过'); loadCourses() }
 }
 const reject = async (row) => {
-  ElPrompt({
-    title: '请输入驳回原因',
-    inputType: 'textarea',
-    callback: async (reason) => {
-      if (!reason) return ElMessage.warning('请输入驳回原因')
-      const res = await courseApi.rejectCourse(row.id, reason)
-      if (res.code === 200) { ElMessage.success('已拒绝'); loadCourses() }
-    }
-  })
+  const res = await courseApi.rejectCourse(row.id)
+  if (res.code === 200) { ElMessage.success('已拒绝'); loadCourses() }
 }
 onMounted(loadCourses)
 </script>

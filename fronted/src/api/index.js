@@ -198,15 +198,4 @@ export const fileAPI = {
 
 export { askAI } from './register.js';
 
-/**
- * QnA问题自动补全
- */
-export function autocompleteQnAQuestions(query) {
-  return request({
-    url: '/api/qna/autocomplete',
-    method: 'get',
-    params: { query }
-  });
-}
-
 export default request 

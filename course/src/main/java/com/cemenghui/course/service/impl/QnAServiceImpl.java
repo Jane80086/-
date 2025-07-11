@@ -155,15 +155,4 @@ public class QnAServiceImpl implements QnAService {
         questionDao.updateById(question);
         return true;
     }
-
-    @Override
-    public List<String> autocompleteQuestions(String query) {
-        LambdaQueryWrapper<Question> wrapper = new LambdaQueryWrapper<>();
-        wrapper.like(Question::getQuestion, query)
-               .select(Question::getQuestion)
-               .orderByDesc(Question::getCreatedAt)
-               .last("limit 10");
-        List<Question> questions = questionDao.selectList(wrapper);
-        return questions.stream().map(Question::getQuestion).toList();
-    }
 }

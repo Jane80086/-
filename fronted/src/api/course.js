@@ -3,18 +3,13 @@ import request from '@/utils/request'
 // 课程相关API
 export const courseApi = {
   getCourseList(params) {
-    return request.get('/api/course/list', { params })
+    return request.get('/course/list', { params })
   },
-<<<<<<< HEAD
   getCourseDetail(id) {
     return request.get(`/course/${id}`)
-=======
-  getCourseDetail(id, userId) {
-    return request.get(`/api/course/${id}`, { params: userId ? { userId } : {} })
->>>>>>> a4b722f (本地临时保存)
   },
   createCourse(data) {
-    return request.post('/api/course/create', data)
+    return request.post('/course/create', data)
   },
   updateCourse(id, data) {
     return request.put(`/course/${id}`, data)
@@ -29,7 +24,7 @@ export const courseApi = {
   // 获取课程笔记
   getNotes(courseId) {
     return request({
-      url: `/api/course/${courseId}/notes`,
+      url: `/course/${courseId}/notes`,
       method: 'get'
     })
   },
@@ -37,7 +32,7 @@ export const courseApi = {
   // 添加笔记
   addNote(courseId, data) {
     return request({
-      url: `/api/course/${courseId}/notes`,
+      url: `/course/${courseId}/notes`,
       method: 'post',
       data
     })
@@ -46,7 +41,7 @@ export const courseApi = {
   // 删除笔记
   deleteNote(noteId) {
     return request({
-      url: `/api/notes/${noteId}`,
+      url: `/notes/${noteId}`,
       method: 'delete'
     })
   },
@@ -54,7 +49,7 @@ export const courseApi = {
   // 获取课程问答
   getQuestions(courseId) {
     return request({
-      url: `/api/course/${courseId}/questions`,
+      url: `/course/${courseId}/questions`,
       method: 'get'
     })
   },
@@ -62,7 +57,7 @@ export const courseApi = {
   // 提交问题
   submitQuestion(courseId, data) {
     return request({
-      url: `/api/course/${courseId}/questions`,
+      url: `/course/${courseId}/questions`,
       method: 'post',
       data
     })
@@ -71,7 +66,7 @@ export const courseApi = {
   // 点赞问题
   likeQuestion(questionId) {
     return request({
-      url: `/api/questions/${questionId}/like`,
+      url: `/questions/${questionId}/like`,
       method: 'post'
     })
   },
@@ -79,7 +74,7 @@ export const courseApi = {
   // 收藏/取消收藏课程
   toggleFavorite(courseId) {
     return request({
-      url: `/api/course/${courseId}/favorite`,
+      url: `/course/${courseId}/favorite`,
       method: 'post'
     })
   },
@@ -87,7 +82,7 @@ export const courseApi = {
   // 获取推荐课程
   getRecommendations(userId) {
     return request({
-      url: '/api/recommendation/courses',
+      url: '/recommendation/courses',
       method: 'get',
       params: { userId }
     })
@@ -96,7 +91,7 @@ export const courseApi = {
   // 获取热门课程
   getPopularCourses() {
     return request({
-      url: '/api/recommendation/popular',
+      url: '/recommendation/popular',
       method: 'get'
     })
   },
@@ -104,7 +99,7 @@ export const courseApi = {
   // 搜索课程
   searchCourses(keyword) {
     return request({
-      url: '/api/course/search',
+      url: '/course/search',
       method: 'get',
       params: { keyword }
     })
@@ -113,7 +108,7 @@ export const courseApi = {
   // 获取热搜关键词
   getHotKeywords() {
     return request({
-      url: '/api/search/hot-keywords',
+      url: '/search/hot-keywords',
       method: 'get'
     })
   },
@@ -121,7 +116,7 @@ export const courseApi = {
   // 获取我的课程
   getMyCourses(params = {}) {
     return request({
-      url: '/api/course/my',
+      url: '/course/my',
       method: 'get',
       params
     })
@@ -130,7 +125,7 @@ export const courseApi = {
   // 获取我的课程统计
   getMyCourseStats() {
     return request({
-      url: '/api/course/my/stats',
+      url: '/course/my/stats',
       method: 'get'
     })
   },
@@ -138,43 +133,10 @@ export const courseApi = {
   // 获取学习进度
   getLearningProgress(courseId) {
     return request({
-      url: `/api/course/${courseId}/progress`,
+      url: `/course/${courseId}/progress`,
       method: 'get'
     })
   },
-<<<<<<< HEAD
-=======
-
-  // 获取课程评论
-  getComments(courseId) {
-    return request({
-      url: `/api/course/${courseId}/comments`,
-      method: 'get'
-    })
-  },
-  // 获取AI问答历史
-  getAiQnaList(courseId) {
-    return request({
-      url: `/api/course/${courseId}/ai-qna`,
-      method: 'get'
-    })
-  },
->>>>>>> a4b722f (本地临时保存)
-}
-
-// 课程AI问答：提交问题并获取AI回复
-export function askCourseAIQna(courseId, question, userId) {
-  return request.post(`/api/course/${courseId}/ai-qna`, {
-    question,
-    userId
-  })
-}
-
-// 课程AI问答：获取历史
-export function getCourseAIQnaHistory(courseId, current = 1, size = 10) {
-  return request.get(`/api/course/${courseId}/ai-qna`, {
-    params: { current, size }
-  })
 }
 
 // 文件相关API
@@ -188,7 +150,10 @@ export const fileApi = {
     return request({
       url: '/api/file/upload',
       method: 'post',
-      data: formData
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     })
   },
 
@@ -200,7 +165,10 @@ export const fileApi = {
     return request({
       url: '/api/file/upload/course-cover',
       method: 'post',
-      data: formData
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     })
   },
 
@@ -212,7 +180,10 @@ export const fileApi = {
     return request({
       url: '/api/file/upload/course-video',
       method: 'post',
-      data: formData
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     })
   },
 
@@ -224,7 +195,10 @@ export const fileApi = {
     return request({
       url: '/api/file/upload/user-avatar',
       method: 'post',
-      data: formData
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     })
   },
 

@@ -34,10 +34,6 @@ import com.cemenghui.course.service.impl.MinioServiceImpl;
 import com.cemenghui.course.service.ChapterService;
 import com.cemenghui.common.JWTUtil;
 import org.springframework.beans.factory.annotation.Value;
-import com.cemenghui.course.entity.Question;
-import com.cemenghui.course.service.QnAService;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 @RestController
 @RequestMapping("/api/course")
@@ -66,9 +62,6 @@ public class CourseController {
 
     @Autowired
     private JWTUtil jwtUtil;
-
-    @Autowired
-    private QnAService qnaService;
 
     /**
      * 创建新课程
@@ -141,22 +134,19 @@ public class CourseController {
     }
 
     /**
-     * 获取课程详情（已发布所有人可查，驳回仅创建者可查）
+     * 获取课程详情
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Result> getCourseDetail(@PathVariable Long id, @RequestParam(required = false) Long userId) {
+    public ResponseEntity<Result> getCourseDetail(@PathVariable Long id) {
         try {
-            Course course = courseService.getCourseDetail(id);
-            if ("PUBLISHED".equals(course.getStatus())) {
-                return ResponseEntity.ok(Result.success("操作成功", course));
-            } else if ("REJECTED".equals(course.getStatus()) && userId != null && userId.equals(course.getInstructorId())) {
-                return ResponseEntity.ok(Result.success("操作成功", course));
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Result.fail("无权限访问该课程"));
+            Course course = courseService.getCourseDetail(id); // 用数据库真实数据
+            if (course == null) {
+                // 课程不存在，返回 code=404, data=null
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Result.success("课程不存在", null));
             }
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Result.success("课程不存在", null));
+            // 课程存在，返回 code=200, data=course
+            return ResponseEntity.ok(Result.success("操作成功", course));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("获取课程详情失败: " + e.getMessage()));
@@ -200,92 +190,13 @@ public class CourseController {
     }
 
     /**
-     * 获取课程列表（只返回已发布课程）
+     * 获取课程列表
      */
     @GetMapping("/list")
-    public ResponseEntity<Result> getCourseList(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String level,
-            @RequestParam(required = false) String sortBy) {
+    public ResponseEntity<Result> getCourseList() {
         try {
-            List<Course> allCourses = courseService.listPublishedCourses();
-            
-            // 过滤课程
-            List<Course> filteredCourses = allCourses.stream()
-                .filter(course -> {
-                    // 关键词搜索
-                    if (keyword != null && !keyword.trim().isEmpty()) {
-                        String kw = keyword.toLowerCase();
-                        return course.getTitle().toLowerCase().contains(kw) ||
-                               course.getDescription().toLowerCase().contains(kw) ||
-                               (course.getCategory() != null && course.getCategory().toLowerCase().contains(kw));
-                    }
-                    return true;
-                })
-                .filter(course -> {
-                    // 分类过滤
-                    if (category != null && !category.trim().isEmpty()) {
-                        return category.equals(course.getCategory());
-                    }
-                    return true;
-                })
-                .filter(course -> {
-                    // 难度过滤
-                    if (level != null && !level.trim().isEmpty()) {
-                        // 这里可以根据实际需求调整难度判断逻辑
-                        return level.equals(course.getLevel());
-                    }
-                    return true;
-                })
-                .collect(java.util.stream.Collectors.toList());
-            
-            // 排序
-            if (sortBy != null) {
-                switch (sortBy) {
-                    case "latest":
-                        filteredCourses.sort((a, b) -> b.getId().compareTo(a.getId()));
-                        break;
-                    case "popular":
-                        filteredCourses.sort((a, b) -> Integer.compare(b.getViewCount() != null ? b.getViewCount() : 0, 
-                                                                      a.getViewCount() != null ? a.getViewCount() : 0));
-                        break;
-                    case "rating":
-                        filteredCourses.sort((a, b) -> {
-                            BigDecimal ratingA = a.getRating() != null ? a.getRating() : BigDecimal.ZERO;
-                            BigDecimal ratingB = b.getRating() != null ? b.getRating() : BigDecimal.ZERO;
-                            return ratingB.compareTo(ratingA);
-                        });
-                        break;
-                    case "price-asc":
-                        filteredCourses.sort((a, b) -> a.getPrice().compareTo(b.getPrice()));
-                        break;
-                    case "price-desc":
-                        filteredCourses.sort((a, b) -> b.getPrice().compareTo(a.getPrice()));
-                        break;
-                }
-            }
-            
-            // 分页
-            int total = filteredCourses.size();
-            int start = (page - 1) * size;
-            int end = Math.min(start + size, total);
-            
-            List<Course> pageCourses = start < total ? filteredCourses.subList(start, end) : new ArrayList<>();
-            
-            // 构建分页响应
-            Map<String, Object> pageInfo = new HashMap<>();
-            pageInfo.put("content", pageCourses);
-            pageInfo.put("totalElements", total);
-            pageInfo.put("totalPages", (int) Math.ceil((double) total / size));
-            pageInfo.put("currentPage", page);
-            pageInfo.put("pageSize", size);
-            pageInfo.put("hasNext", end < total);
-            pageInfo.put("hasPrevious", page > 1);
-            
-            return ResponseEntity.ok(Result.success("获取成功", pageInfo));
+            List<Course> courses = courseService.listCourses(); // 用数据库真实数据
+            return ResponseEntity.ok(Result.success("获取成功", courses));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -601,14 +512,17 @@ public class CourseController {
     }
 
     /**
-     * 企业用户获取自己所有课程（草稿/待审核/已发布/驳回）
+     * 获取我的课程
      */
     @GetMapping("/my")
-    public ResponseEntity<Result> getMyCourses(@RequestParam Long userId) {
+    public ResponseEntity<Result> getMyCourses() {
         try {
-            List<Course> myCourses = courseService.listCoursesByUser(userId);
-            return ResponseEntity.ok(Result.success("获取成功", myCourses));
+            // 这里应该根据当前登录用户获取课程
+            // 暂时返回模拟数据
+            List<Course> myCourses = createMockCourses().subList(0, 2);
+            return ResponseEntity.ok(Result.success("获取我的课程成功", myCourses));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("获取我的课程失败: " + e.getMessage()));
         }
@@ -741,44 +655,44 @@ public class CourseController {
             // 获取文件大小
             long fileSize = minioServiceImpl.getFileSize(objectName);
             if (fileSize == 0) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
             
             // 支持 HTTP Range
-        String range = request.getHeader("Range");
+            String range = request.getHeader("Range");
             long start = 0, end = fileSize - 1;
-        if (range != null && range.startsWith("bytes=")) {
-            String[] parts = range.replace("bytes=", "").split("-");
-            try {
-                start = Long.parseLong(parts[0]);
-                if (parts.length > 1 && !parts[1].isEmpty()) {
-                    end = Long.parseLong(parts[1]);
-                }
-            } catch (NumberFormatException ignore) {}
-        }
+            if (range != null && range.startsWith("bytes=")) {
+                String[] parts = range.replace("bytes=", "").split("-");
+                try {
+                    start = Long.parseLong(parts[0]);
+                    if (parts.length > 1 && !parts[1].isEmpty()) {
+                        end = Long.parseLong(parts[1]);
+                    }
+                } catch (NumberFormatException ignore) {}
+            }
             if (end >= fileSize) end = fileSize - 1;
             if (start > end) start = 0;
             
-        long contentLength = end - start + 1;
-        response.setStatus(range == null ? 200 : 206);
-        response.setContentType("video/mp4");
-        response.setHeader("Accept-Ranges", "bytes");
-        response.setHeader("Content-Length", String.valueOf(contentLength));
+            long contentLength = end - start + 1;
+            response.setStatus(range == null ? 200 : 206);
+            response.setContentType("video/mp4");
+            response.setHeader("Accept-Ranges", "bytes");
+            response.setHeader("Content-Length", String.valueOf(contentLength));
             response.setHeader("Content-Range", String.format("bytes %d-%d/%d", start, end, fileSize));
             
             // 从MinIO读取并输出视频流
             try (InputStream is = minioServiceImpl.downloadFile(objectName, start, end); 
                  OutputStream os = response.getOutputStream()) {
-            byte[] buffer = new byte[8192];
-            long toRead = contentLength;
-            int len;
-            while (toRead > 0 && (len = is.read(buffer, 0, (int)Math.min(buffer.length, toRead))) != -1) {
-                os.write(buffer, 0, len);
-                toRead -= len;
+                byte[] buffer = new byte[8192];
+                long toRead = contentLength;
+                int len;
+                while (toRead > 0 && (len = is.read(buffer, 0, (int)Math.min(buffer.length, toRead))) != -1) {
+                    os.write(buffer, 0, len);
+                    toRead -= len;
+                }
+                os.flush();
             }
-            os.flush();
-        }
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Video streaming error: " + e.getMessage());
@@ -797,78 +711,6 @@ public class CourseController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.fail("获取热搜关键词失败: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * 课程AI问答接口
-     */
-    @PostMapping("/{id}/ai-qna")
-    public ResponseEntity<Result> askCourseQuestion(@PathVariable Long id, @RequestBody Map<String, Object> request) {
-        try {
-            String questionContent = (String) request.get("question");
-            Long userId = Long.valueOf(request.get("userId").toString());
-            
-            if (questionContent == null || questionContent.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Result.fail("问题内容不能为空"));
-            }
-            
-            // 创建问题对象
-            Question question = new Question();
-            question.setCourseId(id);
-            question.setUserId(userId);
-            question.setQuestion(questionContent);
-            question.setCreatedAt(java.time.LocalDateTime.now());
-            
-            // 保存问题并生成AI回复
-            Question savedQuestion = qnaService.askQuestion(question);
-            String aiReply = qnaService.autoReply(savedQuestion);
-            
-            // 构建响应
-            Map<String, Object> response = new HashMap<>();
-            response.put("question", savedQuestion);
-            response.put("aiReply", aiReply);
-            
-            return ResponseEntity.ok(Result.success("AI问答成功", response));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Result.fail("AI问答失败: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * 获取课程AI问答历史
-     */
-    @GetMapping("/{id}/ai-qna")
-    public ResponseEntity<Result> getCourseAIQna(@PathVariable Long id,
-                                                @RequestParam(defaultValue = "1") long current,
-                                                @RequestParam(defaultValue = "10") long size) {
-        try {
-            Page<Question> page = new Page<>(current, size);
-            IPage<Question> questions = qnaService.getQuestionsByCoursePaged(id, page);
-            return ResponseEntity.ok(Result.success("获取AI问答历史成功", questions));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Result.fail("获取AI问答历史失败: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * 重新生成AI回复
-     */
-    @PostMapping("/{courseId}/ai-qna/{questionId}/regenerate")
-    public ResponseEntity<Result> regenerateAIReply(@PathVariable Long courseId, @PathVariable Long questionId) {
-        try {
-            Question question = qnaService.getQuestionById(questionId);
-            if (question == null) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            String newReply = qnaService.autoReply(question);
-            return ResponseEntity.ok(Result.success("重新生成AI回复成功", newReply));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Result.fail("重新生成AI回复失败: " + e.getMessage()));
         }
     }
 } 

@@ -87,14 +87,4 @@ public interface CourseService {
      * @return 待审核课程列表
      */
     List<Course> getPendingCourses();
-
-    /**
-     * 获取所有已发布课程
-     */
-    List<Course> listPublishedCourses();
-
-    /**
-     * 获取某用户所有课程（企业课程管理用）
-     */
-    List<Course> listCoursesByUser(Long userId);
 } 
