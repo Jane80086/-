@@ -33,6 +33,17 @@ public class UserModifyHistory {
     }
     
     public void setHistoryId(String historyId) {
-        this.id = historyId != null ? Long.valueOf(historyId) : null;
+        if (historyId == null) {
+            this.id = null;
+            return;
+        }
+        
+        try {
+            // 尝试直接解析为Long
+            this.id = Long.valueOf(historyId);
+        } catch (NumberFormatException e) {
+            // 如果是UUID字符串，生成一个Long ID
+            this.id = Long.valueOf(Math.abs(historyId.hashCode()));
+        }
     }
 }

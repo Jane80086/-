@@ -13,6 +13,9 @@ import java.util.Map;
 @Mapper
 public interface UserManagementMapper {
 
+    // 添加缺失的field_name字段到system_user_modify_history表
+    void addFieldNameColumn();
+
     // 查询用户列表
     List<EnterpriseUser> getUserList(UserQueryDTO query);
 
@@ -23,7 +26,7 @@ public interface UserManagementMapper {
     EnterpriseUser getUserById(Long userId);
 
     // 创建用户
-    void createUserByTemplate(EnterpriseUser user);
+    int createUserByTemplate(EnterpriseUser user);
 
     // 记录用户修改历史
     void recordModifyHistory(UserModifyHistory history);
@@ -38,7 +41,7 @@ public interface UserManagementMapper {
     void addPermission(@Param("userId") Long userId, @Param("permission") String permission);
 
     // 更新用户信息
-    void updateUser(EnterpriseUser user);
+    int updateUser(EnterpriseUser user);
 
     // 删除用户
     void deleteUserById(Long userId);
