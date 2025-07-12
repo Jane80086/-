@@ -22,14 +22,17 @@ public interface NewsMapper extends BaseMapper<News> {
     Page<News> findByCondition(Page<News> page, @Param("request") SearchRequest request, @Param("status") Integer status, @Param("currentUserId") Long currentUserId);
 Long countByCondition(@Param("request") SearchRequest request, @Param("status") Integer status);
     Page<News> findByUserId(Page<News> page, @Param("userId") Long userId);
-
+    Long countByUserId(@Param("userId") Long userId);
     @Update("UPDATE news SET view_count = view_count + 1 WHERE id = #{newsId}")
     void updateViewCount(@Param("newsId") Long newsId);
 
-    @Update("UPDATE news SET is_deleted = 1 WHERE id = #{newsId} AND user_id = #{userId}")
+    @Update("UPDATE news SET is_deleted = 1 WHERE id = #{newsId}")
     int softDelete(@Param("newsId") Long newsId, @Param("userId") Long userId);
 
     Page<News> findPendingNews(Page<News> page);
+    // 新增一个用于统计待审核新闻总数的方法
+    @Select("SELECT COUNT(*) FROM news WHERE status = 0 AND is_deleted = 0")
+    Long countPendingNews();
 
     Long countByStatus(@Param("status") Integer status);
 
