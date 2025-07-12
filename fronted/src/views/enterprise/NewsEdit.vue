@@ -1,13 +1,15 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getNewsDetail, editNews } from '@/api/news'
-import { ElMessage } from 'element-plus'
+import {ref, onMounted} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {getNewsDetail, editNews} from '@/api/news'
+import {ElMessage} from 'element-plus'
+import {ArrowLeft} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const newsForm = ref({
+  id: null, // 新增：用於保存新聞ID
   title: '',
   image: '',
   content: '',
@@ -21,18 +23,18 @@ const submitLoading = ref(false)
 
 const rules = {
   title: [
-    { required: true, message: '请输入标题', trigger: 'blur' },
-    { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
+    {required: true, message: '请输入标题', trigger: 'blur'},
+    {min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur'}
   ],
   content: [
-    { required: true, message: '请输入内容', trigger: 'blur' }
+    {required: true, message: '请输入内容', trigger: 'blur'}
   ],
   summary: [
-    { required: true, message: '请输入简介', trigger: 'blur' },
-    { max: 200, message: '简介不能超过200个字符', trigger: 'blur' }
+    {required: true, message: '请输入简介', trigger: 'blur'},
+    {max: 200, message: '简介不能超过200个字符', trigger: 'blur'}
   ],
   author: [
-    { required: true, message: '请输入作者', trigger: 'blur' }
+    {required: true, message: '请输入作者', trigger: 'blur'}
   ]
 }
 
@@ -40,16 +42,30 @@ const loadNewsDetail = async () => {
   loading.value = true
   try {
     const newsId = route.params.id
-    const data = await getNewsDetail(newsId)
-    newsForm.value = {
-      title: data.title,
-      image: data.image || '',
-      content: data.content,
-      summary: data.summary,
-      author: data.author
+    if (!newsId) {
+      ElMessage.error('无法获取新闻ID')
+      router.back()
+      return
+    }
+
+    const response = await getNewsDetail(newsId)
+
+    if (response && response.code === '0' && response.data) {
+      // 正确地将数据赋值给表单
+      newsForm.value = {
+        id: newsId, // 保存ID
+        title: response.data.title,
+        image: response.data.image || '',
+        content: response.data.content,
+        summary: response.data.summary,
+        author: response.data.author
+      }
+    } else {
+      ElMessage.error(response.msg || '加载动态详情失败')
+      router.back()
     }
   } catch (error) {
-    ElMessage.error('加载动态详情失败')
+    ElMessage.error('加载动态详情失败，请检查网络或服务器')
     router.back()
   } finally {
     loading.value = false
@@ -63,14 +79,13 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitLoading.value = true
 
-    const newsId = route.params.id
-    await editNews(newsId, newsForm.value)
+    // 确保将 ID 传给 editNews
+    await editNews(newsForm.value.id, newsForm.value)
+
     ElMessage.success('编辑成功')
-    router.push('/enterprise/my-news')
+    router.push('/enterprise/news/my') // 修改为正确路由
   } catch (error) {
-    if (error.message) {
-      ElMessage.error(error.message)
-    }
+    ElMessage.error(error.message || '编辑失败，请检查表单')
   } finally {
     submitLoading.value = false
   }
@@ -90,7 +105,7 @@ onMounted(() => {
     <el-card>
       <template #header>
         <div class="header-actions">
-          <el-button @click="goBack" :icon="'ArrowLeft'">返回</el-button>
+          <el-button @click="goBack" :icon="ArrowLeft">返回</el-button>
           <span>编辑动态</span>
         </div>
       </template>
@@ -110,7 +125,6 @@ onMounted(() => {
               show-word-limit
           />
         </el-form-item>
-
         <el-form-item label="作者" prop="author">
           <el-input
               v-model="newsForm.author"
@@ -164,15 +178,3 @@ onMounted(() => {
     </el-card>
   </div>
 </template>
-
-<style scoped>
-.news-edit {
-  padding: 20px;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-</style>

@@ -15,29 +15,31 @@ const pageParams = ref({
 })
 
 const statusMap = {
-  0: { text: '待审核', type: 'warning' },
-  1: { text: '已发布', type: 'success' },
-  2: { text: '审核拒绝', type: 'danger' },
+  0: {text: '待审核', type: 'warning'},
+  1: {text: '已发布', type: 'success'},
+  2: {text: '审核拒绝', type: 'danger'},
   // 修改这里：将 '已下线' 改为 '草稿' 以匹配后端枚举
-  3: { text: '草稿', type: 'info' }
+  3: {text: '草稿', type: 'info'}
 }
 
 const loadMyNews = async () => {
   loading.value = true
   try {
-    const pageResult = await getMyNewsList(pageParams.value)
+    const response = await getMyNewsList(pageParams.value)
 
-    console.log('Received pageResult:', pageResult)
+    console.log('Received response:', response) // 打印完整的响应体
 
-    if (pageResult) {
-      newsList.value = pageResult.list
-      total.value = pageResult.total
+    // 检查响应是否成功，并从 'data' 字段中提取真正的分页结果
+    if (response && response.code === '0' && response.data) {
+      const pageResult = response.data
+      newsList.value = pageResult.list // 从 data 中提取 list
+      total.value = pageResult.total   // 从 data 中提取 total
     } else {
-      ElMessage.error('加载数据失败：未收到有效数据')
+      ElMessage.error(response.msg || '加载数据失败：未收到有效数据')
     }
-
   } catch (error) {
     console.error('Network or request exception:', error)
+    ElMessage.error('加载数据失败，请检查网络连接')
   } finally {
     loading.value = false
   }
@@ -49,7 +51,7 @@ const handlePageChange = (page) => {
 }
 
 const handleEdit = (newsId) => {
-  router.push(`/enterprise/news-edit/${newsId}`)
+  router.push(`/enterprise/news/${newsId}/edit`)
 }
 
 const handleDelete = async (newsId, title) => {
@@ -75,7 +77,7 @@ const handleDelete = async (newsId, title) => {
 }
 
 const viewDetail = (newsId) => {
-  router.push(`/normal/news-detail/${newsId}`)
+  router.push(`/enterprise/news/:id/${newsId}`)
 }
 
 onMounted(() => {
@@ -89,7 +91,7 @@ onMounted(() => {
       <template #header>
         <div class="header-actions">
           <span>我的动态</span>
-          <el-button type="primary" @click="router.push('/enterprise/news-publish')">
+          <el-button type="primary" @click="router.push('/enterprise/news/publish')">
             发布新动态
           </el-button>
         </div>
@@ -108,7 +110,7 @@ onMounted(() => {
           </template>
         </el-table-column>
 
-        <el-table-column prop="author" label="作者" width="120" />
+        <el-table-column prop="author" label="作者" width="120"/>
 
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -118,9 +120,9 @@ onMounted(() => {
           </template>
         </el-table-column>
 
-        <el-table-column prop="viewCount" label="浏览量" width="100" />
+        <el-table-column prop="viewCount" label="浏览量" width="100"/>
 
-        <el-table-column prop="createTime" label="发布时间" width="180" />
+        <el-table-column prop="createTime" label="发布时间" width="180"/>
 
         <el-table-column prop="auditComment" label="审核意见" min-width="150">
           <template #default="{ row }">

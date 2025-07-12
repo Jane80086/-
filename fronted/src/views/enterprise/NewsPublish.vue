@@ -53,7 +53,7 @@ const handleSubmit = async () => {
 
     await publishNews(newsForm.value)
     ElMessage.success('发布成功，等待审核')
-    router.push('/enterprise/my-news')
+    router.push('/enterprise/news/my')
   } catch (error) {
     if (error.message) {
       ElMessage.error(error.message)

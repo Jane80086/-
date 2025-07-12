@@ -3,10 +3,10 @@
     <!-- Secondary sidebar -->
     <aside class="secondary-sidebar">
       <div
-        v-for="item in secondaryMenu"
-        :key="item.key"
-        :class="['icon-btn', { active: item.key === activeSecondary }]"
-        @click="handleSecondaryMenuClick(item.key)"
+          v-for="item in secondaryMenu"
+          :key="item.key"
+          :class="['icon-btn', { active: item.key === activeSecondary }]"
+          @click="handleSecondaryMenuClick(item.key)"
       >
         <el-icon :size="28"><component :is="item.icon" /></el-icon>
       </div>
@@ -16,17 +16,17 @@
       <div class="logo">测盟汇 - 企业版</div>
       <el-input v-model="search" placeholder="搜索菜单" class="menu-search" clearable />
       <el-menu
-        :default-active="$route.path"
-        class="menu"
-        background-color="#F7F9FA"
-        text-color="#2D3A4B"
-        active-text-color="#A3BCE2"
-        @select="handleMenuSelect"
+          :default-active="$route.path"
+          class="menu"
+          background-color="#F7F9FA"
+          text-color="#2D3A4B"
+          active-text-color="#A3BCE2"
+          @select="handleMenuSelect"
       >
         <el-menu-item
-          v-for="item in filteredPrimaryMenu"
-          :key="item.path"
-          :index="item.path"
+            v-for="item in filteredPrimaryMenu"
+            :key="item.path"
+            :index="item.path"
         >
           <el-icon><component :is="item.icon" /></el-icon>
           {{ item.label }}
@@ -92,10 +92,10 @@ const getActiveSecondary = (path) => {
   if (path.includes('/news')) {
     return 'content'
   } else if (
-    path.includes('/home') ||
-    path.includes('/my-courses') ||
-    path.includes('/courses') ||
-    path.includes('/course-manage')
+      path.includes('/home') ||
+      path.includes('/my-courses') ||
+      path.includes('/courses') ||
+      path.includes('/course-manage')
   ) {
     return 'home'
   } else if (path.includes('/meeting')) {
@@ -122,7 +122,9 @@ const enterpriseMenu = {
     { label: '我的课程', path: '/enterprise/my-courses', icon: HomeFilled },
   ],
   content: [
-    { label: '我的动态', path: '/enterprise/news', icon: Document },
+    { label: '行业动态', path: '/enterprise/news', icon: Document },
+    { label: '我的动态', path: '/enterprise/news/my', icon: Document },
+    { label: '发表动态', path: '/enterprise/news/publish', icon: Document },
   ],
   meeting: [
     { label: '我的会议', path: '/enterprise/meeting', icon: Calendar },
@@ -137,10 +139,10 @@ const search = ref('')
 const filteredPrimaryMenu = computed(() => {
   console.log('=== EnterpriseLayout filteredPrimaryMenu 计算 ===')
   console.log('当前 activeSecondary:', activeSecondary.value)
-  
+
   let menu = enterpriseMenu[activeSecondary.value] || []
   console.log('菜单内容:', menu)
-  
+
   if (!search.value) return menu
   return menu.filter(item => item.label.includes(search.value))
 })
@@ -154,13 +156,13 @@ const handleSecondaryMenuClick = (key) => {
 const handleMenuSelect = (index) => {
   console.log('EnterpriseLayout 菜单项被选中:', index)
   console.log('目标路径:', index)
-  
+
   // 确保路径是企业用户路径
   if (!index.startsWith('/enterprise/')) {
     console.error('企业用户尝试访问非企业路径:', index)
     return
   }
-  
+
   // 执行路由跳转
   router.push(index)
 }
@@ -168,7 +170,7 @@ const handleMenuSelect = (index) => {
 // 处理下拉菜单命令
 const handleDropdownCommand = (command) => {
   console.log('EnterpriseLayout 下拉菜单命令:', command)
-  
+
   if (command === 'profile') {
     handleProfile()
   } else if (command === 'logout') {
@@ -186,27 +188,27 @@ const handleProfile = () => {
 const handleLogout = async () => {
   try {
     console.log('开始退出登录')
-    
+
     // 显示确认对话框
     await ElMessageBox.confirm(
-      '确定要退出登录吗？',
-      '退出登录',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
+        '确定要退出登录吗？',
+        '退出登录',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
     )
-    
+
     // 调用store中的退出登录方法
     await userStore.logout()
-    
+
     // 显示成功消息
     ElMessage.success('退出登录成功')
-    
+
     // 跳转到登录页面
     router.push('/login')
-    
+
   } catch (error) {
     if (error !== 'cancel') {
       console.error('退出登录失败:', error)
