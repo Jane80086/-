@@ -42,7 +42,7 @@
             >
               <div class="course-image">
                 <el-image 
-                  :src="course.coverImage || 'https://via.placeholder.com/120x80'" 
+                  :src="course.coverImage || '/class.jpg'" 
                   fit="cover"
                   style="width: 120px; height: 80px; border-radius: 8px;"
                 />

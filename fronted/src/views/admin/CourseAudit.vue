@@ -106,7 +106,7 @@
         @click="viewCourseDetail(course.id)"
       >
         <div class="card-image-wrap">
-          <img :src="course.imageUrl || '/default-course.jpg'" :alt="course.title" class="card-image" />
+                      <img :src="course.imageUrl || '/class.jpg'" :alt="course.title" class="card-image" />
           <div class="card-badge" :class="getStatusClass(course.status)">
             {{ getStatusText(course.status) }}
           </div>

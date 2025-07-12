@@ -127,6 +127,7 @@ public class RegisterServiceImpl implements RegisterService {
                 adminUser.setRealName(requestDTO.getRealName());
                 adminUser.setPhone(requestDTO.getPhone() != null ? requestDTO.getPhone() : "");
                 adminUser.setEmail(requestDTO.getEmail() != null ? requestDTO.getEmail() : "");
+                adminUser.setUserType("ADMIN"); // 设置管理员类型
                 adminUser.setNickname(requestDTO.getNickname() != null ? requestDTO.getNickname() : adminUser.getRealName());
                 adminUser.setDepartment(requestDTO.getDepartment() != null ? requestDTO.getDepartment() : "");
                 adminUser.setStatus(1);
@@ -155,6 +156,7 @@ public class RegisterServiceImpl implements RegisterService {
                 user.setRealName(requestDTO.getRealName());
                 user.setPhone(requestDTO.getPhone() != null ? requestDTO.getPhone() : "");
                 user.setEmail(requestDTO.getEmail() != null ? requestDTO.getEmail() : "");
+                user.setUserType("ENTERPRISE"); // 设置企业用户类型
                 user.setEnterpriseId(enterpriseId);
                 user.setNickname(requestDTO.getNickname() != null ? requestDTO.getNickname() : user.getRealName());
                 user.setStatus(1);
@@ -171,7 +173,7 @@ public class RegisterServiceImpl implements RegisterService {
                 user.setRealName(requestDTO.getRealName());
                 user.setPhone(requestDTO.getPhone() != null ? requestDTO.getPhone() : "");
                 user.setEmail(requestDTO.getEmail() != null ? requestDTO.getEmail() : "");
-                user.setUserType("NORMAL");
+                user.setUserType("NORMAL"); // 设置普通用户类型
                 user.setEnterpriseId(""); // 普通用户无企业ID
                 user.setNickname(requestDTO.getNickname() != null ? requestDTO.getNickname() : user.getRealName());
                 user.setStatus(1);

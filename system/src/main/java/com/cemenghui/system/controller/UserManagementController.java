@@ -71,13 +71,16 @@ public class UserManagementController {
     @PostMapping
     public Object createUser(@Valid @RequestBody EnterpriseUser user,
                                                        @RequestHeader("Authorization") String token) {
+        System.out.println("[DEBUG] 收到创建用户请求: " + user);
         if (!isSuperAdmin(token)) {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限操作"), HttpStatus.UNAUTHORIZED);
         }
         try {
             Long userId = userManagementService.createUser(user);
+            System.out.println("[DEBUG] 用户创建成功，用户ID: " + userId);
             return new ResponseEntity<>(ResultVO.success(userId), HttpStatus.CREATED);
         } catch (Exception e) {
+            System.err.println("[ERROR] 创建用户失败: " + e.getMessage());
             e.printStackTrace();
             return new ResponseEntity<>(ResultVO.error("创建用户失败：" + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -128,7 +131,12 @@ public class UserManagementController {
             return new ResponseEntity<>(ResultVO.unauthorized("无权限访问"), HttpStatus.UNAUTHORIZED);
         }
 
+        System.out.println("[DEBUG] 收到历史记录查询请求: " + query);
+        System.out.println("[DEBUG] userId: " + query.getUserId() + ", type: " + (query.getUserId() != null ? query.getUserId().getClass().getName() : "null"));
+        
         UserHistoryListDTO historyList = userManagementService.getUserModifyHistoryPaged(query);
+        System.out.println("[DEBUG] 查询结果: " + historyList);
+        
         return new ResponseEntity<>(ResultVO.success(historyList), HttpStatus.OK);
     }
 

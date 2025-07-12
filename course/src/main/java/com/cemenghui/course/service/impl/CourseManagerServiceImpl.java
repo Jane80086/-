@@ -32,6 +32,12 @@ public class CourseManagerServiceImpl implements com.cemenghui.course.service.Co
         if (course.getStatus() == null || course.getStatus().isEmpty()) {
             course.setStatus("DRAFT");
         }
+        
+        // 设置默认封面图片
+        if (course.getCoverImage() == null || course.getCoverImage().isEmpty()) {
+            course.setCoverImage("/class.jpg");
+        }
+        
         courseDao.insert(course);
         // 插入后用主键查一遍，返回数据库真实数据
         return courseDao.selectById(course.getId());

@@ -40,7 +40,7 @@ const form = ref({
   description: '',
   category: '',
   price: 0,
-  imageUrl: '',
+  imageUrl: '/class.jpg',
   videoUrl: ''
 })
 

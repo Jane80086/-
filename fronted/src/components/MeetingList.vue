@@ -60,7 +60,7 @@ const formatDateTime = (dateTime) => {
 
 // 查看会议详情
 const viewMeeting = (id) => {
-  router.push({ name: 'meeting-detail', params: { id } });
+  router.push(`/meeting/${id}`);
 };
 
 // 编辑会议

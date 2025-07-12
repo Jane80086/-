@@ -3,7 +3,7 @@
     <el-row :gutter="20">
       <el-col :span="6" v-for="course in courses" :key="course.id">
         <el-card @click="viewCourseDetail(course.id)" class="course-card">
-          <img :src="course.imageUrl || '/default-course.jpg'" class="course-image" />
+          <img :src="course.imageUrl || '/class.jpg'" class="course-image" />
           <div class="course-info">
             <h3>{{ course.title }}</h3>
             <p>{{ course.description }}</p>

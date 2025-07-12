@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { searchNews, getPopularNews } from '@/api/news'
-import { ElMessage } from 'element-plus'
+import {ref, onMounted} from 'vue'
+import {useRouter} from 'vue-router'
+import {searchNews, getPopularNews} from '@/api/news'
+import {ElMessage} from 'element-plus'
 
 const router = useRouter()
 
@@ -20,19 +20,21 @@ const loading = ref(false)
 const handleSearch = async () => {
   loading.value = true
   try {
-    const data = await searchNews(searchForm.value)
-    console.log('API返回数据:', data)
+    // searchNews 返回的是整个 res 对象，即 { code, msg, data }
+    const responseData = await searchNews(searchForm.value) // 明确变量名，表示是整个响应数据
 
-    // 根据实际返回的数据结构调整
-    newsList.value = data.list || data.records || []
-    total.value = data.total || 0
+    console.log('API完整响应数据:', responseData) // 打印出来确认结构
+
+    // 访问实际的业务数据部分，即 responseData.data
+    newsList.value = responseData.data.list || []
+    total.value = responseData.data.total || 0
 
     if (newsList.value.length === 0) {
       console.log('没有搜索到数据')
     }
   } catch (error) {
     console.error('搜索错误:', error)
-    ElMessage.error('搜索失败')
+    ElMessage.error('搜索失败，请检查网络或联系管理员')
   } finally {
     loading.value = false
   }
@@ -44,17 +46,26 @@ const handlePageChange = (page) => {
 }
 
 const handleReset = () => {
-  searchForm.value = { keyword: '', page: 1, size: 10 }
+  searchForm.value = {keyword: '', page: 1, size: 10}
   handleSearch()
 }
 
 const viewDetail = (newsId) => {
-  router.push(`/normal/news-detail/${newsId}`)
+  router.push(`/enterprise/news/${newsId}`)
 }
 
 const loadPopularNews = async () => {
   try {
-    popularNews.value = await getPopularNews(5)
+    const response = await getPopularNews(5) // <-- 调用 API
+
+    // 检查响应是否成功，并提取真正的数组数据
+    if (response && response.code === '0') {
+      popularNews.value = response.data || [] // <-- 核心修改：访问 response.data
+    } else {
+      // 如果 code 不为 0，打印错误信息
+      console.error('加载热门动态失败:', response.msg)
+    }
+
   } catch (error) {
     console.error('加载热门动态失败:', error)
   }
@@ -82,7 +93,9 @@ onMounted(() => {
                 class="search-input"
             >
               <template #prefix>
-                <el-icon><Search /></el-icon>
+                <el-icon>
+                  <Search/>
+                </el-icon>
               </template>
             </el-input>
           </div>
@@ -94,7 +107,9 @@ onMounted(() => {
                 :loading="loading"
                 class="search-btn"
             >
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search/>
+              </el-icon>
               搜索
             </el-button>
             <el-button
@@ -102,7 +117,9 @@ onMounted(() => {
                 @click="handleReset"
                 class="reset-btn"
             >
-              <el-icon><Refresh /></el-icon>
+              <el-icon>
+                <Refresh/>
+              </el-icon>
               重置
             </el-button>
           </div>
@@ -118,7 +135,7 @@ onMounted(() => {
             <template #header>
               <div class="card-header">
                 <span class="header-title">
-                  <el-icon><Document /></el-icon>
+                  <el-icon><Document/></el-icon>
                   动态列表
                 </span>
                 <span class="result-count" v-if="total > 0">
@@ -160,15 +177,21 @@ onMounted(() => {
                         <p class="news-summary">{{ news.summary }}</p>
                         <div class="news-meta">
                           <el-tag size="small" type="info">
-                            <el-icon><User /></el-icon>
+                            <el-icon>
+                              <User/>
+                            </el-icon>
                             {{ news.author }}
                           </el-tag>
                           <el-tag size="small" type="success">
-                            <el-icon><Clock /></el-icon>
+                            <el-icon>
+                              <Clock/>
+                            </el-icon>
                             {{ news.createTime }}
                           </el-tag>
                           <el-tag size="small" type="warning">
-                            <el-icon><View /></el-icon>
+                            <el-icon>
+                              <View/>
+                            </el-icon>
                             {{ news.viewCount }}
                           </el-tag>
                         </div>
@@ -197,7 +220,7 @@ onMounted(() => {
             <template #header>
               <div class="card-header">
                 <span class="header-title">
-                  <el-icon><TrendCharts /></el-icon>
+                  <el-icon><TrendCharts/></el-icon>
                   热门动态
                 </span>
               </div>
@@ -216,7 +239,9 @@ onMounted(() => {
                 <div class="popular-info">
                   <div class="popular-title">{{ news.title }}</div>
                   <div class="popular-meta">
-                    <el-icon><View /></el-icon>
+                    <el-icon>
+                      <View/>
+                    </el-icon>
                     {{ news.viewCount || 0 }}
                   </div>
                 </div>

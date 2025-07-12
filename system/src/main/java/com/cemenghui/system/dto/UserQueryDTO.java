@@ -18,4 +18,5 @@ public class UserQueryDTO {
     private String enterpriseName;  // 企业名称
     private String enterpriseType;  // 企业类型
     private String phone;           // 手机号码
+    private String username;        // 用户名
 }

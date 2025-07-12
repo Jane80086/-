@@ -39,7 +39,17 @@ public class SearchController {
     @GetMapping("/hot-keywords")
     public Result getHotKeywords() {
         try {
-            List<String> keywords = aiService.getHotSearchTrends();
+            // 如果AI服务失败，返回默认热门关键词
+            List<String> keywords;
+            try {
+                keywords = aiService.getHotSearchTrends();
+                if (keywords == null || keywords.isEmpty()) {
+                    keywords = java.util.Arrays.asList("Java", "前端", "AI", "大数据", "Python", "Spring Boot", "Vue.js", "React");
+                }
+            } catch (Exception e) {
+                // AI服务异常，返回默认关键词
+                keywords = java.util.Arrays.asList("Java", "前端", "AI", "大数据", "Python", "Spring Boot", "Vue.js", "React");
+            }
             return Result.success(keywords);
         } catch (Exception e) {
             return Result.fail("获取热门关键词失败: " + e.getMessage());

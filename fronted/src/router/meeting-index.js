@@ -5,8 +5,8 @@ import ReviewView from '../views/ReviewView.vue';
  
 const routes = [
   {
-    path: '/',
-    name: 'home',
+    path: '/meeting',
+    name: 'meeting-home',
     component: HomeView,
     meta: { requiresAuth: true }
   },
@@ -24,16 +24,15 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/meeting-test',
-    name: 'meeting-test',
-    component: () => import('@/views/MeetingTestView.vue'),
-    meta: { requiresAuth: false }
+    path: '/meeting-stats',
+    name: 'meeting-stats',
+    component: ReviewView,
+    meta: { requiresAuth: true }
   },
-  // 添加404路由
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
-    redirect: '/'
+    redirect: '/meeting'
   }
 ];
  
@@ -75,7 +74,7 @@ router.beforeEach((to, from, next) => {
       next('/login');
     } else if (to.name === 'login' && isAuthenticated) {
       console.log('已登录用户访问登录页，重定向到首页');
-      next('/');
+      next('/meeting');
     } else {
       next();
     }
@@ -95,5 +94,4 @@ router.onError((error) => {
 });
 
 export const meetingRoutes = routes;
-
 export default router; 

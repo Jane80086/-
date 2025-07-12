@@ -145,7 +145,7 @@
           >
             <div class="course-card" @click="viewCourseDetail(course.id)">
               <div class="course-image">
-                <img :src="course.imageUrl || '/default-course.jpg'" :alt="course.title">
+                <img :src="course.imageUrl || '/class.jpg'" :alt="course.title">
                 <div class="course-overlay">
                   <el-button type="primary" size="small" @click.stop="continueLearning(course.id)">
                     继续学习
@@ -354,20 +354,30 @@ const loadMyCourses = async () => {
   try {
     loading.value = true
     const response = await courseApi.getMyCourses({
-      page: currentPage.value - 1,
+      page: currentPage.value, // 改为从1开始
       size: pageSize.value
     })
     
     if (response.code === 200) {
-      courses.value = response.data.content || response.data || []
-      totalCourses.value = response.data.totalElements || courses.value.length
+      // 处理分页数据
+      if (response.data && response.data.content) {
+        courses.value = response.data.content
+        totalCourses.value = response.data.totalElements || 0
+        // 自动同步统计卡片的课程数
+        stats.value.totalCourses = totalCourses.value
+      } else {
+        // 兼容非分页数据
+        courses.value = response.data || []
+        totalCourses.value = courses.value.length
+        stats.value.totalCourses = totalCourses.value
+      }
       await loadStats()
     } else {
-      ElMessage.error('获取我的课程失败')
+      ElMessage.error(response.message || '获取我的课程失败')
     }
   } catch (error) {
     console.error('加载我的课程失败:', error)
-    ElMessage.error('网络错误，请稍后重试')
+    ElMessage.error(error?.message || '网络错误，请稍后重试')
   } finally {
     loading.value = false
   }

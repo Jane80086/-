@@ -14,9 +14,26 @@ const loadNewsDetail = async () => {
   loading.value = true
   try {
     const newsId = route.params.id
-    newsDetail.value = await getNewsDetail(newsId)
+    if (!newsId) {
+      ElMessage.error('新闻ID不存在，无法加载详情')
+      router.back()
+      return
+    }
+
+    const response = await getNewsDetail(newsId)
+
+    // 检查响应是否成功
+    if (response && response.code === '0') {
+      // 核心修改：将 newsDetail.value 赋值为 response.data
+      newsDetail.value = response.data
+      console.log('新闻详情加载成功:', newsDetail.value)
+    } else {
+      ElMessage.error(response.msg || '加载新闻详情失败')
+      router.back()
+    }
   } catch (error) {
-    ElMessage.error('加载详情失败')
+    console.error('加载新闻详情时出错:', error)
+    ElMessage.error('网络或服务器错误，加载详情失败')
     router.back()
   } finally {
     loading.value = false

@@ -125,5 +125,11 @@
             <artifactId>fastjson</artifactId>
             <version>1.2.83</version>
         </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>4.9.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project> 

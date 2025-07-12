@@ -7,7 +7,7 @@
       <!-- 课程头部信息 -->
       <div class="course-header">
         <div class="course-banner">
-          <img :src="course?.imageUrl || '/default-course.jpg'" :alt="course?.title">
+          <img :src="course?.imageUrl || '/class.jpg'" :alt="course?.title">
           <div class="course-overlay">
             <el-button type="primary" size="large" @click="goToPlay">
               <el-icon><VideoPlay /></el-icon>

@@ -14,9 +14,22 @@ const loadNewsDetail = async () => {
   loading.value = true
   try {
     const newsId = route.params.id
-    newsDetail.value = await getNewsDetail(newsId)
+    if (!newsId) {
+      ElMessage.error('无法获取新闻ID')
+      router.back()
+      return
+    }
+
+    // 正確地處理 API 回傳值
+    const response = await getNewsDetail(newsId)
+    if (response && response.code === '0' && response.data) {
+      newsDetail.value = response.data
+    } else {
+      ElMessage.error(response.msg || '加载详情失败')
+      router.back()
+    }
   } catch (error) {
-    ElMessage.error('加载详情失败')
+    ElMessage.error('加载详情失败，请检查网络或服务器')
     router.back()
   } finally {
     loading.value = false
@@ -42,7 +55,7 @@ onMounted(() => {
         </div>
       </template>
 
-      <div v-if="newsDetail.id">
+      <div v-if="newsDetail && newsDetail.id">
         <div class="article-header">
           <h1 class="article-title">{{ newsDetail.title }}</h1>
           <div class="article-meta">
@@ -51,7 +64,6 @@ onMounted(() => {
             <span>浏览量: {{ newsDetail.viewCount }}</span>
           </div>
         </div>
-
         <div class="article-image" v-if="newsDetail.image">
           <el-image
               :src="newsDetail.image"
@@ -73,87 +85,3 @@ onMounted(() => {
     </el-card>
   </div>
 </template>
-
-<style scoped>
-.news-detail {
-  padding: 20px;
-}
-
-.detail-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.article-header {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.article-title {
-  margin: 0 0 15px 0;
-  color: #303133;
-  font-size: 28px;
-  font-weight: bold;
-  line-height: 1.4;
-}
-
-.article-meta {
-  color: #909399;
-  font-size: 14px;
-}
-
-.article-meta span {
-  margin-right: 20px;
-}
-
-.article-image {
-  margin: 30px 0;
-  text-align: center;
-}
-
-.article-summary {
-  margin: 30px 0;
-  padding: 20px;
-  background-color: #f5f7fa;
-  border-radius: 8px;
-}
-
-.article-summary h3 {
-  margin: 0 0 10px 0;
-  color: #303133;
-}
-
-.article-summary p {
-  margin: 0;
-  color: #606266;
-  line-height: 1.6;
-}
-
-.article-content {
-  margin: 30px 0;
-}
-
-.article-content h3 {
-  margin: 0 0 20px 0;
-  color: #303133;
-}
-
-.content-html {
-  color: #303133;
-  line-height: 1.8;
-  font-size: 16px;
-}
-
-.content-html :deep(p) {
-  margin-bottom: 15px;
-}
-
-.content-html :deep(img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin: 15px 0;
-}
-</style>
