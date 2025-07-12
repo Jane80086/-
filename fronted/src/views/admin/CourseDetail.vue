@@ -198,6 +198,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { VideoPlay, User, Clock, View, Star, Check, Close } from '@element-plus/icons-vue'
 import { adminApi } from '@/api/course'
+import { useUserStore } from '@/store/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -302,13 +303,33 @@ const getStatusText = (status) => {
   }
 }
 const approveCourse = async () => {
-  // TODO: 调用后端审核通过接口
-  ElMessage.success('审核通过')
+  try {
+    const reviewerId = useUserStore?.user?.id || ''
+    const res = await adminApi.reviewCourse(course.value?.id, 'approved', '', reviewerId)
+    if (res.code === 200) {
+      ElMessage.success('审核通过')
+      await loadCourseDetail()
+    } else {
+      ElMessage.error(res.message || '审核失败')
+    }
+  } catch (e) {
+    ElMessage.error('审核请求异常')
+  }
 }
 const rejectCourse = async () => {
-  // TODO: 调用后端驳回接口，带上rejectReason.value
-  showRejectDialog.value = false
-  ElMessage.success('已驳回')
+  try {
+    const reviewerId = useUserStore?.user?.id || ''
+    const res = await adminApi.reviewCourse(course.value?.id, 'rejected', rejectReason.value, reviewerId)
+    if (res.code === 200) {
+      ElMessage.success('已驳回')
+      await loadCourseDetail()
+    } else {
+      ElMessage.error(res.message || '审核失败')
+    }
+    showRejectDialog.value = false
+  } catch (e) {
+    ElMessage.error('审核请求异常')
+  }
 }
 onMounted(() => {
   loadCourseDetail()

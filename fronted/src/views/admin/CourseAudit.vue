@@ -189,6 +189,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, StarFilled, View, User, Clock, Document } from '@element-plus/icons-vue'
 import { adminApi } from '@/api/course'
 import { useUserStore } from '@/store/user'
+const userStore = useUserStore()
 
 const router = useRouter()
 const loading = ref(false)
@@ -325,7 +326,8 @@ const viewCourseDetail = (courseId) => {
 
 const approveCourse = async (course) => {
   try {
-    await adminApi.reviewCourse(course.id, 'approved')
+    const reviewerId = userStore.user?.id || ''
+    const res = await adminApi.reviewCourse(course.id, 'approved', '', reviewerId)
     ElMessage.success('审核通过！')
     loadCourses()
   } catch (e) {
@@ -340,7 +342,8 @@ const rejectCourse = (course) => {
 
 const confirmReject = async () => {
   try {
-    await adminApi.reviewCourse(currentCourse.value.id, 'rejected', rejectReason.value)
+    const reviewerId = userStore.user?.id || ''
+    const res = await adminApi.reviewCourse(currentCourse.value.id, 'rejected', rejectReason.value, reviewerId)
     ElMessage.success('已驳回！')
     rejectVisible.value = false
     rejectReason.value = ''
