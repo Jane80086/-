@@ -19,18 +19,18 @@ const loading = ref(false)
 
 const rules = {
   title: [
-    { required: true, message: '请输入标题', trigger: 'blur' },
-    { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
+    {required: true, message: '请输入标题', trigger: 'blur'},
+    {min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur'}
   ],
   content: [
-    { required: true, message: '请输入内容', trigger: 'blur' }
+    {required: true, message: '请输入内容', trigger: 'blur'}
   ],
   summary: [
-    { required: true, message: '请输入简介', trigger: 'blur' },
-    { max: 200, message: '简介不能超过200个字符', trigger: 'blur' }
+    {required: true, message: '请输入简介', trigger: 'blur'},
+    {max: 200, message: '简介不能超过200个字符', trigger: 'blur'}
   ],
   author: [
-    { required: true, message: '请输入作者', trigger: 'blur' }
+    {required: true, message: '请输入作者', trigger: 'blur'}
   ]
 }
 
@@ -44,7 +44,7 @@ const handleSubmit = async () => {
     // 调用管理员发布动态的API，假设这个API会直接将动态设置为已发布状态
     await adminPublishNews(newsForm.value)
     ElMessage.success('动态发布成功！') // 提示发布成功，无需审核
-    router.push('/admin/news-manage') // 发布后跳转到动态管理页面
+    router.push('/admin/news/') // 发布后跳转到动态管理页面
   } catch (error) {
     if (error.message) {
       ElMessage.error(error.message)

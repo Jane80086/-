@@ -10,6 +10,7 @@ import com.cemenghui.meeting.dao.MeetingDao;
 import com.cemenghui.meeting.util.PermissionUtil;
 import com.cemenghui.meeting.util.ValidationUtil;
 import com.cemenghui.meeting.exception.ServiceException;
+import com.cemenghui.entity.User;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class MeetingService {
     private final MeetingDao meetingDao;
     private final PermissionUtil permissionUtil;
     private final ValidationUtil validationUtil;
+    private final UserService userService;
     /**
      * 创建会议
      */
@@ -58,6 +60,14 @@ public class MeetingService {
             
             // 设置创建人
             meeting.setCreatorName(username);
+            
+            // 获取用户ID并设置创建人ID
+            User user = userService.getUserByUsername(username);
+            if (user != null) {
+                meeting.setCreatorId(user.getId());
+            } else {
+                throw new IllegalArgumentException("用户信息不存在");
+            }
             
             // 设置初始状态：管理员创建的会议直接通过，企业用户创建的会议需要审核
             if (permissionUtil.isAdmin(username)) {
@@ -311,8 +321,8 @@ public class MeetingService {
             
             // 根据用户权限设置查询条件
             if (permissionUtil.isAdmin(username)) {
-                // 管理员只能看到自己审核的会议和未审核的会议
-                wrapper.and(w -> w.eq(Meeting::getReviewerName, username).or().eq(Meeting::getStatus, 0));
+                // 管理员可以看到所有会议（自己创建的、自己审核的、未审核的、已通过的）
+                // 不添加额外的权限限制，管理员可以查看所有会议
                 if (query.getStatus() != null) {
                     wrapper.eq(Meeting::getStatus, query.getStatus());
                 }
@@ -323,7 +333,7 @@ public class MeetingService {
                 // 普通用户只能查看已通过的会议
                 wrapper.eq(Meeting::getStatus, 1);
             }
-            
+              
             // 添加其他查询条件
             if (query.getMeetingName() != null && !query.getMeetingName().trim().isEmpty()) {
                 wrapper.like(Meeting::getMeetingName, query.getMeetingName());

@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useUserStore } from '@/store/user';
 
 const router = useRouter();
+const userStore = useUserStore();
 const currentUser = ref(null);
 const pendingMeetings = ref([]);
 const reviewRecords = ref([]);
@@ -123,6 +125,7 @@ const switchTab = (tab) => {
 };
 
 onMounted(() => {
+  userStore.initUser && userStore.initUser();
   fetchUserInfo();
   fetchPendingMeetings();
   fetchReviewRecords();
@@ -133,12 +136,12 @@ onMounted(() => {
   <div class="review-page">
     <div class="header">
       <h1>审核管理</h1>
-      <button @click="router.push('/')" class="back-btn">返回首页</button>
+      <button @click="router.push('/admin/dashboard')" class="back-btn">返回首页</button>
     </div>
 
     <div v-if="!isAdmin" class="no-permission">
       <p>您没有权限访问审核管理页面</p>
-      <button @click="router.push('/')">返回首页</button>
+      <button @click="router.push('/admin/dashboard')">返回首页</button>
     </div>
 
     <div v-else>

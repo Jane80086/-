@@ -449,7 +449,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Check, VideoPlay, ChatDotRound, Cpu, Edit, ChatLineRound } from '@element-plus/icons-vue'
 import { courseApi } from '@/api/course'
 import { askAI } from '@/api/register'
-import { adminApi } from '@/api/admin'
+import { adminApi } from '@/api/course'
 
 const route = useRoute()
 const router = useRouter()

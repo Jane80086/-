@@ -138,8 +138,10 @@ public class AdminController {
         try {
             int offset = (page - 1) * size;
             List<Course> all = courseService.listCourses();
-            int total = all.size();
-            List<Course> pageList = all.stream().skip(offset).limit(size).toList();
+            // 只返回已发布课程
+            List<Course> published = all.stream().filter(c -> "PUBLISHED".equals(c.getStatus())).toList();
+            int total = published.size();
+            List<Course> pageList = published.stream().skip(offset).limit(size).toList();
             Map<String, Object> pageInfo = new HashMap<>();
             pageInfo.put("content", pageList);
             pageInfo.put("totalElements", total);

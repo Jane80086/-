@@ -52,7 +52,7 @@
               <span v-else class="free">免费</span>
             </div>
             <div class="action-buttons">
-              <el-button type="primary" size="large" @click="goToPlay">
+              <el-button type="primary" size="large" @click="() => { console.log('CourseDetail 头部开始学习按钮被点击'); goToPlay(); }">
                 <el-icon><VideoPlay /></el-icon>
                 开始学习
               </el-button>
@@ -197,7 +197,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { VideoPlay, User, Clock, View, Star, Check, Close } from '@element-plus/icons-vue'
-import { courseApi } from '@/api/course'
+import { adminApi } from '@/api/course'
 
 const route = useRoute()
 const router = useRouter()
@@ -212,15 +212,18 @@ const loadCourseDetail = async () => {
   try {
     loading.value = true
     const courseId = route.params.id
-    const response = await courseApi.getCourseDetail(courseId)
+    console.log('CourseDetail 加载课程详情，ID:', courseId)
+    const response = await adminApi.getCourseDetail(courseId)
     if (response.code === 200) {
       course.value = response.data
+      console.log('课程详情加载成功:', course.value)
       await loadChapters()
     } else {
       ElMessage.error(`获取课程详情失败，ID=${courseId}，后端返回：${response.message || response.code}`)
     }
   } catch (error) {
     const courseId = route.params.id
+    console.error('加载课程详情失败:', error)
     ElMessage.error(`网络错误或404，课程ID=${courseId}，${error?.message || error}`)
   } finally {
     loading.value = false
@@ -229,7 +232,7 @@ const loadCourseDetail = async () => {
 const loadChapters = async () => {
   try {
     const courseId = route.params.id
-    const response = await courseApi.getChapters(courseId)
+    const response = await adminApi.getChapters(courseId)
     if (response.code === 200) {
       chapters.value = response.data || []
     } else {
@@ -250,11 +253,26 @@ const loadChapters = async () => {
   }
 }
 const goToPlay = () => {
+  console.log('=== 点击开始学习按钮 ===')
+  console.log('课程对象:', course.value)
+  console.log('课程ID:', course.value?.id)
+  console.log('router对象:', router)
+  
   if (!course.value?.id) {
     ElMessage.error('课程ID无效，无法跳转到播放页')
     return
   }
-  router.push(`/admin/course/${course.value.id}/play`)
+  
+  const targetPath = `/admin/course/${course.value.id}/play`
+  console.log('准备跳转到播放页:', targetPath)
+  
+  try {
+    router.push(targetPath)
+    console.log('跳转到播放页成功')
+  } catch (error) {
+    console.error('跳转到播放页失败:', error)
+    ElMessage.error('跳转失败：' + error.message)
+  }
 }
 const formatDuration = (min) => {
   if (!min) return '0分钟'

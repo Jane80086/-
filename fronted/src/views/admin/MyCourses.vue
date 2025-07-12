@@ -158,6 +158,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { courseApi } from '@/api/course'
+import { adminApi } from '@/api/course'
 
 const router = useRouter()
 const loading = ref(false)
@@ -175,10 +176,23 @@ const fetchCourses = async () => {
       size: pageSize.value,
       keyword: searchKeyword.value
     }
-    const res = await courseApi.getCourseList(params)
+    // 优先用adminApi.getCourses
+    const res = await adminApi.getCourses(params)
+    let data = res.data
     if (res.code === 200) {
-      courses.value = res.data.records || res.data || []
-      totalCourses.value = res.data.total || res.data.length || 0
+      if (Array.isArray(data)) {
+        courses.value = data
+        totalCourses.value = data.length
+      } else if (data && Array.isArray(data.records)) {
+        courses.value = data.records
+        totalCourses.value = data.total || data.records.length
+      } else if (data && Array.isArray(data.content)) {
+        courses.value = data.content
+        totalCourses.value = data.totalElements || data.content.length
+      } else {
+        courses.value = []
+        totalCourses.value = 0
+      }
     } else {
       courses.value = []
       totalCourses.value = 0
@@ -210,16 +224,22 @@ const handleCurrentChange = (val) => {
   fetchCourses()
 }
 
-const displayCourses = computed(() => courses.value)
+const displayCourses = computed(() => {
+  let filtered = Array.isArray(courses.value) ? courses.value.slice() : []
+  // 可扩展筛选/排序逻辑，如：
+  // if (searchKeyword.value) { ... }
+  // if (sortBy.value) { ... }
+  return filtered
+})
 
 const totalViews = computed(() => {
-  return courses.value.reduce((sum, course) => sum + (course.viewCount || 0), 0)
+  return Array.isArray(courses.value) ? courses.value.reduce((sum, course) => sum + (course.viewCount || 0), 0) : 0
 })
 const approvedCourses = computed(() => {
-  return courses.value.filter(course => course.status === 'approved').length
+  return Array.isArray(courses.value) ? courses.value.filter(course => course.status === 'approved').length : 0
 })
 const pendingCourses = computed(() => {
-  return courses.value.filter(course => course.status === 'pending').length
+  return Array.isArray(courses.value) ? courses.value.filter(course => course.status === 'pending').length : 0
 })
 
 const viewCourse = (id) => {

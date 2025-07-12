@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import MeetingList from '../components/MeetingList.vue'; 
-import meetingService from '../api/meeting.js';
-import fileService from '../api/file.js';
+import { useUserStore } from '@/store/user';
+import MeetingList from '../../components/MeetingList.vue'; 
+import { meetingAPI } from '../../api/meeting.js';
+import fileService from '../../api/file.js';
 
 const router = useRouter();
+const userStore = useUserStore();
 const meetings = ref([]);
 const filteredMeetings = ref([]);
 const reviewRecords = ref([]);
@@ -14,7 +16,6 @@ const error = ref(null);
 const showAddModal = ref(false);
 const showReviewModal = ref(false);
 const showRecordsModal = ref(false);
-const currentUser = ref(null);
 const activeTab = ref('meetings'); // meetings, records
 const addUploading = ref(false); // 新增会议图片上传状态
 
@@ -40,24 +41,10 @@ const reviewForm = ref({
   reviewComment: ''
 });
 
-// 计算用户权限
-const isAdmin = computed(() => currentUser.value?.userType === 'ADMIN');
-const isEnterprise = computed(() => currentUser.value?.userType === 'ENTERPRISE');
-
-// 获取用户信息
-const fetchUserInfo = async () => {
-  try {
-    const response = await meetingService.getUserInfo();
-    console.log('用户信息原始数据:', response.data); // 添加调试信息
-    if (response.data.code === 200) {
-      currentUser.value = response.data.data;
-      console.log('当前用户信息:', currentUser.value); // 添加调试信息
-      console.log('用户类型:', currentUser.value?.userType); // 添加调试信息
-    }
-  } catch (err) {
-    console.error('获取用户信息失败:', err);
-  }
-};
+// 计算用户权限 - 使用统一的用户状态管理
+const currentUser = computed(() => userStore.user);
+const isAdmin = computed(() => currentUser.value?.role === 'admin' || currentUser.value?.userType === 'ADMIN');
+const isEnterprise = computed(() => currentUser.value?.role === 'enterprise' || currentUser.value?.userType === 'ENTERPRISE');
 
 // 获取会议列表（根据用户权限）
 const fetchMeetings = async () => {
@@ -72,16 +59,28 @@ const fetchMeetings = async () => {
     };
     
     console.log('查询参数:', query); // 添加调试信息
-    const response = await meetingService.getMeetings(query);
-    console.log('会议列表原始数据:', response.data); // 添加调试信息
-    if (response.data.code === 200) {
-      meetings.value = response.data.data.meetings || [];
+    console.log('当前用户:', currentUser.value); // 添加用户信息调试
+    const response = await meetingAPI.getMeetings(query);
+    console.log('会议列表原始数据:', response); // 添加调试信息
+    console.log('响应类型:', typeof response); // 添加类型调试
+    console.log('响应结构:', Object.keys(response || {})); // 添加结构调试
+    
+    if (response && response.code === 200) {
+      console.log('响应数据:', response.data); // 添加数据调试
+      meetings.value = response.data.meetings || [];
+      // 批量处理图片URL
+      await Promise.all(meetings.value.map(async m => {
+        if (m.imageUrl) m.imageUrl = await fileService.getImageUrl(m.imageUrl);
+      }));
       console.log('会议列表对象:', meetings.value); // 添加调试信息
+      console.log('会议列表长度:', meetings.value.length); // 添加长度调试
       filteredMeetings.value = meetings.value;
+    } else {
+      console.error('响应状态码不是200:', response?.code); // 添加错误调试
     }
   } catch (err) {
     error.value = '加载会议列表失败，请稍后重试';
-    console.error(err);
+    console.error('获取会议列表错误:', err); // 添加错误调试
   } finally {
     isLoading.value = false;
   }
@@ -93,18 +92,18 @@ const fetchReviewRecords = async () => {
     let response;
     if (isAdmin.value) {
       // 管理员查看自己的审核记录
-      response = await meetingService.getReviewRecordsByReviewer();
+      response = await meetingAPI.getReviewRecordsByReviewer();
     } else if (isEnterprise.value) {
       // 企业用户查看自己的申请记录
-      response = await meetingService.getReviewRecordsByCreator();
+      response = await meetingAPI.getReviewRecordsByCreator();
     } else {
       // 普通用户没有审核记录
       reviewRecords.value = [];
       return;
     }
     
-    if (response.data.code === 200) {
-      reviewRecords.value = response.data.data || [];
+    if (response.code === 200) {
+      reviewRecords.value = response.data || [];
     }
   } catch (err) {
     console.error('获取审核记录失败:', err);
@@ -127,7 +126,8 @@ const searchMeetings = async () => {
 // 添加会议
 const handleAdd = async () => {
   try {
-    await meetingService.createMeeting(newMeeting.value);
+    const payload = { ...newMeeting.value, imageUrl: newMeeting.value._imageObjectName || newMeeting.value.imageUrl };
+    await meetingAPI.createMeeting(payload);
     showAddModal.value = false;
     newMeeting.value = {
       meetingName: '',
@@ -150,7 +150,7 @@ const handleDelete = async (id) => {
   }
   
   try {
-    await meetingService.deleteMeeting(id, true);
+    await meetingAPI.deleteMeeting(id, true);
     await fetchMeetings();
   } catch (err) {
     error.value = err.response?.data?.message || '删除会议失败，请重试';
@@ -161,7 +161,7 @@ const handleDelete = async (id) => {
 // 更新会议
 const handleUpdate = async (updatedMeeting) => {
   try {
-    await meetingService.updateMeeting(updatedMeeting);
+    await meetingAPI.updateMeeting(updatedMeeting);
     await fetchMeetings();
   } catch (err) {
     error.value = err.response?.data?.message || '更新会议失败，请重试';
@@ -172,7 +172,7 @@ const handleUpdate = async (updatedMeeting) => {
 // 审核会议
 const handleReview = async () => {
   try {
-    await meetingService.reviewMeeting(reviewForm.value);
+    await meetingAPI.reviewMeeting(reviewForm.value);
     showReviewModal.value = false;
     reviewForm.value = {
       meetingId: null,
@@ -232,8 +232,7 @@ const formatDateTime = (dateTime) => {
 
 // 登出
 const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  userStore.logout();
   router.push('/login');
 };
 
@@ -260,35 +259,36 @@ const onAddImageChange = async (event) => {
   
   addUploading.value = true;
   try {
-    const res = await meetingService.uploadMeetingImage(file);
-    // 处理后端ApiResponse格式
-    if (res.data && res.data.code === 200 && res.data.data) {
-      // 对于私有bucket，返回的是对象名称，需要获取预签名URL
-      if (!res.data.data.startsWith('http://') && !res.data.data.startsWith('https://')) {
-        const presignedUrl = await fileService.getImageUrl(res.data.data);
-        newMeeting.value.imageUrl = presignedUrl || res.data.data;
-      } else {
-        newMeeting.value.imageUrl = res.data.data;
-      }
+    const response = await meetingAPI.uploadMeetingImage(file);
+    if (response.code === 200) {
+      // 先存对象名，提交时用
+      newMeeting.value._imageObjectName = response.data;
+      // 预览用URL
+      newMeeting.value.imageUrl = await fileService.getImageUrl(response.data);
+      console.log('图片上传成功:', newMeeting.value.imageUrl);
     } else {
-      alert('图片上传失败: ' + (res.data.message || '未知错误'));
+      alert('图片上传失败: ' + response.message);
     }
-  } catch (e) {
-    console.error('图片上传错误:', e);
-    if (e.response?.status === 413) {
-      alert('文件太大，请选择小于10MB的图片');
-    } else {
-      alert('图片上传失败: ' + (e.response?.data?.message || e.message || '请重试'));
-    }
+  } catch (err) {
+    console.error('图片上传失败:', err);
+    alert('图片上传失败，请重试');
   } finally {
     addUploading.value = false;
+    event.target.value = '';
   }
 };
 
+// 初始化
 onMounted(() => {
-  fetchUserInfo();
+  console.log('Meeting-HomeView 组件挂载');
+  console.log('当前用户信息:', currentUser.value);
+  console.log('用户角色:', currentUser.value?.role);
+  console.log('用户类型:', currentUser.value?.userType);
+  
   fetchMeetings();
-  fetchReviewRecords();
+  if (isAdmin.value || isEnterprise.value) {
+    fetchReviewRecords();
+  }
 });
 </script>
 
@@ -451,7 +451,7 @@ onMounted(() => {
           <button 
             v-if="isAdmin" 
             class="review-btn" 
-            @click="router.push('/meeting-stats')"
+            @click="router.push('/admin/meeting-stats')"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -484,7 +484,6 @@ onMounted(() => {
       <MeetingList 
         v-if="!isLoading && !error" 
         :meetings="filteredMeetings" 
-        :current-user="currentUser"
         :on-delete="handleDelete"
         :on-review="openReviewModal"
         @update-meeting="handleUpdate"
@@ -529,11 +528,11 @@ onMounted(() => {
             <div class="record-meta">
               <div class="meta-item">
                 <span class="label">创建人:</span>
-                <span class="value">{{ record.creator }}</span>
+                <span class="value">{{ record.creatorName }}</span>
               </div>
               <div v-if="isAdmin" class="meta-item">
                 <span class="label">审核人:</span>
-                <span class="value">{{ record.reviewer }}</span>
+                <span class="value">{{ record.reviewerName }}</span>
               </div>
               <div class="meta-item">
                 <span class="label">{{ isAdmin ? '审核' : '申请' }}时间:</span>
@@ -627,6 +626,8 @@ onMounted(() => {
         </form>
       </div>
     </div>
+    <!-- 在页面合适位置添加返回首页按钮 -->
+    <button @click="router.push('/admin/dashboard')" class="back-btn">返回首页</button>
   </div>
 </template>
 

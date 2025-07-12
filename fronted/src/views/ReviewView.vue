@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import meetingService from '../api/meeting';
+import { useUserStore } from '@/store/user';
+import { meetingAPI } from '../api/meeting';
 
 const router = useRouter();
-const currentUser = ref(null);
+const userStore = useUserStore();
 const pendingMeetings = ref([]);
 const reviewRecords = ref([]);
 const isLoading = ref(true);
@@ -18,25 +19,14 @@ const reviewForm = ref({
   reviewComment: ''
 });
 
-// 计算用户权限
-const isAdmin = computed(() => currentUser.value?.userType === 'ADMIN');
-
-// 获取用户信息
-const fetchUserInfo = async () => {
-  try {
-    const response = await meetingService.getUserInfo();
-    if (response.data.code === 200) {
-      currentUser.value = response.data.data;
-    }
-  } catch (err) {
-    console.error('获取用户信息失败:', err);
-  }
-};
+// 计算用户权限 - 使用统一的用户状态管理
+const currentUser = computed(() => userStore.user);
+const isAdmin = computed(() => currentUser.value?.role === 'admin' || currentUser.value?.userType === 'ADMIN');
 
 // 获取待审核会议
 const fetchPendingMeetings = async () => {
   try {
-    const response = await meetingService.getPendingMeetings();
+    const response = await meetingAPI.getPendingMeetings();
     if (response.data.code === 200) {
       pendingMeetings.value = response.data.data || [];
     }
@@ -49,7 +39,7 @@ const fetchPendingMeetings = async () => {
 // 获取审核记录
 const fetchReviewRecords = async () => {
   try {
-    const response = await meetingService.getReviewRecordsByReviewer();
+    const response = await meetingAPI.getReviewRecordsByReviewer();
     if (response.data.code === 200) {
       reviewRecords.value = response.data.data || [];
     }
@@ -64,7 +54,7 @@ const fetchReviewRecords = async () => {
 // 审核会议
 const handleReview = async () => {
   try {
-    await meetingService.reviewMeeting(reviewForm.value);
+    await meetingAPI.reviewMeeting(reviewForm.value);
     reviewForm.value = {
       meetingId: null,
       status: 1,
@@ -85,6 +75,16 @@ const openReviewModal = (meeting) => {
     status: 1,
     reviewComment: ''
   };
+};
+
+// 切换标签页
+const switchTab = (tab) => {
+  activeTab.value = tab;
+  if (tab === 'records') {
+    fetchReviewRecords();
+  } else {
+    fetchPendingMeetings();
+  }
 };
 
 // 获取状态文本
@@ -113,20 +113,26 @@ const formatDateTime = (dateTime) => {
   return new Date(dateTime).toLocaleString('zh-CN');
 };
 
-// 切换标签页
-const switchTab = (tab) => {
-  activeTab.value = tab;
-  if (tab === 'pending') {
-    fetchPendingMeetings();
-  } else if (tab === 'records') {
-    fetchReviewRecords();
-  }
+// 返回首页
+const goHome = () => {
+  router.push('/admin/dashboard');
 };
 
 onMounted(() => {
-  fetchUserInfo();
-  fetchPendingMeetings();
-  fetchReviewRecords();
+  userStore.initUser && userStore.initUser();
+  console.log('ReviewView 组件挂载');
+  console.log('当前用户信息:', currentUser.value);
+  console.log('用户角色:', currentUser.value?.role);
+  console.log('用户类型:', currentUser.value?.userType);
+  console.log('是否为管理员:', isAdmin.value);
+  
+  if (isAdmin.value) {
+    fetchPendingMeetings();
+    fetchReviewRecords();
+  } else {
+    error.value = '您没有权限访问此页面';
+    isLoading.value = false;
+  }
 });
 </script>
 
@@ -134,12 +140,12 @@ onMounted(() => {
   <div class="review-page">
     <div class="header">
       <h1>审核管理</h1>
-      <button @click="router.push('/meeting')" class="back-btn">返回首页</button>
+      <button @click="goHome" class="back-btn">返回首页</button>
     </div>
 
     <div v-if="!isAdmin" class="no-permission">
       <p>您没有权限访问审核管理页面</p>
-      <button @click="router.push('/meeting')">返回首页</button>
+      <button @click="goHome">返回首页</button>
     </div>
 
     <div v-else>

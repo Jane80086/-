@@ -103,7 +103,7 @@
         v-for="course in displayCourses"
         :key="course.id"
         class="course-card"
-        @click="viewCourseDetail(course.id)"
+        @click="() => { console.log('卡片被点击，课程:', course); viewCourseDetail(course.id); }"
       >
         <div class="card-image-wrap">
                       <img :src="course.imageUrl || '/class.jpg'" :alt="course.title" class="card-image" />
@@ -187,7 +187,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, StarFilled, View, User, Clock, Document } from '@element-plus/icons-vue'
-import { courseApi } from '@/api/course'
+import { adminApi } from '@/api/course'
 import { useUserStore } from '@/store/user'
 
 const router = useRouter()
@@ -209,11 +209,15 @@ const currentCourse = ref(null)
 const courses = ref([])
 const loadCourses = async () => {
   loading.value = true
-  const res = await courseApi.getAuditCourses()
+  console.log('开始加载课程数据...')
+  const res = await adminApi.getPendingCourses()
+  console.log('API响应:', res)
   if (res.code === 200) {
     // 兼容 status 大小写，允许后端返回所有课程，前端统一过滤
     const allCourses = res.data.content || res.data || []
+    console.log('所有课程:', allCourses)
     courses.value = allCourses.filter(c => (c.status || '').toLowerCase() === 'pending')
+    console.log('过滤后的待审核课程:', courses.value)
   } else {
     courses.value = []
   }
@@ -297,16 +301,31 @@ const resetFilters = () => {
 }
 
 const viewCourseDetail = (courseId) => {
+  console.log('=== 点击课程卡片 ===')
+  console.log('课程ID:', courseId)
+  console.log('课程ID类型:', typeof courseId)
+  console.log('router对象:', router)
+  
   if (!courseId || isNaN(Number(courseId)) || Number(courseId) <= 0) {
     ElMessage.error(`课程ID无效：${courseId}`)
     return
   }
-  router.push(`/admin/course/${courseId}`)
+  
+  const targetPath = `/admin/course/${courseId}`
+  console.log('准备跳转到:', targetPath)
+  
+  try {
+    router.push(targetPath)
+    console.log('路由跳转成功')
+  } catch (error) {
+    console.error('路由跳转失败:', error)
+    ElMessage.error('跳转失败：' + error.message)
+  }
 }
 
 const approveCourse = async (course) => {
   try {
-    await courseApi.reviewCourse(course.id, 'approved')
+    await adminApi.reviewCourse(course.id, 'approved')
     ElMessage.success('审核通过！')
     loadCourses()
   } catch (e) {
@@ -321,7 +340,7 @@ const rejectCourse = (course) => {
 
 const confirmReject = async () => {
   try {
-    await courseApi.reviewCourse(currentCourse.value.id, 'rejected', rejectReason.value)
+    await adminApi.reviewCourse(currentCourse.value.id, 'rejected', rejectReason.value)
     ElMessage.success('已驳回！')
     rejectVisible.value = false
     rejectReason.value = ''
@@ -374,6 +393,9 @@ const handleCurrentChange = (page) => {
 
 // 组件挂载
 onMounted(() => {
+  console.log('=== CourseAudit 组件挂载 ===')
+  console.log('router对象:', router)
+  console.log('useRouter函数:', useRouter)
   loadCourses()
 })
 </script>

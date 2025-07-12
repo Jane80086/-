@@ -15,7 +15,7 @@ def ask_ai(question, context=None):
         "user": "test_user",
         "files": []
     }
-    resp = requests.post(f"{DIFY_BASE_URL}/chat-messages", json=data, headers=headers, timeout=60)
+    resp = requests.post(f"{DIFY_BASE_URL}/chat-messages", json=data, headers=headers, timeout=10)
     try:
         return resp.json()
     except Exception:

@@ -38,9 +38,13 @@ public class AiQuestionController {
      * 获取课程的所有问题
      */
     @GetMapping("/course/{courseId}")
-    public ResponseEntity<List<Question>> getQuestionsByCourseId(@PathVariable Long courseId) {
-        List<Question> questions = aiQuestionService.getQuestionsByCourseId(courseId);
-        return ResponseEntity.ok(questions);
+    public ResponseEntity<Result> getQuestionsByCourseId(@PathVariable Long courseId) {
+        try {
+            List<Question> questions = aiQuestionService.getQuestionsByCourseId(courseId);
+            return ResponseEntity.ok(Result.success("获取成功", questions));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Result.fail("获取失败: " + e.getMessage()));
+        }
     }
 
     /**

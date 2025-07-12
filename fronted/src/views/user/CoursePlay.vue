@@ -513,7 +513,7 @@ const submitAiQuestion = async () => {
     })
     
     if (response.code === 200) {
-      aiAnswer.value = response.data.answer
+      aiAnswer.value = response.data.aiAnswer || response.data.answer || 'AI回复已生成'
       aiQuestion.value = ''
       await loadAiQnaList()
       ElMessage.success('AI回复已生成')
