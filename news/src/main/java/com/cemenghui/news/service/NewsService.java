@@ -44,4 +44,5 @@ public interface NewsService {
      * @return 热门动态列表
      */
     List<NewsVO> getHotNews(Integer limit, Integer status); // 可以增加状态参数，更灵活
+    NewsVO getAdminNewsDetail(Long newsId);
 }

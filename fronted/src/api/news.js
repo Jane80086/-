@@ -147,3 +147,10 @@ export const batchAuditNews = (newsIds, auditData) => {
         data: { newsIds, ...auditData }
     })
 }
+
+export const getAdminNewsDetail = (newsId) => {
+    return request({
+        url: `/api/admin/news/${newsId}`,
+        method: 'get'
+    });
+}

@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -146,12 +147,23 @@ public class NewsServiceImpl implements NewsService {
     @Override
     public PageResult<NewsVO> getMyNewsList(PageRequest pageRequest) {
         Long currentUserId = authorizationService.getCurrentUserId();
-        Page<News> page = new Page<>(pageRequest.getPage(), pageRequest.getValidPageSize());
-        Page<News> result = newsMapper.findByUserId(page, currentUserId);
-        List<NewsVO> voList = result.getRecords().stream()
-                .map(news -> convertToVO(news, currentUserId))
-                .collect(Collectors.toList());
-        return new PageResult<>(voList, result.getTotal(), pageRequest.getPage(), pageRequest.getValidPageSize());
+
+        // 1. 手动获取总数
+        Long total = newsMapper.countByUserId(currentUserId);
+
+        // 2. 如果总数大于0，才执行分页查询，避免无谓的数据库访问
+        List<NewsVO> voList = new ArrayList<>();
+        if (total > 0) {
+            Page<News> page = new Page<>(pageRequest.getPage(), pageRequest.getValidPageSize());
+            // findByUserId 方法接受的是一个 Page 对象，MyBatis Plus 会自动处理分页
+            Page<News> result = newsMapper.findByUserId(page, currentUserId);
+
+            voList = result.getRecords().stream()
+                    .map(news -> convertToVO(news, currentUserId))
+                    .collect(Collectors.toList());
+        }
+
+        return new PageResult<>(voList, total, pageRequest.getPage(), pageRequest.getValidPageSize());
     }
 
     @Override
@@ -211,16 +223,27 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     public PageResult<NewsVO> getPendingNewsList(PageRequest pageRequest) {
-        // ==== 核心修改点：此方法在 AdminNewsController 中已有 @PreAuthorize("hasRole('ADMIN')")，所以可以移除此行 ====
-        // authorizationService.checkAdminPermission(authorizationService.getCurrentUserId()); // 删除或注释掉此行
+        // 1. 手动获取总数
+        Long total = newsMapper.countPendingNews();
 
+        // 2. 如果总数为 0，直接返回空结果，避免无谓的数据库查询
+        if (total == 0) {
+            return new PageResult<>(List.of(), 0L, pageRequest.getPage(), pageRequest.getValidPageSize());
+        }
+
+        // 3. 执行分页查询
         Page<News> page = new Page<>(pageRequest.getPage(), pageRequest.getValidPageSize());
         Page<News> result = newsMapper.findPendingNews(page);
+
+        // 4. 将实体转换为 VO
         List<NewsVO> voList = result.getRecords().stream()
                 .map(news -> convertToVO(news, authorizationService.getCurrentUserId()))
                 .collect(Collectors.toList());
-        return new PageResult<>(voList, result.getTotal(), pageRequest.getPage(), pageRequest.getValidPageSize());
+
+        // 5. 使用手动获取的总数构建 PageResult
+        return new PageResult<>(voList, total, pageRequest.getPage(), pageRequest.getValidPageSize());
     }
+
 
     @Override
     @Transactional
@@ -343,7 +366,7 @@ public class NewsServiceImpl implements NewsService {
 
         // 2. 查询新闻
         News news = newsMapper.selectById(newsId);
-        if (news == null || news.getIsDeleted() == 1) {  // 重点检查这个条件
+        if (news == null || news.getIsDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
 
@@ -352,15 +375,16 @@ public class NewsServiceImpl implements NewsService {
         BeanUtils.copyProperties(news, oldNews);
 
         // 4. 执行软删除
-        news.setIsDeleted(1);
-        int result = newsMapper.updateById(news);
+        // 将这行代码替换为调用 newsMapper.softDelete
+        // int result = newsMapper.updateById(news);
+        int result = newsMapper.softDelete(newsId, currentUserId);
 
         // 5. 记录日志
         if (result > 0) {
+            // 在 recordOperation 中，如果需要记录新值，可以传入 null
             recordOperation(currentUserId, OperationType.DELETE, newsId,
                     "管理员删除新闻", oldNews, null);
         }
-
         return result > 0;
     }
 
@@ -484,5 +508,16 @@ public class NewsServiceImpl implements NewsService {
     @CacheEvict(cacheNames = "news", key = "'detail:' + #newsId")
     public void evictNewsDetailCache(Long newsId) {
         log.debug("Evicted news detail cache for newsId: {}", newsId);
+    }
+
+    @Override
+    public NewsVO getAdminNewsDetail(Long newsId) {
+        News news = newsMapper.selectById(newsId);
+        if (news == null || news.getIsDeleted() == 1) {
+            throw new NewsNotFoundException(newsId);
+        }
+        // 管理员可以查看任何新闻，所以不需要额外的权限检查
+        // 如果需要记录管理员的查看行为，可以在这里添加逻辑
+        return convertToVO(news, authorizationService.getCurrentUserId());
     }
 }

@@ -4,6 +4,13 @@ server:
 spring:
   application:
     name: meeting
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      enabled: true
+      location: ${java.io.tmpdir}/meeting-uploads
+      file-size-threshold: 2KB
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -45,7 +52,7 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: auto
-  type-aliases-package: com.cemenghui.meeting.entity
+  type-aliases-package: com.cemenghui.meeting.bean
 
 jwt:
   secret: cemenghui-secret-key

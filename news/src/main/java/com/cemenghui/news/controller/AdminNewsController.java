@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/news")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('ADMIN')")
 @RequiredArgsConstructor
 @Slf4j
 public class AdminNewsController {
@@ -96,5 +96,11 @@ public class AdminNewsController {
             }
         }
         return Result.success("批量审核完成，成功处理" + successCount + "条记录");
+    }
+
+    @GetMapping("/{newsId}")
+    public Result getAdminNewsDetail(@PathVariable Long newsId) {
+        NewsVO newsDetail = newsService.getAdminNewsDetail(newsId);
+        return Result.success(newsDetail);
     }
 }

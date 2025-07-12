@@ -1,33 +1,37 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import meetingService from '../api/meeting.js';
+import { useUserStore } from '@/store/user';
+import { meetingAPI } from '../api/meeting.js';
 import fileService from '../api/file.js';
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
 const meeting = ref(null);
-const currentUser = ref(null);
 const reviewRecords = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 
+// 计算用户信息 - 使用统一的用户状态管理
+const currentUser = computed(() => userStore.user);
+
 // 获取会议详情
 const fetchMeetingDetail = async () => {
   try {
-    const response = await meetingService.getMeetingDetail(route.params.id);
-    console.log('会议详情原始数据:', response.data);
-    if (response.data.code === 200) {
-      meeting.value = response.data.data;
+    const response = await meetingAPI.getMeetingDetail(route.params.id);
+    console.log('会议详情原始数据:', response);
+    if (response.code === 200) {
+      meeting.value = response.data;
       console.log('会议详情对象:', meeting.value);
       console.log('会议名称:', meeting.value?.meetingName);
       console.log('会议内容:', meeting.value?.meetingContent);
       console.log('开始时间:', meeting.value?.startTime);
       console.log('结束时间:', meeting.value?.endTime);
-      console.log('创建人:', meeting.value?.creator);
+      console.log('创建人:', meeting.value?.creatorName);
       console.log('状态:', meeting.value?.status);
     } else {
-      error.value = response.data.message || '获取会议详情失败';
+      error.value = response.message || '获取会议详情失败';
     }
   } catch (err) {
     error.value = '获取会议详情失败，请稍后重试';
@@ -40,24 +44,12 @@ const fetchMeetingDetail = async () => {
 // 获取审核记录
 const fetchReviewRecords = async () => {
   try {
-    const response = await meetingService.getReviewRecordsByMeeting(route.params.id);
-    if (response.data.code === 200) {
-      reviewRecords.value = response.data.data || [];
+    const response = await meetingAPI.getReviewRecordsByMeeting(route.params.id);
+    if (response.code === 200) {
+      reviewRecords.value = response.data || [];
     }
   } catch (err) {
     console.error('获取审核记录失败:', err);
-  }
-};
-
-// 获取用户信息
-const fetchUserInfo = async () => {
-  try {
-    const response = await meetingService.getUserInfo();
-    if (response.data.code === 200) {
-      currentUser.value = response.data.data;
-    }
-  } catch (err) {
-    console.error('获取用户信息失败:', err);
   }
 };
 
@@ -93,21 +85,14 @@ const formatDateTime = (dateTime) => {
 
 // 处理会议图片URL，支持私有bucket
 const processMeetingImageUrl = async (meeting) => {
-  if (meeting.imageUrl && !meeting.imageUrl.startsWith('http://') && !meeting.imageUrl.startsWith('https://')) {
-    try {
-      const presignedUrl = await fileService.getImageUrl(meeting.imageUrl);
-      if (presignedUrl) {
-        meeting.imageUrl = presignedUrl;
-      }
-    } catch (error) {
-      console.error('获取会议图片URL失败:', error);
-    }
+  if (meeting.imageUrl) {
+    meeting.imageUrl = await fileService.getImageUrl(meeting.imageUrl);
   }
 };
 
 // 返回列表
 const goBack = () => {
-  router.push('/');
+  router.push('/meeting');
 };
 
 // 监听会议数据变化，自动处理图片URL
@@ -118,7 +103,11 @@ watch(() => meeting.value, async (newMeeting) => {
 }, { immediate: true });
 
 onMounted(() => {
-  fetchUserInfo();
+  console.log('MeetingDetailView 组件挂载');
+  console.log('当前用户信息:', currentUser.value);
+  console.log('用户角色:', currentUser.value?.role);
+  console.log('用户类型:', currentUser.value?.userType);
+  
   fetchMeetingDetail();
   fetchReviewRecords();
 });
@@ -151,7 +140,7 @@ onMounted(() => {
           <div class="info-grid">
             <div class="info-item">
               <span class="label">创建人:</span>
-              <span class="value">{{ meeting.creator }}</span>
+              <span class="value">{{ meeting.creatorName }}</span>
             </div>
             <div class="info-item">
               <span class="label">开始时间:</span>
@@ -172,12 +161,12 @@ onMounted(() => {
           </div>
         </div>
 
-        <div v-if="meeting.reviewer" class="info-section">
+        <div v-if="meeting.reviewerName" class="info-section">
           <h3>审核信息</h3>
           <div class="info-grid">
             <div class="info-item">
               <span class="label">审核人:</span>
-              <span class="value">{{ meeting.reviewer }}</span>
+              <span class="value">{{ meeting.reviewerName }}</span>
             </div>
             <div class="info-item">
               <span class="label">审核时间:</span>
@@ -223,7 +212,7 @@ onMounted(() => {
             >
               <div class="record-header">
                 <div class="record-meta">
-                  <span class="reviewer">审核人: {{ record.reviewer }}</span>
+                  <span class="reviewer">审核人: {{ record.reviewerName }}</span>
                   <span class="review-time">{{ formatDateTime(record.reviewTime) }}</span>
                 </div>
                 <span 

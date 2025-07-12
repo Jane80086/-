@@ -61,7 +61,7 @@ public class News {
 
     public boolean canEdit() {
         // According to the new logic, only pending (0) or rejected (2) news can be edited.
-        return this.status != null && (this.status == 0 || this.status == 2);
+        return this.status != null ;
     }
 
     public boolean canDelete() {

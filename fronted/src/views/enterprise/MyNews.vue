@@ -15,11 +15,11 @@ const pageParams = ref({
 })
 
 const statusMap = {
-  0: {text: '待审核', type: 'warning'},
-  1: {text: '已发布', type: 'success'},
-  2: {text: '审核拒绝', type: 'danger'},
+  0: { text: '待审核', type: 'warning' },
+  1: { text: '已发布', type: 'success' },
+  2: { text: '审核拒绝', type: 'danger' },
   // 修改这里：将 '已下线' 改为 '草稿' 以匹配后端枚举
-  3: {text: '草稿', type: 'info'}
+  3: { text: '草稿', type: 'info' }
 }
 
 const loadMyNews = async () => {
@@ -110,7 +110,7 @@ onMounted(() => {
           </template>
         </el-table-column>
 
-        <el-table-column prop="author" label="作者" width="120"/>
+        <el-table-column prop="author" label="作者" width="120" />
 
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -120,9 +120,9 @@ onMounted(() => {
           </template>
         </el-table-column>
 
-        <el-table-column prop="viewCount" label="浏览量" width="100"/>
+        <el-table-column prop="viewCount" label="浏览量" width="100" />
 
-        <el-table-column prop="createTime" label="发布时间" width="180"/>
+        <el-table-column prop="createTime" label="发布时间" width="180" />
 
         <el-table-column prop="auditComment" label="审核意见" min-width="150">
           <template #default="{ row }">
@@ -137,7 +137,7 @@ onMounted(() => {
                 size="small"
                 type="primary"
                 @click="handleEdit(row.id)"
-                :disabled="![0, 2, 3].includes(row.status)"
+                :disabled="![0, 1, 2, 3].includes(row.status)"
             >
               编辑
             </el-button>

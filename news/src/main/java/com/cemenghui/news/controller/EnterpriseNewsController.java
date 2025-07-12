@@ -14,7 +14,7 @@ import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/enterprise/news")
-@PreAuthorize("hasRole('ENTERPRISE') or hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('ENTERPRISE') or hasAuthority('ADMIN')")
 @RequiredArgsConstructor
 public class EnterpriseNewsController {
 

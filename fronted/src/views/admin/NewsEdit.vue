@@ -161,6 +161,7 @@ onMounted(() => {
 .news-edit {
   padding: 20px;
 }
+
 .header-actions {
   display: flex;
   align-items: center;

@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { getBasicStatistics, getHotNews } from '@/api/news'
-import { ElMessage } from 'element-plus'
+import {ref, onMounted, watch} from 'vue'
+import {getBasicStatistics, getHotNews} from '@/api/news'
+import {ElMessage} from 'element-plus'
 import * as echarts from 'echarts'
-import { useRouter } from 'vue-router' // 引入 useRouter
+import {useRouter} from 'vue-router' // 引入 useRouter
 
 const loading = ref(false)
 const statistics = ref({
@@ -35,54 +35,72 @@ const hotNewsList = ref([])
 const dateRange = ref([])
 
 const loadBasicStatistics = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const data = await getBasicStatistics()
-    statistics.value = {
-      totalNews: data.totalNews || 0,
-      publishedNews: data.publishedNews || 0,
-      pendingNews: data.pendingNews || 0,
-      rejectedNews: data.rejectedNews || 0,
-      offlineNews: data.offlineNews || 0,
-      totalViews: data.totalViews || 0,
-      todayViews: data.todayViews || 0,
-      totalUsers: data.totalUsers || 0,
-      activeUsers: 0
+    // Step 1: Get the full response object from the API call
+    const response = await getBasicStatistics();
+
+    // Step 2: Check for success and access the nested data
+    if (response && response.code === '0' && response.data) {
+      const data = response.data; // Correctly get the nested data object
+
+      // Now, use this correct 'data' object to populate your statistics
+      statistics.value = {
+        totalNews: data.totalNews || 0,
+        publishedNews: data.publishedNews || 0,
+        pendingNews: data.pendingNews || 0,
+        rejectedNews: data.rejectedNews || 0,
+        totalViews: data.totalViews || 0,
+        todayViews: data.todayViews || 0,
+        totalUsers: data.totalUsers || 0,
+        activeUsers: data.activeUsers || 0
+      };
+
+      chartData.value.newsStatusChart.data = [
+        data.publishedNews || 0,
+        data.pendingNews || 0,
+        data.rejectedNews || 0
+      ];
+      updateNewsStatusChart();
+    } else {
+      // Handle API call failure
+      ElMessage.error('加载基础统计数据失败: 无效响应');
     }
-
-    chartData.value.newsStatusChart.data = [
-      data.publishedNews || 0,
-      data.pendingNews || 0,
-      data.rejectedNews || 0
-    ]
-    updateNewsStatusChart()
-
   } catch (error) {
-    ElMessage.error('加载基础统计数据失败') // 加载基础统计数据失败
+    console.error('API error:', error);
+    ElMessage.error('加载基础统计数据失败: 网络或服务器错误');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const loadHotNews = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const response = await getHotNews()
-    console.log('getHotNews API 返回的原始数据 (可能是数组):', response); // getHotNews API 返回的原始数据 (可能是数组)
+    const response = await getHotNews();
+    console.log('getHotNews API 返回的原始数据:', response);
 
-    hotNewsList.value = response || []
+    // Correctly check for success and assign the nested data
+    if (response && response.code === '0' && response.data) {
+      hotNewsList.value = response.data;
+    } else {
+      hotNewsList.value = []; // Set to an empty array on failure
+      ElMessage.error('加载热门动态失败: 无效响应');
+    }
   } catch (error) {
-    ElMessage.error('加载热门动态失败') // 加载热门动态失败
+    console.error('API error:', error);
+    hotNewsList.value = [];
+    ElMessage.error('加载热门动态失败: 网络或服务器错误');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 修改：点击标题查看动态详情的功能，使用 router.push 进行跳转
 const goToNewsDetail = (newsId) => {
   console.log('点击了新闻ID:', newsId); // 点击了新闻ID
   // 使用 router.push 进行导航到 NewsDetail 路由
-  router.push({ name: 'NewsDetail', params: { id: newsId } });
+  router.push({path: `/admin/news/${newsId}`});
   // ElMessage.info(`正在查看新闻ID: ${newsId} 的详情`); // 移除提示，因为会跳转页面
 }
 
@@ -168,7 +186,10 @@ onMounted(() => {
     <div class="stats-header">
       <h2>数据统计与分析</h2> <!-- 数据统计与分析 -->
       <el-button type="primary" @click="refreshData" :loading="loading">
-        <el-icon><Refresh /></el-icon> 刷新数据 <!-- 刷新数据 -->
+        <el-icon>
+          <Refresh/>
+        </el-icon>
+        刷新数据 <!-- 刷新数据 -->
       </el-button>
     </div>
 
@@ -177,7 +198,9 @@ onMounted(() => {
         <el-card class="stat-card">
           <div class="stat-content">
             <div class="stat-icon news-icon">
-              <el-icon size="40"><Document /></el-icon>
+              <el-icon size="40">
+                <Document/>
+              </el-icon>
             </div>
             <div class="stat-info">
               <h3>{{ statistics.totalNews }}</h3>
@@ -191,7 +214,9 @@ onMounted(() => {
         <el-card class="stat-card">
           <div class="stat-content">
             <div class="stat-icon views-icon">
-              <el-icon size="40"><View /></el-icon>
+              <el-icon size="40">
+                <View/>
+              </el-icon>
             </div>
             <div class="stat-info">
               <h3>{{ statistics.totalViews }}</h3>
@@ -205,7 +230,9 @@ onMounted(() => {
         <el-card class="stat-card">
           <div class="stat-content">
             <div class="stat-icon users-icon">
-              <el-icon size="40"><User /></el-icon>
+              <el-icon size="40">
+                <User/>
+              </el-icon>
             </div>
             <div class="stat-info">
               <h3>{{ statistics.totalUsers }}</h3>
@@ -225,7 +252,7 @@ onMounted(() => {
           <div class="chart-container">
             <div id="newsStatusChart" class="echart"></div>
             <div v-if="statistics.totalNews === 0" class="empty-chart-overlay">
-              <el-empty description="暂无动态数据" /> <!-- 暂无动态数据 -->
+              <el-empty description="暂无动态数据"/> <!-- 暂无动态数据 -->
             </div>
           </div>
         </el-card>
@@ -253,7 +280,7 @@ onMounted(() => {
               </el-col>
             </el-row>
 
-            <el-divider />
+            <el-divider/>
 
             <el-row>
               <el-col :span="12">
@@ -292,7 +319,7 @@ onMounted(() => {
               </el-table-column>
               <el-table-column prop="viewCount" label="浏览量" width="120" sortable></el-table-column> <!-- 浏览量 -->
             </el-table>
-            <el-empty v-else description="暂无热门动态" /> <!-- 暂无热门动态 -->
+            <el-empty v-else description="暂无热门动态"/> <!-- 暂无热门动态 -->
           </div>
         </el-card>
       </el-col>
