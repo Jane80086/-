@@ -1,14 +1,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useUserStore } from '@/store/user';
+import fileAPI from '@/api/file.js';
+import meetingAPI from '@/api/meeting.js';
 
 const props = defineProps({
   meetings: {
     type: Array,
-    required: true 
-  },
-  currentUser: {
-    type: Object,
     required: true 
   },
   onDelete: {
@@ -24,13 +23,15 @@ const props = defineProps({
 const emit = defineEmits(['update-meeting']);
 
 const router = useRouter();
+const userStore = useUserStore();
 const showEditModal = ref(false);
 const currentMeeting = ref(null);
 const editUploading = ref(false);
 
-// 计算用户权限
-const isAdmin = computed(() => props.currentUser?.userType === 'ADMIN');
-const isEnterprise = computed(() => props.currentUser?.userType === 'ENTERPRISE');
+// 计算用户权限 - 使用统一的用户状态管理
+const currentUser = computed(() => userStore.user);
+const isAdmin = computed(() => currentUser.value?.role === 'admin' || currentUser.value?.userType === 'ADMIN');
+const isEnterprise = computed(() => currentUser.value?.role === 'enterprise' || currentUser.value?.userType === 'ENTERPRISE');
 
 // 获取状态文本
 const getStatusText = (status) => {
@@ -83,32 +84,50 @@ const saveEdit = () => {
 
 // 检查是否有编辑权限
 const canEdit = (meeting) => {
-  return isAdmin.value || (isEnterprise.value && meeting.creator === props.currentUser?.username);
+  return isAdmin.value || (isEnterprise.value && meeting.creatorName === currentUser.value?.username);
 };
 
 // 检查是否有删除权限
 const canDelete = (meeting) => {
-  return isAdmin.value || (isEnterprise.value && meeting.creator === props.currentUser?.username);
+  return isAdmin.value || (isEnterprise.value && meeting.creatorName === currentUser.value?.username);
 };
 
 // 检查是否有审核权限
 const canReview = (meeting) => {
-  return isAdmin.value && meeting.status === 0;
+  return isAdmin.value && meeting.status === 0; // 只有管理员可以审核待审核的会议
 };
+
+// 处理会议图片URL，支持私有bucket
+const processMeetingImageUrl = async (meeting) => {
+  if (meeting.imageUrl) {
+    meeting.imageUrl = await fileAPI.getImageUrl(meeting.imageUrl);
+  }
+};
+
+// 批量处理会议图片URL
+const processMeetingsImageUrls = async (meetings) => {
+  if (!meetings || meetings.length === 0) return;
+  await Promise.all(meetings.map(meeting => processMeetingImageUrl(meeting)));
+};
+
+// 监听会议数据变化，自动处理图片URL
+watch(() => props.meetings, async (newMeetings) => {
+  if (newMeetings && newMeetings.length > 0) {
+    await processMeetingsImageUrls(newMeetings);
+  }
+}, { immediate: true });
 
 // 处理编辑会议图片上传
 const onEditImageChange = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
-  
   // 检查文件大小（10MB限制）
   const maxSize = 10 * 1024 * 1024; // 10MB
   if (file.size > maxSize) {
     alert('文件大小不能超过10MB');
-    event.target.value = ''; // 清空文件选择
+    event.target.value = '';
     return;
   }
-  
   // 检查文件类型
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
   if (!allowedTypes.includes(file.type)) {
@@ -116,24 +135,15 @@ const onEditImageChange = async (event) => {
     event.target.value = '';
     return;
   }
-  
   editUploading.value = true;
   try {
-    // 模拟上传逻辑，实际应用中需要调用后端API
-    // 假设上传成功后，imageUrl 是直接的 URL 或对象名称
-    // 对于私有 bucket，需要获取预签名 URL
-    const res = { data: { code: 200, data: 'https://example.com/image.jpg' } }; // 示例数据
-    if (res.data && res.data.code === 200 && res.data.data) {
-      // 对于私有bucket，返回的是对象名称，需要获取预签名URL
-      if (!res.data.data.startsWith('http://') && !res.data.data.startsWith('https://')) {
-        // 模拟获取预签名URL
-        const presignedUrl = 'https://example.com/presigned-url'; // 实际应用中调用 fileService.getImageUrl
-        currentMeeting.value.imageUrl = presignedUrl || res.data.data;
-      } else {
-        currentMeeting.value.imageUrl = res.data.data;
-      }
+    // 实际上传
+    const res = await meetingAPI.uploadMeetingImage(file);
+    if (res.code === 200) {
+      currentMeeting.value._imageObjectName = res.data;
+      currentMeeting.value.imageUrl = await fileAPI.getImageUrl(res.data);
     } else {
-      alert('图片上传失败: ' + (res.data.message || '未知错误'));
+      alert('图片上传失败: ' + (res.message || '未知错误'));
     }
   } catch (e) {
     console.error('图片上传错误:', e);
@@ -147,46 +157,13 @@ const onEditImageChange = async (event) => {
   }
 };
 
-// 处理会议图片URL，支持私有bucket
-const processMeetingImageUrl = async (meeting) => {
-  if (meeting.imageUrl && !meeting.imageUrl.startsWith('http://') && !meeting.imageUrl.startsWith('https://')) {
-    try {
-      // 模拟获取预签名URL
-      const presignedUrl = 'https://example.com/presigned-url'; // 实际应用中调用 fileService.getImageUrl
-      if (presignedUrl) {
-        meeting.imageUrl = presignedUrl;
-      }
-    } catch (error) {
-      console.error('获取会议图片URL失败:', error);
-    }
-  }
-};
-
-// 批量处理会议图片URL
-const processMeetingsImageUrls = async (meetings) => {
-  if (!meetings || meetings.length === 0) return;
-  
-  const promises = meetings.map(meeting => processMeetingImageUrl(meeting));
-  await Promise.all(promises);
-};
-
-// 监听会议数据变化，自动处理图片URL
-watch(() => props.meetings, async (newMeetings) => {
-  if (newMeetings && newMeetings.length > 0) {
-    await processMeetingsImageUrls(newMeetings);
-  }
-}, { immediate: true });
-
-onMounted(async () => {
-  console.log('会议列表数据:', props.meetings);
-  if (props.meetings && props.meetings.length > 0) {
-    // 处理图片URL
-    await processMeetingsImageUrls(props.meetings);
-    
-    props.meetings.forEach((m, i) => {
-      console.log(`会议${i + 1} imageUrl:`, m.imageUrl);
-    });
-  }
+onMounted(() => {
+  console.log('MeetingList 组件挂载');
+  console.log('当前用户信息:', currentUser.value);
+  console.log('用户角色:', currentUser.value?.role);
+  console.log('用户类型:', currentUser.value?.userType);
+  console.log('接收到的会议数据:', props.meetings);
+  console.log('会议数据长度:', props.meetings?.length);
 });
 </script>
 
@@ -246,10 +223,10 @@ onMounted(async () => {
                 <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <span class="label">创建人:</span>
-              <span class="value">{{ meeting.creator }}</span>
+              <span class="value">{{ meeting.creatorName }}</span>
             </div>
             
-            <div v-if="meeting.reviewer" class="meta-item">
+            <div v-if="meeting.reviewerName" class="meta-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -258,7 +235,7 @@ onMounted(async () => {
                 <polyline points="10,9 9,9 8,9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <span class="label">审核人:</span>
-              <span class="value">{{ meeting.reviewer }}</span>
+              <span class="value">{{ meeting.reviewerName }}</span>
             </div>
             
             <div v-if="meeting.reviewTime" class="meta-item">

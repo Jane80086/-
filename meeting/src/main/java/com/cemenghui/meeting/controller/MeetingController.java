@@ -305,4 +305,27 @@ public class MeetingController {
             return ApiResponse.error("图片上传失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 获取预签名URL
+     */
+    @PostMapping("/presigned-url")
+    public ApiResponse<String> getPresignedUrl(@RequestBody Map<String, String> request) {
+        try {
+            if (request == null || !request.containsKey("objectName")) {
+                return ApiResponse.error(400, "缺少对象名称参数");
+            }
+            
+            String objectName = request.get("objectName");
+            ApiResponse<String> presignedResult = minioService.getPresignedUrl(objectName);
+            if (presignedResult.getCode() == 200) {
+                return ApiResponse.success("获取成功", presignedResult.getData());
+            } else {
+                return ApiResponse.error(presignedResult.getCode(), presignedResult.getMessage());
+            }
+        } catch (Exception e) {
+            logger.error("获取预签名URL失败", e);
+            return ApiResponse.error("获取预签名URL失败: " + e.getMessage());
+        }
+    }
 } 
