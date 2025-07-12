@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getNewsDetail } from '@/api/news'
+import { getAdminNewsDetail } from '@/api/news'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
@@ -14,9 +14,19 @@ const loadNewsDetail = async () => {
   loading.value = true
   try {
     const newsId = route.params.id
-    newsDetail.value = await getNewsDetail(newsId)
+    // 改用管理员专用的接口
+    const response = await getAdminNewsDetail(newsId)
+
+    // 检查响应状态码，确保请求成功
+    if (response && response.code === '0' && response.data) {
+      newsDetail.value = response.data
+    } else {
+      ElMessage.error('加载详情失败：未收到有效数据')
+      router.back()
+    }
   } catch (error) {
-    ElMessage.error('加载详情失败')
+    console.error('Error fetching news detail:', error)
+    ElMessage.error('网络或请求异常')
     router.back()
   } finally {
     loading.value = false

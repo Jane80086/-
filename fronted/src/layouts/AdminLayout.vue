@@ -121,6 +121,10 @@ const adminMenu = {
     { label: '课程搜索', path: '/admin/course-search', icon: Document },
     { label: '我的课程', path: '/admin/my-courses', icon: Collection },
     { label: '课程审核', path: '/admin/courses', icon: Collection },
+    { label: '动态管理', path: '/admin/news', icon: UserFilled },
+    { label: '动态审核', path: '/admin/news/audit', icon: UserFilled },
+    { label: '发表动态', path: '/admin/news/publish', icon: UserFilled },
+    { label: '动态统计', path: '/admin/news/stats', icon: UserFilled },
   ],
   meeting: [
     { label: '会议审核', path: '/admin/meetings', icon: Calendar },

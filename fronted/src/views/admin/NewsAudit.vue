@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getPendingNewsList, auditNews, batchAuditNews } from '@/api/news'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import {ref, onMounted} from 'vue'
+import {getPendingNewsList, auditNews, batchAuditNews} from '@/api/news'
+import {ElMessage, ElMessageBox} from 'element-plus'
 
 const newsList = ref([])
 const total = ref(0)
@@ -23,28 +23,21 @@ const auditForm = ref({
 const loadPendingNews = async () => {
   loading.value = true
   try {
-    // 这里的 pageResult 已经是后端 Result 对象的 data 字段内容，即 PageResult 对象
-    const pageResult = await getPendingNewsList(pageParams.value)
+    const response = await getPendingNewsList(pageParams.value)
 
-    // 打印实际接收到的数据，帮助调试
-    console.log('Received pending news pageResult:', pageResult)
-
-    // 因为 request.js 已经处理了 code === 1 的情况，
-    // 如果 Promise 成功解析，说明数据是有效的 PageResult
-    if (pageResult) { // 简单判断 pageResult 是否存在
-      // 修正：根据后端返回的 PageResult 结构，列表字段名为 'list'
-      newsList.value = pageResult.list // 直接访问 list
-      total.value = pageResult.total     // 直接访问 total
+    // 检查响应的 code 和 data 字段
+    if (response && response.code === '0' && response.data) {
+      const pageResult = response.data; // 正确获取 data 字段的内容
+      newsList.value = pageResult.list;
+      total.value = pageResult.total;
     } else {
-      // 如果 pageResult 为空或 undefined，可能是请求虽然成功但没有返回数据
-      ElMessage.error('加载待审核动态失败：未收到有效数据')
+      ElMessage.error('加载待审核动态失败：未收到有效数据或请求失败');
     }
   } catch (error) {
-    // request.js 已经通过 ElMessage.error 提示了错误信息，这里可以捕获并做其他处理
-    console.error('Network or request exception for pending news:', error)
-    // ElMessage.error('网络或请求异常') // 避免重复提示
+    console.error('Network or request exception for pending news:', error);
+    ElMessage.error('网络或请求异常');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -92,7 +85,18 @@ const handleAudit = async () => {
 const handleBatchAudit = async () => {
   try {
     const newsIds = selectedNews.value.map(news => news.id)
-    await batchAuditNews(newsIds, auditForm.value)
+
+    // 关键改动：在这里构造一个名为 'auditRequest' 的嵌套对象
+    const auditRequestData = {
+      auditRequest: {
+        status: auditForm.value.status,
+        comment: auditForm.value.auditComment // 注意：如果后端DTO是comment，这里也用comment
+      }
+    }
+
+    // 将新闻ID数组和这个嵌套对象作为参数传递给 news.js
+    await batchAuditNews(newsIds, auditRequestData)
+
     ElMessage.success('批量审核成功')
     batchAuditDialogVisible.value = false
     selectedNews.value = []
@@ -104,7 +108,7 @@ const handleBatchAudit = async () => {
 
 const quickApprove = async (newsId) => {
   try {
-    await auditNews(newsId, { status: 1, auditComment: '审核通过' })
+    await auditNews(newsId, {status: 1, auditComment: '审核通过'})
     ElMessage.success('审核通过')
     loadPendingNews()
   } catch (error) {
@@ -115,7 +119,7 @@ const quickApprove = async (newsId) => {
 const quickReject = async (newsId) => {
   try {
     // ElMessageBox.prompt 返回的是一个 Promise，其 resolve 值包含用户输入
-    const { value: auditComment } = await ElMessageBox.prompt('请输入拒绝原因', '审核拒绝', {
+    const {value: auditComment} = await ElMessageBox.prompt('请输入拒绝原因', '审核拒绝', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       inputPlaceholder: '请输入拒绝原因'
@@ -161,11 +165,11 @@ onMounted(() => {
           stripe
           @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" />
+        <el-table-column type="selection" width="55"/>
 
-        <el-table-column prop="title" label="标题" min-width="200" />
+        <el-table-column prop="title" label="标题" min-width="200"/>
 
-        <el-table-column prop="author" label="作者" width="120" />
+        <el-table-column prop="author" label="作者" width="120"/>
 
         <el-table-column prop="summary" label="简介" min-width="200">
           <template #default="{ row }">
@@ -175,11 +179,11 @@ onMounted(() => {
           </template>
         </el-table-column>
 
-        <el-table-column prop="createTime" label="提交时间" width="180" />
+        <el-table-column prop="createTime" label="提交时间" width="180"/>
 
         <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="$router.push(`/normal/news-detail/${row.id}`)">
+            <el-button size="small" @click="$router.push(`/admin/news/${row.id}`)">
               预览
             </el-button>
             <el-button size="small" type="success" @click="quickApprove(row.id)">
