@@ -116,6 +116,11 @@ export const userAPI = {
     return request.post('/api/user/register', userData)
   },
   
+  // 创建用户
+  createUser(userData) {
+    return request.post('/api/admin/users', userData)
+  },
+  
   // 获取用户信息
   getUserInfo() {
     return request.get('/api/user/info')
@@ -144,6 +149,18 @@ export const userAPI = {
   // 获取用户历史记录
   getUserHistory(params) {
     return request.get('/api/admin/users/history', { params })
+  },
+  // 获取当前用户信息
+  getCurrentUser() {
+    return request.get('/api/user/current')
+  },
+  // 更新当前用户信息
+  updateCurrentUser(userData) {
+    return request.put('/api/user/current', userData)
+  },
+  // 恢复用户历史记录
+  restoreUserHistory(historyId) {
+    return request.post(`/api/admin/users/history/${historyId}/restore`)
   }
 }
 
