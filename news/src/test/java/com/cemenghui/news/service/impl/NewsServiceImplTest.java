@@ -9,6 +9,7 @@ import com.cemenghui.news.dto.*;
 import com.cemenghui.news.entity.News;
 import com.cemenghui.news.entity.UserOperationLog;
 import com.cemenghui.news.entity.UserViewLog;
+import com.cemenghui.news.enums.OperationType;
 import com.cemenghui.news.exception.BusinessException;
 import com.cemenghui.news.exception.NewsNotFoundException;
 import com.cemenghui.news.exception.UnauthorizedException;
@@ -81,6 +82,8 @@ class NewsServiceImplTest {
         mockPage.setRecords(Arrays.asList(news1, news2));
 
         // 模拟行为
+        when(newsMapper.countByCondition(eq(searchRequest), eq(NewsConstants.NEWS_STATUS_PUBLISHED)))
+                .thenReturn(2L);
         when(newsMapper.findByCondition(any(Page.class), eq(searchRequest),
                 eq(NewsConstants.NEWS_STATUS_PUBLISHED), isNull()))
                 .thenReturn(mockPage);
@@ -102,6 +105,7 @@ class NewsServiceImplTest {
         assertEquals("已发布", vo1.getStatusText());
 
         // 验证mock调用
+        verify(newsMapper).countByCondition(eq(searchRequest), eq(NewsConstants.NEWS_STATUS_PUBLISHED));
         verify(newsMapper).findByCondition(any(Page.class), eq(searchRequest),
                 eq(NewsConstants.NEWS_STATUS_PUBLISHED), isNull());
         verify(authorizationService, times(2)).getCurrentUserId();
@@ -109,14 +113,9 @@ class NewsServiceImplTest {
 
     @Test
     void searchNews_ShouldReturnEmptyResult_WhenNoDataFound() {
-        // 准备空页
-        Page<News> mockPage = new Page<>(1, 10, 0);
-        mockPage.setRecords(Collections.emptyList());
-
-        // 模拟行为
-        when(newsMapper.findByCondition(any(Page.class), eq(searchRequest),
-                eq(NewsConstants.NEWS_STATUS_PUBLISHED), isNull()))
-                .thenReturn(mockPage);
+        // 模拟行为 - 总数返回0，不会调用分页查询
+        when(newsMapper.countByCondition(eq(searchRequest), eq(NewsConstants.NEWS_STATUS_PUBLISHED)))
+                .thenReturn(0L);
 
         // 执行测试
         PageResult<NewsVO> result = newsService.searchNews(searchRequest);
@@ -125,10 +124,11 @@ class NewsServiceImplTest {
         assertNotNull(result);
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotal());
+        assertEquals(0, result.getList().size());
 
         // 验证mock调用
-        verify(newsMapper).findByCondition(any(Page.class), eq(searchRequest),
-                eq(NewsConstants.NEWS_STATUS_PUBLISHED), isNull());
+        verify(newsMapper).countByCondition(eq(searchRequest), eq(NewsConstants.NEWS_STATUS_PUBLISHED));
+        verify(newsMapper, never()).findByCondition(any(Page.class), any(), any(), any());
     }
 
     @Test
@@ -145,9 +145,12 @@ class NewsServiceImplTest {
         mockPage.setRecords(Collections.singletonList(news));
 
         // 模拟行为
+        when(newsMapper.countByCondition(eq(searchRequest), eq(NewsConstants.NEWS_STATUS_PUBLISHED)))
+                .thenReturn(1L);
         when(newsMapper.findByCondition(any(Page.class), eq(searchRequest),
                 eq(NewsConstants.NEWS_STATUS_PUBLISHED), isNull()))
                 .thenReturn(mockPage);
+        when(authorizationService.getCurrentUserId()).thenReturn(1L);
 
         // 执行测试
         PageResult<NewsVO> result = newsService.searchNews(searchRequest);
@@ -158,6 +161,9 @@ class NewsServiceImplTest {
         assertEquals(1, result.getTotal());
         assertEquals(1, result.getPage());
         assertEquals(1, result.getPageSize());
+
+        // 验证mock调用
+        verify(newsMapper).countByCondition(eq(searchRequest), eq(NewsConstants.NEWS_STATUS_PUBLISHED));
     }
 
     @Test
@@ -166,10 +172,20 @@ class NewsServiceImplTest {
         searchRequest.setPageSize(100);
 
         // 准备大量数据
+        List<News> newsList = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            News news = new News();
+            news.setId((long) i);
+            news.setTitle("News " + i);
+            news.setStatus(NewsConstants.NEWS_STATUS_PUBLISHED);
+            newsList.add(news);
+        }
         Page<News> mockPage = new Page<>(1, 100, 50);
-        // 这里可以添加更多模拟数据...
+        mockPage.setRecords(newsList);
 
         // 模拟行为
+        when(newsMapper.countByCondition(eq(searchRequest), eq(NewsConstants.NEWS_STATUS_PUBLISHED)))
+                .thenReturn(50L);
         when(newsMapper.findByCondition(any(Page.class), eq(searchRequest),
                 eq(NewsConstants.NEWS_STATUS_PUBLISHED), isNull()))
                 .thenReturn(mockPage);
@@ -181,6 +197,10 @@ class NewsServiceImplTest {
         assertNotNull(result);
         assertEquals(50, result.getTotal());
         assertEquals(100, result.getPageSize());
+        assertEquals(50, result.getList().size());
+
+        // 验证mock调用
+        verify(newsMapper).countByCondition(eq(searchRequest), eq(NewsConstants.NEWS_STATUS_PUBLISHED));
     }
 
     @Test
@@ -395,6 +415,7 @@ class NewsServiceImplTest {
 
         // 模拟行为
         when(authorizationService.getCurrentUserId()).thenReturn(userId);
+        when(newsMapper.countByUserId(userId)).thenReturn(2L);
         when(newsMapper.findByUserId(any(Page.class), eq(userId))).thenReturn(mockPage);
 
         // 执行测试
@@ -415,20 +436,19 @@ class NewsServiceImplTest {
         assertEquals(userId, news2.getUserId());
 
         // 验证mock调用
+        verify(newsMapper).countByUserId(userId);
         verify(newsMapper).findByUserId(any(Page.class), eq(userId));
         verify(authorizationService, atLeastOnce()).getCurrentUserId();
     }
 
     @Test
     void getMyNewsList_ShouldReturnEmpty_WhenUserHasNoNews() {
-        // 准备空页
+        // 准备测试数据
         Long userId = 1L;
-        Page<News> mockPage = new Page<>(1, 10, 0);
-        mockPage.setRecords(Collections.emptyList());
 
-        // 模拟行为
+        // 模拟行为 - 总数返回0，不会调用分页查询
         when(authorizationService.getCurrentUserId()).thenReturn(userId);
-        when(newsMapper.findByUserId(any(Page.class), eq(userId))).thenReturn(mockPage);
+        when(newsMapper.countByUserId(userId)).thenReturn(0L);
 
         // 执行测试
         PageResult<NewsVO> result = newsService.getMyNewsList(pageRequest);
@@ -437,6 +457,12 @@ class NewsServiceImplTest {
         assertNotNull(result);
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotal());
+        assertEquals(0, result.getList().size());
+
+        // 验证mock调用
+        verify(newsMapper).countByUserId(userId);
+        verify(newsMapper, never()).findByUserId(any(Page.class), eq(userId));
+        verify(authorizationService, atLeastOnce()).getCurrentUserId();
     }
 
     @Test
@@ -499,26 +525,52 @@ class NewsServiceImplTest {
     }
 
     @Test
-    void editNews_ShouldThrowException_WhenNewsIsPublished() {
+    void editNews_ShouldSetToPending_WhenEnterpriseUserEditsAnyStatusNews() {
+        // 准备测试数据
         Long newsId = 1L;
-        Long currentUserId = 1L;
+        Long currentUserId = 1L; // 企业用户自己的ID
+        NewsRequest newsRequest = new NewsRequest();
+        newsRequest.setTitle("Updated Title");
+        newsRequest.setContent("Updated Content");
 
-        News existingNews = new News();
-        existingNews.setId(newsId);
-        existingNews.setUserId(currentUserId);
-        existingNews.setStatus(NewsConstants.NEWS_STATUS_PUBLISHED); // 已发布状态不可编辑
+        // 测试不同初始状态
+        for (Integer status : Arrays.asList(
+                NewsConstants.NEWS_STATUS_PENDING,
+                NewsConstants.NEWS_STATUS_PUBLISHED,
+                NewsConstants.NEWS_STATUS_REJECTED
+        )) {
+            News existingNews = new News();
+            existingNews.setId(newsId);
+            existingNews.setUserId(currentUserId); // 自己的新闻
+            existingNews.setTitle("Original Title");
+            existingNews.setContent("Original Content");
+            existingNews.setStatus(status); // 不同初始状态
+            existingNews.setIsDeleted(0);
 
-        // 模拟行为
-        when(authorizationService.getCurrentUserId()).thenReturn(currentUserId);
-        when(newsMapper.selectById(newsId)).thenReturn(existingNews);
-        when(authorizationService.canEditNews(currentUserId, newsId)).thenReturn(true);
-        when(authorizationService.isEnterprise(currentUserId)).thenReturn(true); // 新增
-        when(authorizationService.isAdmin(currentUserId)).thenReturn(false); // 新增
+            // 模拟行为 - 企业用户
+            when(authorizationService.getCurrentUserId()).thenReturn(currentUserId);
+            when(newsMapper.selectById(newsId)).thenReturn(existingNews);
+            when(authorizationService.canEditNews(currentUserId, newsId)).thenReturn(true);
+            when(authorizationService.isEnterprise(currentUserId)).thenReturn(true);
+            when(authorizationService.isAdmin(currentUserId)).thenReturn(false);
+            when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
-        // 执行和验证
-        assertThrows(BusinessException.class, () -> {
-            newsService.editNews(newsId, new NewsRequest());
-        });
+            // 执行测试
+            boolean result = newsService.editNews(newsId, newsRequest);
+
+            // 验证结果
+            assertTrue(result);
+
+            // 验证无论初始状态是什么，编辑后都变为待审核状态
+            verify(newsMapper).updateById(argThat(news ->
+                    news.getStatus() == NewsConstants.NEWS_STATUS_PENDING &&
+                            news.getTitle().equals("Updated Title") &&
+                            news.getContent().equals("Updated Content")
+            ));
+
+            // 重置mock
+            reset(newsMapper);
+        }
     }
 
     @Test
@@ -575,17 +627,21 @@ class NewsServiceImplTest {
         // 准备测试数据
         News news1 = new News();
         news1.setId(1L);
+        news1.setTitle("Pending News 1");
         news1.setStatus(NewsConstants.NEWS_STATUS_PENDING);
 
         News news2 = new News();
         news2.setId(2L);
+        news2.setTitle("Pending News 2");
         news2.setStatus(NewsConstants.NEWS_STATUS_PENDING);
 
         Page<News> mockPage = new Page<>(1, 10, 2);
         mockPage.setRecords(Arrays.asList(news1, news2));
 
         // 模拟行为
+        when(newsMapper.countPendingNews()).thenReturn(2L); // 新增总数模拟
         when(newsMapper.findPendingNews(any(Page.class))).thenReturn(mockPage);
+        when(authorizationService.getCurrentUserId()).thenReturn(1L); // 新增当前用户模拟
 
         // 执行测试
         PageResult<NewsVO> result = newsService.getPendingNewsList(pageRequest);
@@ -593,7 +649,34 @@ class NewsServiceImplTest {
         // 验证结果
         assertNotNull(result);
         assertEquals(2, result.getList().size());
+        assertEquals(2, result.getTotal());
+        assertEquals(1, result.getPage());
+        assertEquals(10, result.getPageSize());
         assertEquals("待审核", result.getList().get(0).getStatusText());
+
+        // 验证mock调用
+        verify(newsMapper).countPendingNews();
+        verify(newsMapper).findPendingNews(any(Page.class));
+        verify(authorizationService, atLeastOnce()).getCurrentUserId();
+    }
+
+    @Test
+    void getPendingNewsList_ShouldReturnEmpty_WhenNoPendingNews() {
+        // 模拟行为 - 总数为0，不会调用分页查询
+        when(newsMapper.countPendingNews()).thenReturn(0L);
+
+        // 执行测试
+        PageResult<NewsVO> result = newsService.getPendingNewsList(pageRequest);
+
+        // 验证结果
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotal());
+        assertEquals(0, result.getList().size());
+
+        // 验证mock调用
+        verify(newsMapper).countPendingNews();
+        verify(newsMapper, never()).findPendingNews(any(Page.class));
     }
 
     @Test
@@ -893,17 +976,18 @@ class NewsServiceImplTest {
         request.setPageSize(10);
         request.setStatus(1); // 已发布状态
 
-        // 模拟分页结果
-        Page<News> mockPage = new Page<>(request.getPage(), request.getPageSize());
+        // 准备模拟新闻数据
         List<News> mockNewsList = List.of(
                 createMockNews(1L, "新闻1", 1),
                 createMockNews(2L, "新闻2", 1)
         );
+
+        Page<News> mockPage = new Page<>(request.getPage(), request.getPageSize());
         mockPage.setRecords(mockNewsList);
-        mockPage.setTotal(2L);
 
         // 模拟行为
         when(authorizationService.getCurrentUserId()).thenReturn(1L);
+        when(newsMapper.countByCondition(eq(request), eq(request.getStatus()))).thenReturn(2L);
         when(newsMapper.findByCondition(
                 any(Page.class),
                 eq(request),
@@ -915,50 +999,63 @@ class NewsServiceImplTest {
         PageResult<NewsVO> result = newsService.getAllNewsList(request);
 
         // 验证结果
+        assertNotNull(result);
         assertFalse(result.isEmpty());
         assertEquals(2, result.getList().size());
+        assertEquals(2, result.getTotal()); // 使用手动获取的总数
         assertEquals(1, result.getPage());
         assertEquals(10, result.getPageSize());
-        assertEquals(1, result.getTotalPages());
 
         // 验证转换后的VO内容
         NewsVO firstNews = result.getList().get(0);
         assertEquals("新闻1", firstNews.getTitle());
         assertEquals("已发布", firstNews.getStatusText());
+
+        // 验证mock调用
+        verify(newsMapper).countByCondition(eq(request), eq(request.getStatus()));
+        verify(newsMapper).findByCondition(any(Page.class), eq(request), eq(request.getStatus()), isNull());
     }
 
     @Test
     void getAllNewsList_ShouldReturnEmpty_WhenNoMatch() {
+        // 准备测试数据
         SearchRequest request = new SearchRequest();
         request.setStatus(1);
 
-        Page<News> emptyPage = new Page<>(request.getPage(), request.getPageSize());
-        emptyPage.setRecords(Collections.emptyList());
-        emptyPage.setTotal(0L);
+        // 模拟行为 - 总数为0，不会调用分页查询
+        when(newsMapper.countByCondition(eq(request), eq(request.getStatus()))).thenReturn(0L);
 
-        when(authorizationService.getCurrentUserId()).thenReturn(1L);
-        when(newsMapper.findByCondition(
-                any(Page.class),
-                eq(request),
-                eq(request.getStatus()),
-                isNull()
-        )).thenReturn(emptyPage);
-
+        // 执行测试
         PageResult<NewsVO> result = newsService.getAllNewsList(request);
 
+        // 验证结果
+        assertNotNull(result);
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotal());
+        assertEquals(0, result.getList().size());
+
+        // 验证mock调用
+        verify(newsMapper).countByCondition(eq(request), eq(request.getStatus()));
+        verify(newsMapper, never()).findByCondition(any(Page.class), any(), any(), any());
     }
 
     @Test
     void getAllNewsList_ShouldUseDefaultPaging_WhenNullRequest() {
-        // 1. 准备模拟数据
+        // 准备模拟数据
+        List<News> mockNewsList = List.of(createMockNews(1L, "默认新闻", 1));
         Page<News> mockPage = new Page<>(1, 10);
-        mockPage.setRecords(List.of(createMockNews(1L, "默认新闻", 1)));
-        mockPage.setTotal(1L);
+        mockPage.setRecords(mockNewsList);
 
-        // 2. 模拟行为 - 精确匹配实际调用
+        // 模拟行为
         when(authorizationService.getCurrentUserId()).thenReturn(1L);
+        when(newsMapper.countByCondition(
+                argThat(request ->
+                        request != null &&
+                                request.getPage() == 1 &&
+                                request.getPageSize() == 10
+                ),
+                isNull()
+        )).thenReturn(1L);
         when(newsMapper.findByCondition(
                 argThat(page -> page.getCurrent() == 1 && page.getSize() == 10),
                 argThat(request ->
@@ -972,14 +1069,20 @@ class NewsServiceImplTest {
                 isNull()
         )).thenReturn(mockPage);
 
-        // 3. 执行测试
+        // 执行测试
         PageResult<NewsVO> result = newsService.getAllNewsList(null);
 
-        // 4. 验证结果
+        // 验证结果
+        assertNotNull(result);
         assertFalse(result.isEmpty());
         assertEquals(1, result.getList().size());
+        assertEquals(1, result.getTotal());
         assertEquals(1, result.getPage());
         assertEquals(10, result.getPageSize());
+
+        // 验证mock调用
+        verify(newsMapper).countByCondition(any(SearchRequest.class), isNull());
+        verify(newsMapper).findByCondition(any(Page.class), any(SearchRequest.class), isNull(), isNull());
     }
 
     // 辅助方法
@@ -992,87 +1095,115 @@ class NewsServiceImplTest {
         return news;
     }
 
+    // 正常输入测试 - 成功删除新闻
     @Test
-    void adminDeleteNews_ShouldSoftDeleteNews_WhenNewsExists() {
+    void adminDeleteNews_ShouldReturnTrue_WhenNewsExistsAndNotDeleted() {
         // 准备测试数据
         Long newsId = 1L;
+        Long adminUserId = 1L;
         News existingNews = new News();
         existingNews.setId(newsId);
-        existingNews.setTitle("待删除新闻");
-        existingNews.setIsDeleted(0); // 未删除状态
+        existingNews.setTitle("Test News");
+        existingNews.setIsDeleted(0);
 
-        // 模拟行为
-        when(authorizationService.getCurrentUserId()).thenReturn(1L);
+        // 设置Mock行为
+        when(authorizationService.getCurrentUserId()).thenReturn(adminUserId);
         when(newsMapper.selectById(newsId)).thenReturn(existingNews);
-        when(newsMapper.updateById(any(News.class))).thenReturn(1);
+        when(newsMapper.softDelete(newsId, adminUserId)).thenReturn(1);
 
         // 执行测试
         boolean result = newsService.adminDeleteNews(newsId);
 
         // 验证结果
         assertTrue(result);
-        assertEquals(1, existingNews.getIsDeleted()); // 验证软删除标记
-
-        // 验证依赖调用
         verify(newsMapper).selectById(newsId);
-        verify(newsMapper).updateById(existingNews);
-        verify(logService).recordOperation(argThat(log ->
-                "管理员删除新闻".equals(log.getOperationDesc()) &&
-                        existingNews.getTitle().equals(log.getResourceTitle())
-        ));
+        verify(newsMapper).softDelete(newsId, adminUserId);
+        verify(logService).recordOperation(any());
     }
 
     @Test
     void adminDeleteNews_ShouldThrowException_WhenNewsNotExist() {
         Long newsId = 999L;
+        Long currentUserId = 1L;
 
-        when(authorizationService.getCurrentUserId()).thenReturn(1L);
+        when(authorizationService.getCurrentUserId()).thenReturn(currentUserId);
         when(newsMapper.selectById(newsId)).thenReturn(null);
 
         assertThrows(NewsNotFoundException.class, () -> {
             newsService.adminDeleteNews(newsId);
         });
 
-        verify(newsMapper, never()).updateById(any());
+        verify(newsMapper, never()).softDelete(any(), any());
     }
 
+    // 异常输入测试 - 新闻已删除
     @Test
-    void adminDeleteNews_ShouldThrowException_WhenNewsAlreadyDeleted() {
-        // 1. 准备测试数据
-        Long newsId = 1L;
+    void adminDeleteNews_ShouldThrowNewsNotFoundException_WhenNewsAlreadyDeleted() {
+        // 准备测试数据
+        Long newsId = 2L;
         News deletedNews = new News();
         deletedNews.setId(newsId);
-        deletedNews.setTitle("已删除新闻");
-        deletedNews.setIsDeleted(1); // 明确设置为已删除
+        deletedNews.setIsDeleted(1);
 
-        // 2. 模拟行为
-        when(authorizationService.getCurrentUserId()).thenReturn(1L);
-        when(newsMapper.selectById(newsId)).thenReturn(deletedNews); // 返回已删除的新闻
+        // 设置Mock行为
+        when(newsMapper.selectById(newsId)).thenReturn(deletedNews);
 
-        // 3. 执行和验证
-        assertThrows(NewsNotFoundException.class, () -> {
-            newsService.adminDeleteNews(newsId);
-        }, "应该对已删除新闻抛出NewsNotFoundException");
+        // 执行测试并验证异常
+        assertThrows(NewsNotFoundException.class, () -> newsService.adminDeleteNews(newsId));
 
-        // 4. 验证没有执行更新操作
-        verify(newsMapper, never()).updateById(any());
+        // 验证Mock调用
+        verify(newsMapper).selectById(newsId);
+        verify(newsMapper, never()).softDelete(any(), any());
         verify(logService, never()).recordOperation(any());
     }
 
+    // 边界值测试 - 最小新闻ID
     @Test
-    void adminDeleteNews_ShouldReturnFalse_WhenUpdateFails() {
-        Long newsId = 1L;
+    void adminDeleteNews_ShouldWork_WithMinimumNewsId() {
+        // 准备测试数据
+        Long minNewsId = 1L;
+        Long adminUserId = 1L;
+        News minNews = new News();
+        minNews.setId(minNewsId);
+        minNews.setIsDeleted(0);
+
+        // 设置Mock行为
+        when(authorizationService.getCurrentUserId()).thenReturn(adminUserId);
+        when(newsMapper.selectById(minNewsId)).thenReturn(minNews);
+        when(newsMapper.softDelete(minNewsId, adminUserId)).thenReturn(1);
+
+        // 执行测试
+        boolean result = newsService.adminDeleteNews(minNewsId);
+
+        // 验证结果
+        assertTrue(result);
+        verify(newsMapper).selectById(minNewsId);
+        verify(newsMapper).softDelete(minNewsId, adminUserId);
+        verify(logService).recordOperation(any());
+    }
+
+    // 边界值测试 - 删除操作返回0
+    @Test
+    void adminDeleteNews_ShouldReturnFalse_WhenSoftDeleteReturns0() {
+        // 准备测试数据
+        Long newsId = 3L;
+        Long adminUserId = 1L;
         News existingNews = new News();
         existingNews.setId(newsId);
         existingNews.setIsDeleted(0);
 
-        when(authorizationService.getCurrentUserId()).thenReturn(1L);
+        // 设置Mock行为
+        when(authorizationService.getCurrentUserId()).thenReturn(adminUserId);
         when(newsMapper.selectById(newsId)).thenReturn(existingNews);
-        when(newsMapper.updateById(any(News.class))).thenReturn(0); // 模拟更新失败
+        when(newsMapper.softDelete(newsId, adminUserId)).thenReturn(0);
 
+        // 执行测试
         boolean result = newsService.adminDeleteNews(newsId);
 
+        // 验证结果
         assertFalse(result);
+        verify(newsMapper).selectById(newsId);
+        verify(newsMapper).softDelete(newsId, adminUserId);
         verify(logService, never()).recordOperation(any());
     }
 
@@ -1388,4 +1519,57 @@ class NewsServiceImplTest {
         assertTrue(result.isEmpty());
         verify(newsMapper).getHotNews(5, NewsConstants.NEWS_STATUS_PUBLISHED);
     }
+
+    @Test
+    void getAdminNewsDetail_ShouldReturnNewsVO_WhenNewsExists() {
+        // 准备测试数据
+        Long newsId = 1L;
+        News news = new News();
+        news.setId(newsId);
+        news.setTitle("Admin News");
+        news.setStatus(NewsConstants.NEWS_STATUS_PUBLISHED);
+        news.setIsDeleted(0);
+
+        // 模拟行为
+        when(newsMapper.selectById(newsId)).thenReturn(news);
+        when(authorizationService.getCurrentUserId()).thenReturn(1L);
+
+        // 执行测试
+        NewsVO result = newsService.getAdminNewsDetail(newsId);
+
+        // 验证结果
+        assertNotNull(result);
+        assertEquals("Admin News", result.getTitle());
+        assertEquals("已发布", result.getStatusText());
+
+        // 验证mock调用
+        verify(newsMapper).selectById(newsId);
+        verify(authorizationService).getCurrentUserId();
+    }
+
+    @Test
+    void getAdminNewsDetail_ShouldThrowException_WhenNewsNotFound() {
+        Long newsId = 999L;
+        when(newsMapper.selectById(newsId)).thenReturn(null);
+
+        assertThrows(NewsNotFoundException.class, () -> {
+            newsService.getAdminNewsDetail(newsId);
+        });
+    }
+
+    @Test
+    void getAdminNewsDetail_ShouldThrowException_WhenNewsIsDeleted() {
+        Long newsId = 1L;
+        News news = new News();
+        news.setId(newsId);
+        news.setIsDeleted(1);
+
+        when(newsMapper.selectById(newsId)).thenReturn(news);
+
+        assertThrows(NewsNotFoundException.class, () -> {
+            newsService.getAdminNewsDetail(newsId);
+        });
+    }
+
+
 }
