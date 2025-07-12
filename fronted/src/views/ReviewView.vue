@@ -115,10 +115,11 @@ const formatDateTime = (dateTime) => {
 
 // 返回首页
 const goHome = () => {
-  router.push('/meeting');
+  router.push('/admin/dashboard');
 };
 
 onMounted(() => {
+  userStore.initUser && userStore.initUser();
   console.log('ReviewView 组件挂载');
   console.log('当前用户信息:', currentUser.value);
   console.log('用户角色:', currentUser.value?.role);
