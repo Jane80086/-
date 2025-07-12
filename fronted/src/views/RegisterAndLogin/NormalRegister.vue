@@ -95,7 +95,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { register } from '@/api/auth'
+import { userRegister } from '@/api/auth'
 import { v4 as uuidv4 } from 'uuid'
 
 export default {
@@ -167,7 +167,7 @@ export default {
       try {
         loading.value = true
         await registerFormRef.value.validate();
-        const res = await register({ ...registerForm, uuid: uuid.value });
+        const res = await userRegister({ ...registerForm, uuid: uuid.value });
         console.log('注册返回：', res); // 增加详细日志
         if (res && res.success) {
           ElMessage.success('注册成功');

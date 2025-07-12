@@ -42,11 +42,11 @@
             />
           </el-form-item>
           
-          <el-form-item v-if="registerForm.userType === 'ENTERPRISE'" label="企业ID" prop="enterpriseId">
+          <el-form-item label="企业ID" prop="enterpriseId">
             <el-input v-model="registerForm.enterpriseId" placeholder="请输入企业ID" />
           </el-form-item>
           
-          <el-form-item v-if="registerForm.userType === 'ENTERPRISE'" label="企业类型" prop="enterpriseType">
+          <el-form-item label="企业类型" prop="enterpriseType">
             <el-select v-model="registerForm.enterpriseType" placeholder="请选择企业类型" style="width: 100%">
               <el-option label="科技企业" value="科技企业" />
               <el-option label="制造企业" value="制造企业" />
@@ -69,14 +69,6 @@
           </el-form-item>
           <el-form-item label="部门" prop="department">
             <el-input v-model="registerForm.department" placeholder="请输入部门" />
-          </el-form-item>
-          
-          <el-form-item label="注册类型" prop="userType">
-            <el-radio-group v-model="registerForm.userType">
-              <el-radio label="USER">普通用户</el-radio>
-              <el-radio label="ADMIN">管理员</el-radio>
-              <el-radio label="ENTERPRISE">企业用户</el-radio>
-            </el-radio-group>
           </el-form-item>
           
           <el-form-item label="验证码" prop="verificationCode">
@@ -117,9 +109,8 @@
 import { useUserStore } from '@/store/user'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { register } from '@/api/auth'
+import { register, enterpriseRegister } from '@/api/auth'
 import { v4 as uuidv4 } from 'uuid'
-import { login } from '@/api/auth' // Added login import
 
   
   export default {
@@ -196,18 +187,6 @@ import { login } from '@/api/auth' // Added login import
         registerRules.enterpriseId[0].required = !isAdmin.value
         registerRules.enterpriseType[0].required = !isAdmin.value
       })
-      // 在 setup 内 watch 注册类型，切换时清空并移除企业相关校验
-      watch(() => registerForm.userType, (val) => {
-        if (val !== 'ENTERPRISE') {
-          registerForm.enterpriseId = '';
-          registerForm.enterpriseType = '';
-          registerRules.enterpriseId[0].required = false;
-          registerRules.enterpriseType[0].required = false;
-        } else {
-          registerRules.enterpriseId[0].required = true;
-          registerRules.enterpriseType[0].required = true;
-        }
-      });
       const refreshCaptcha = () => {
         uuid.value = uuidv4()
         captchaUrl.value = `/api/auth/captcha?uuid=${uuid.value}&t=${Date.now()}`
@@ -217,30 +196,17 @@ import { login } from '@/api/auth' // Added login import
           loading.value = true
           await registerFormRef.value.validate();
           // 注册时带上 uuid
-          const res = await register({ ...registerForm, uuid: uuid.value });
+          const res = await enterpriseRegister({ ...registerForm, uuid: uuid.value });
+          console.log('注册返回：', res);
           if (res && res.success) {
-            ElMessage.success('注册成功，正在自动登录...');
-            // 自动登录
-            const loginRes = await login({
-              account: registerForm.account,
-              password: registerForm.password,
-              uuid: uuid.value
-            });
-            if (loginRes && loginRes.success) {
-              userStore.setUser(loginRes.user);
-              localStorage.setItem('token', loginRes.token);
-              // 跳转首页
-              let userRole = loginRes.user.role || loginRes.user.userType || (loginRes.user.account && String(loginRes.user.account).startsWith('0000') ? 'admin' : 'user');
-              if (userRole && typeof userRole === 'string') userRole = userRole.toLowerCase();
-              if (userRole === 'admin') {
-                router.push('/admin/dashboard');
-              } else if (userRole === 'enterprise') {
-                router.push('/enterprise/home');
-              } else {
-                router.push('/user/home');
-              }
+            ElMessage.success('注册成功');
+            // 根据用户类型决定跳转路径
+            if (registerForm.userType === 'ENTERPRISE') {
+              // 企业用户注册成功后跳转到登录页面
+              ElMessage.success('企业用户注册成功，请登录');
+              router.push('/login');
             } else {
-              ElMessage.error(loginRes?.message || '自动登录失败，请手动登录');
+              // 其他用户注册成功后跳转到登录页面
               router.push('/login');
             }
           } else {
@@ -253,6 +219,7 @@ import { login } from '@/api/auth' // Added login import
             refreshCaptcha();
           }
         } catch (error) {
+          console.error('注册错误：', error);
           ElMessage.error(error.response?.data?.message || error.message || '注册失败，请重试');
           refreshCaptcha();
         } finally {
