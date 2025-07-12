@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import com.cemenghui.course.entity.Review;
 import com.cemenghui.course.service.ReviewService;
+import com.cemenghui.course.vo.CoursePublishRecordVO;
 
 @RestController
 @RequestMapping("/api/course")
@@ -74,25 +75,15 @@ public class CourseController {
     private ReviewService reviewService;
 
     /**
-     * 创建新课程（支持视频文件上传）
+     * 创建新课程（只用 JSON，不处理文件流）
      */
     @PostMapping("/create")
-    public ResponseEntity<Result> createCourseWithVideo(
-            @RequestPart("course") @Valid Course course,
-            @RequestPart(value = "videoFile", required = false) MultipartFile videoFile) {
+    public ResponseEntity<Result> createCourse(@RequestBody @Valid Course course) {
         try {
-            // 1. 处理视频文件上传（改为上传到 MinIO）
-            if (videoFile != null && !videoFile.isEmpty()) {
-                // 使用 MinIO 上传视频，返回外链 URL
-                String videoUrl = minioServiceImpl.uploadCourseVideo(videoFile);
-                course.setVideoUrl(videoUrl);
-            }
-            
-            // 2. 设置默认封面图片
+            // 设置默认封面图片
             if (course.getCoverImage() == null || course.getCoverImage().isEmpty()) {
                 course.setCoverImage("/class.jpg");
             }
-            
             course.setStatus("PENDING");
             Course createdCourse = courseManagerService.createCourse(course);
             Map<String, Object> result = new HashMap<>();
@@ -783,8 +774,17 @@ public class CourseController {
      */
     @GetMapping("/{id}/review-log")
     public ResponseEntity<Result> getReviewLog(@PathVariable Long id) {
-        List<Review> log = reviewService.getReviewLog(id);
+        List<CoursePublishRecordVO> log = reviewService.getReviewLog(id);
         return ResponseEntity.ok(Result.success(log));
+    }
+
+    /**
+     * 获取课程发布记录
+     */
+    @GetMapping("/publish-records")
+    public Result getPublishRecords() {
+        List<CoursePublishRecordVO> records = courseService.getPublishRecords();
+        return Result.success(records);
     }
 
     /**

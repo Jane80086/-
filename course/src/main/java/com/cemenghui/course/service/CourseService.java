@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 import com.cemenghui.course.entity.Comment;
+import com.cemenghui.course.vo.CoursePublishRecordVO;
 
 /**
  * 课程服务接口
@@ -87,4 +88,10 @@ public interface CourseService {
      * @return 待审核课程列表
      */
     List<Course> getPendingCourses();
+
+    /**
+     * 获取课程发布记录
+     * @return 课程发布记录列表
+     */
+    List<CoursePublishRecordVO> getPublishRecords();
 } 

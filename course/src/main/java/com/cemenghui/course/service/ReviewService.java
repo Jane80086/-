@@ -1,6 +1,7 @@
 package com.cemenghui.course.service;
 
 import com.cemenghui.course.entity.Review;
+import com.cemenghui.course.vo.CoursePublishRecordVO;
 import java.util.List;
 
 /**
@@ -29,5 +30,5 @@ public interface ReviewService {
      * @param courseId 课程ID
      * @return 审核记录列表
      */
-    List<Review> getReviewLog(Long courseId);
+    List<CoursePublishRecordVO> getReviewLog(Long courseId);
 } 

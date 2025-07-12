@@ -65,6 +65,12 @@ public class Course implements Serializable {
     @TableField("favorite_count")
     private Integer favoriteCount = 0;
 
+    @TableField("reviewer_name")
+    private String reviewerName;
+
+    @TableField("remark")
+    private String remark;
+
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     private LocalDateTime createdTime;
 
@@ -158,5 +164,18 @@ public class Course implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getReviewerName() {
+        return this.reviewerName;
+    }
+    public void setReviewerName(String reviewerName) {
+        this.reviewerName = reviewerName;
+    }
+    public String getRemark() {
+        return this.remark;
+    }
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 } 

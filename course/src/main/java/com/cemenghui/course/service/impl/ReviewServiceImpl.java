@@ -7,10 +7,14 @@ import com.cemenghui.course.entity.Review;
 import com.cemenghui.course.entity.Course;
 import com.cemenghui.course.entity.ReviewStatus;
 import com.cemenghui.course.service.ReviewService;
+import com.cemenghui.course.service.UserService;
+import com.cemenghui.entity.User;
+import com.cemenghui.course.vo.CoursePublishRecordVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 审核服务实现
@@ -21,6 +25,8 @@ public class ReviewServiceImpl implements ReviewService {
     private ReviewDao reviewDao;
     @Autowired
     private CourseDao courseDao;
+    @Autowired
+    private UserService userService;
 
     /**
      * 审核通过
@@ -33,16 +39,22 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = new Review();
         review.setCourseId(courseId);
         review.setReviewerId(reviewerId);
-        review.setStatus(ReviewStatus.APPROVED.name());
-        reviewDao.insert(review);
-        
-        // 更新课程状态
+        // 查课程名
         Course course = courseDao.selectById(courseId);
         if (course != null) {
-            course.setStatus("PUBLISHED"); // 1表示已发布，改为字符串
+            review.setResourceName(course.getTitle());
+        }
+        // 查审核人昵称
+        String reviewerName = userService.getNicknameById(reviewerId);
+        review.setReviewerName(reviewerName);
+        review.setStatus(ReviewStatus.APPROVED.name());
+        review.setReviewedAt(java.time.LocalDateTime.now());
+        reviewDao.insert(review);
+        // 更新课程状态
+        if (course != null) {
+            course.setStatus("PUBLISHED");
             courseDao.updateById(course);
         }
-        
         onReviewApproved(courseId);
         return review;
     }
@@ -59,11 +71,19 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = new Review();
         review.setCourseId(courseId);
         review.setReviewerId(reviewerId);
+        // 查课程名
+        Course course = courseDao.selectById(courseId);
+        if (course != null) {
+            review.setResourceName(course.getTitle());
+        }
+        // 查审核人昵称
+        String reviewerName = userService.getNicknameById(reviewerId);
+        review.setReviewerName(reviewerName);
         review.setStatus(ReviewStatus.REJECTED.name());
         review.setComment(reason);
+        review.setReviewedAt(java.time.LocalDateTime.now());
         reviewDao.insert(review);
         // 更新课程状态
-        Course course = courseDao.selectById(courseId);
         if (course != null) {
             course.setStatus("REJECTED");
             courseDao.updateById(course);
@@ -78,10 +98,22 @@ public class ReviewServiceImpl implements ReviewService {
      * @return 审核记录列表
      */
     @Override
-    public List<Review> getReviewLog(Long courseId) {
+    public List<CoursePublishRecordVO> getReviewLog(Long courseId) {
         LambdaQueryWrapper<Review> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Review::getCourseId, courseId);
-        return reviewDao.selectList(wrapper);
+        List<Review> reviews = reviewDao.selectList(wrapper);
+        return reviews.stream().map(r -> {
+            CoursePublishRecordVO vo = new CoursePublishRecordVO();
+            vo.setCourseName(r.getResourceName());
+            vo.setPublishTime(r.getReviewedAt() != null ? r.getReviewedAt().toString() : "");
+            vo.setReviewer(r.getReviewerName());
+            String status = r.getStatus();
+            vo.setReviewResult("审核中");
+            if ("APPROVED".equalsIgnoreCase(status)) vo.setReviewResult("通过");
+            else if ("REJECTED".equalsIgnoreCase(status)) vo.setReviewResult("未通过");
+            vo.setRemark(r.getComment());
+            return vo;
+        }).collect(Collectors.toList());
     }
 
     /**

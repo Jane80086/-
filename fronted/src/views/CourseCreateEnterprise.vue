@@ -37,23 +37,31 @@ import UploadMedia from '../components/UploadMedia.vue'
 import { ElMessage } from 'element-plus'
 const router = useRouter()
 const form = ref({ title: '', description: '', businessLicense: '', coverImage: '/class.jpg', videoUrl: '' })
-const licenseUploadUrl = 'http://localhost:9000/company-files/license'
-const coverUploadUrl = 'http://localhost:9000/course-files/cover'
-const videoUploadUrl = 'http://localhost:9000/course-files/video'
+const licenseUploadUrl = '/api/file/upload'
+const coverUploadUrl = '/api/file/upload'
+const videoUploadUrl = '/api/file/upload'
 const onLicenseSuccess = (res) => { form.value.businessLicense = res.url || res.data?.url }
 const onCoverSuccess = (res) => { form.value.coverImage = res.url || res.data?.url }
 const onVideoSuccess = (res) => { form.value.videoUrl = res.url || res.data?.url }
 const submitting = ref(false)
 const createdCourseId = ref(null)
 const submitCreate = async () => {
+  if (!form.value.coverImage) {
+    ElMessage.error('请先上传封面');
+    return;
+  }
+  if (!form.value.videoUrl) {
+    ElMessage.error('请先上传视频');
+    return;
+  }
   try {
     submitting.value = true
     const res = await axios.post('/api/course/create', form.value)
-    const courseId = res.data.data.course.id || res.data.data.id
+    const courseId = res.data.data.course?.id || res.data.data.id
     createdCourseId.value = courseId
     ElMessage.success('课程创建成功，请点击下方按钮提交审核！')
   } catch (e) {
-    ElMessage.error('创建失败')
+    ElMessage.error(e.response?.data?.message || '创建失败')
   } finally {
     submitting.value = false
   }
