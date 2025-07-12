@@ -391,5 +391,21 @@ export const adminApi = {
       url: '/api/admin/dashboard',
       method: 'get'
     })
+  },
+
+  // 获取课程详情
+  getCourseDetail(id) {
+    return request({
+      url: `/api/course/${id}`,
+      method: 'get'
+    })
+  },
+
+  // 获取课程章节
+  getChapters(id) {
+    return request({
+      url: `/api/course/${id}/chapters`,
+      method: 'get'
+    })
   }
 } 

@@ -167,41 +167,42 @@ const loadCourses = async () => {
   }
 }
 const filteredCourses = computed(() => {
-  let filtered = courses.value
+  let filtered = Array.isArray(courses.value) ? courses.value.slice() : []
   // 只展示已审核通过/已发布的课程，兼容多种状态
-  filtered = filtered.filter(course => {
+  filtered = Array.isArray(filtered) ? filtered.filter(course => {
     const status = (course.status || '').toLowerCase()
     return status === 'published' || status === 'approved'
-  })
+  }) : []
   if (searchKeyword.value) {
     const kw = searchKeyword.value.trim().toLowerCase()
-    filtered = filtered.filter(course =>
+    filtered = Array.isArray(filtered) ? filtered.filter(course =>
       course.title.toLowerCase().includes(kw) ||
       course.description.toLowerCase().includes(kw) ||
       (course.instructorName && course.instructorName.toLowerCase().includes(kw))
-    )
+    ) : []
   }
   if (selectedCategory.value) {
-    filtered = filtered.filter(course => course.category === selectedCategory.value)
+    filtered = Array.isArray(filtered) ? filtered.filter(course => course.category === selectedCategory.value) : []
   }
   if (selectedLevel.value) {
-    filtered = filtered.filter(course => course.level === selectedLevel.value)
+    filtered = Array.isArray(filtered) ? filtered.filter(course => course.level === selectedLevel.value) : []
   }
+  if (!Array.isArray(filtered)) filtered = []
   switch (sortBy.value) {
     case 'latest':
-      filtered = [...filtered].sort((a, b) => b.id - a.id)
+      filtered = Array.isArray(filtered) ? [...filtered].sort((a, b) => b.id - a.id) : []
       break
     case 'popular':
-      filtered = [...filtered].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
+      filtered = Array.isArray(filtered) ? [...filtered].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0)) : []
       break
     case 'rating':
-      filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      filtered = Array.isArray(filtered) ? [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0)) : []
       break
     case 'price-asc':
-      filtered = [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0))
+      filtered = Array.isArray(filtered) ? [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0)) : []
       break
     case 'price-desc':
-      filtered = [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0))
+      filtered = Array.isArray(filtered) ? [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0)) : []
       break
   }
   return filtered

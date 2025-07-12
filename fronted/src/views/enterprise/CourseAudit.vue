@@ -21,11 +21,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { courseApi } from '@/api/course'
+import { adminApi } from '@/api/course'
 import { useUserStore } from '@/store/user'
 const courses = ref([])
 const loadCourses = async () => {
-  const res = await courseApi.getAuditCourses()
+  const res = await adminApi.getPendingCourses()
   if (res.code === 200) courses.value = res.data.content || res.data || []
 }
 const getStatusType = (status) => {
@@ -43,12 +43,12 @@ const getStatusText = (status) => {
 const userStore = useUserStore()
 const approve = async (row) => {
   const reviewerId = userStore.user?.id || ''
-  const res = await courseApi.approveCourse(row.id, reviewerId)
+  const res = await adminApi.approveCourse(row.id, reviewerId)
   if (res.code === 200) { ElMessage.success('审核通过'); loadCourses() }
 }
 const reject = async (row) => {
   const reviewerId = userStore.user?.id || ''
-  const res = await courseApi.rejectCourse(row.id, reviewerId)
+  const res = await adminApi.rejectCourse(row.id, reviewerId)
   if (res.code === 200) { ElMessage.success('已拒绝'); loadCourses() }
 }
 onMounted(loadCourses)
