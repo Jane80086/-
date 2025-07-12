@@ -60,11 +60,20 @@ const adminApi = {
     })
   },
   // 课程审核
-  reviewCourse(courseId, status, reason = '') {
+  reviewCourse(courseId, status, reason = '', reviewerId) {
+    const url = `/api/admin/course/${courseId}/review`
+    const data = { status, reason, reviewerId }
+    console.log('[审核请求] POST', url, data)
     return request({
-      url: `/api/admin/course/${courseId}/review`,
+      url,
       method: 'post',
-      params: { status, reason }
+      data
+    }).then(res => {
+      console.log('[审核响应]', res)
+      return res
+    }).catch(err => {
+      console.error('[审核异常]', err)
+      throw err
     })
   },
   // 评论审核

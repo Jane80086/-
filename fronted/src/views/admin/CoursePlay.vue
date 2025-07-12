@@ -450,6 +450,7 @@ import { ArrowLeft, Check, VideoPlay, ChatDotRound, Cpu, Edit, ChatLineRound } f
 import { courseApi } from '@/api/course'
 import { askAI } from '@/api/register'
 import { adminApi } from '@/api/course'
+import { useUserStore } from '@/store/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -614,11 +615,12 @@ const formatTime = (s) => {
 }
 
 // 在审核操作前打印参数，便于排查
+const userStore = useUserStore()
 const approveCourse = async () => {
   console.log('审核通过参数:', course.value?.id, 'approved', '')
   try {
-    // 强制 method 为 post
-    const res = await adminApi.reviewCourse(course.value?.id, 'approved', '')
+    const reviewerId = userStore.user?.id || ''
+    const res = await adminApi.reviewCourse(course.value?.id, 'approved', '', reviewerId)
     console.log('[审核] 审核通过响应:', res)
     if (res.code === 200) {
       ElMessage.success('审核通过')
@@ -634,8 +636,8 @@ const approveCourse = async () => {
 const rejectCourse = async (reason) => {
   console.log('审核驳回参数:', course.value?.id, 'rejected', reason)
   try {
-    // 强制 method 为 post
-    const res = await adminApi.reviewCourse(course.value?.id, 'rejected', reason)
+    const reviewerId = userStore.user?.id || ''
+    const res = await adminApi.reviewCourse(course.value?.id, 'rejected', reason, reviewerId)
     console.log('[审核] 审核驳回响应:', res)
     if (res.code === 200) {
       ElMessage.success('已驳回')
