@@ -1,0 +1,75 @@
+{
+  "routerMap": [
+    {
+      "name": "Start",
+      "pageSourceFile": "src/main/ets/pages/start.ets",
+      "buildFunction": "StartBuilder",
+      "data": {
+        "description" : "this is Start"
+      }
+    },
+    {
+      "name": "Detail",
+      "pageSourceFile": "src/main/ets/pages/Detail.ets",
+      "buildFunction": "DetailBuilder",
+      "data": {
+        "description" : "this is Detail"
+      }
+    },
+    {
+      "name": "meeting",
+      "pageSourceFile": "src/main/ets/pages/meeting.ets",
+      "buildFunction": "meetingBuilder",
+      "data": {
+        "description" : "this is meeting"
+      }
+    },
+    {
+      "name": "web",
+      "pageSourceFile": "src/main/ets/pages/web.ets",
+      "buildFunction": "webBuilder",
+      "data": {
+        "description" : "this is web"
+      }
+    },
+    {
+      "name": "web0",
+      "pageSourceFile": "src/main/ets/pages/web0.ets",
+      "buildFunction": "web0Builder",
+      "data": {
+        "description" : "this is web0"
+      }
+    },
+    {
+      "name": "web2",
+      "pageSourceFile": "src/main/ets/pages/web2.ets",
+      "buildFunction": "web2Builder",
+      "data": {
+        "description" : "this is web2"
+      }
+    },
+    {
+      "name": "Commit",
+      "pageSourceFile": "src/main/ets/pages/Commit.ets",
+      "buildFunction": "CommitBuilder",
+      "data": {
+        "description" : "this is Commit"}
+      },
+    {
+      "name": "TechDetail",
+      "pageSourceFile": "src/main/ets/pages/TechDetail.ets",
+      "buildFunction": "TechDetailBuilder",
+      "data": {
+        "description" : "this is meeting"
+      }
+    },
+    {
+      "name": "HomePage",
+      "pageSourceFile": "src/main/ets/pages/HomePage.ets",
+      "buildFunction": "HomePageBuilder",
+      "data": {
+        "description" : "this is HomePage"
+      }
+    }
+  ]
+}
