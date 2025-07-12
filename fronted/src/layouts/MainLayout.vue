@@ -146,9 +146,9 @@ const primaryMenu = computed(() => {
         { label: '课程审核', path: '/admin/courses', icon: Collection },
       ],
       meeting: [
-        { label: '会议管理', path: '/admin/meeting', icon: Calendar },
-        { label: '会议统计', path: '/admin/meeting-stats', icon: DataAnalysis },
-      ],
+              { label: '会议管理', path: '/admin/meeting', icon: Calendar },
+              { label: '会议统计', path: '/admin/meeting-stats', icon: DataAnalysis },
+            ],
       more: [
         { label: '更多设置', path: '/admin/settings', icon: MoreFilled },
       ]
@@ -164,9 +164,9 @@ const primaryMenu = computed(() => {
         { label: '我的动态', path: '/enterprise/news', icon: Document },
       ],
       meeting: [
-        { label: '我的会议', path: '/enterprise/meeting', icon: Calendar },
-        { label: '会议统计', path: '/enterprise/meeting-stats', icon: DataAnalysis },
-      ],
+              { label: '我的会议', path: '/enterprise/meeting', icon: Calendar },
+              { label: '会议统计', path: '/enterprise/meeting-stats', icon: DataAnalysis },
+            ],
       more: [
         { label: '企业设置', path: '/enterprise/settings', icon: MoreFilled },
       ]

@@ -127,9 +127,9 @@ const enterpriseMenu = {
     { label: '发表动态', path: '/enterprise/news/publish', icon: Document },
   ],
   meeting: [
-    { label: '我的会议', path: '/enterprise/meeting', icon: Calendar },
-    { label: '会议统计', path: '/enterprise/meeting-stats', icon: DataAnalysis },
-  ],
+      { label: '我的会议', path: '/enterprise/meeting', icon: Calendar },
+      { label: '会议统计', path: '/enterprise/meeting-stats', icon: DataAnalysis },
+    ],
   more: [
     { label: '企业设置', path: '/enterprise/settings', icon: MoreFilled },
   ]

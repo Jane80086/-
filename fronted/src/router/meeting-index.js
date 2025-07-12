@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '@/store/user';
-import HomeView from '../views/Meeting-HomeView.vue'; 
-import MeetingDetailView from '../views/MeetingDetailView.vue';   
+import HomeView from '../views/Meeting-HomeView.vue';
+import MeetingDetailView from '../views/MeetingDetailView.vue';
 import ReviewView from '../views/ReviewView.vue';
- 
+
 const routes = [
   {
     path: '/meeting',
@@ -36,10 +36,10 @@ const routes = [
     redirect: '/meeting'
   }
 ];
- 
+
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL), 
-  routes 
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes
 });
 
 // 路由守卫
@@ -47,10 +47,10 @@ router.beforeEach((to, from, next) => {
   try {
     const userStore = useUserStore();
     const isAuthenticated = userStore.isAuthenticated;
-    
+
     // 记录路由跳转日志
     console.log(`Meeting路由跳转: ${from.path} -> ${to.path}, 认证状态: ${isAuthenticated}`);
-    
+
     if (to.meta.requiresAuth && !isAuthenticated) {
       console.log('需要认证但未登录，重定向到登录页');
       next('/login');
