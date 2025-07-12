@@ -157,6 +157,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
+import { courseApi } from '@/api/course'
 
 const router = useRouter()
 const loading = ref(false)
@@ -164,120 +165,109 @@ const searchKeyword = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
 const totalCourses = ref(0)
+const courses = ref([])
 
-// 模拟课程数据
-const courses = ref([
-  { 
-    id: 1, 
-    title: '前端开发入门', 
-    description: '学习HTML、CSS、JavaScript基础', 
-    instructorName: '张老师', 
-    duration: 120, 
-    price: 0, 
-    imageUrl: '', 
-    viewCount: 1234, 
-    rating: 4.5, 
-    category: '前端开发', 
-    level: '初级',
-    status: 'approved'
-  },
-  { 
-    id: 2, 
-    title: 'Java后端实战', 
-    description: 'Spring Boot+MyBatis企业级开发', 
-    instructorName: '李老师', 
-    duration: 180, 
-    price: 99, 
-    imageUrl: '', 
-    viewCount: 888, 
-    rating: 4.8, 
-    category: '后端开发', 
-    level: '中级',
-    status: 'approved'
-  },
-  { 
-    id: 3, 
-    title: 'Python数据分析', 
-    description: '使用Python进行数据分析和可视化', 
-    instructorName: '王老师', 
-    duration: 240, 
-    price: 199, 
-    imageUrl: '', 
-    viewCount: 567, 
-    rating: 4.6, 
-    category: '编程开发', 
-    level: '高级',
-    status: 'pending'
+const fetchCourses = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+      keyword: searchKeyword.value
+    }
+    const res = await courseApi.getCourseList(params)
+    if (res.code === 200) {
+      courses.value = res.data.records || res.data || []
+      totalCourses.value = res.data.total || res.data.length || 0
+    } else {
+      courses.value = []
+      totalCourses.value = 0
+      ElMessage.error(res.message || '获取课程列表失败')
+    }
+  } catch (e) {
+    courses.value = []
+    totalCourses.value = 0
+    ElMessage.error('网络错误，获取课程失败')
+  } finally {
+    loading.value = false
   }
-])
+}
 
-// 计算属性
-const filteredCourses = computed(() => {
-  let filtered = courses.value
-  
-  if (searchKeyword.value) {
-    const kw = searchKeyword.value.trim().toLowerCase()
-    filtered = filtered.filter(course =>
-      course.title.toLowerCase().includes(kw) ||
-      course.description.toLowerCase().includes(kw) ||
-      (course.instructorName && course.instructorName.toLowerCase().includes(kw))
-    )
-  }
-  
-  return filtered
-})
+onMounted(fetchCourses)
 
-const displayCourses = computed(() => {
-  totalCourses.value = filteredCourses.value.length
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredCourses.value.slice(start, end)
-})
+const filterCourses = () => {
+  currentPage.value = 1
+  fetchCourses()
+}
+
+const handleSizeChange = (val) => {
+  pageSize.value = val
+  currentPage.value = 1
+  fetchCourses()
+}
+const handleCurrentChange = (val) => {
+  currentPage.value = val
+  fetchCourses()
+}
+
+const displayCourses = computed(() => courses.value)
 
 const totalViews = computed(() => {
   return courses.value.reduce((sum, course) => sum + (course.viewCount || 0), 0)
 })
-
 const approvedCourses = computed(() => {
   return courses.value.filter(course => course.status === 'approved').length
 })
-
 const pendingCourses = computed(() => {
   return courses.value.filter(course => course.status === 'pending').length
 })
 
-// 方法
-const filterCourses = () => {
-  currentPage.value = 1
+const viewCourse = (id) => {
+  router.push(`/admin/course/${id}`)
 }
-
-const createCourse = () => {
-  router.push('/admin/course/create')
+const editCourse = (id) => {
+  router.push(`/admin/course/${id}/edit`)
 }
-
-const viewCourse = (courseId) => {
-  router.push(`/admin/course/${courseId}`)
-}
-
-const editCourse = (courseId) => {
-  router.push(`/admin/course/${courseId}/edit`)
-}
-
-const deleteCourse = async (courseId) => {
+const deleteCourse = async (id) => {
   try {
     await ElMessageBox.confirm('确定要删除这个课程吗？', '确认删除', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-    
-    const index = courses.value.findIndex(c => c.id === courseId)
-    if (index > -1) {
-      courses.value.splice(index, 1)
-      ElMessage.success('删除成功')
-    }
+    await courseApi.deleteCourse(id)
+    ElMessage.success('删除成功')
+    fetchCourses()
+  } catch {}
+}
+
+// 创建课程弹窗相关
+const createDialogVisible = ref(false)
+const createForm = ref({
+  title: '',
+  instructorName: '',
+  category: '',
+  level: '',
+  price: 0
+})
+const resetCreateForm = () => {
+  createForm.value = {
+    title: '',
+    instructorName: '',
+    category: '',
+    level: '',
+    price: 0
+  }
+}
+const handleCreateCourse = async () => {
+  try {
+    await courseApi.createCourse(createForm.value)
+    ElMessage.success('创建成功')
+    createDialogVisible.value = false
+    resetCreateForm()
+    fetchCourses()
   } catch {
-    // 用户取消删除
+    ElMessage.error('创建失败')
   }
 }
 
@@ -289,7 +279,6 @@ const getStatusType = (status) => {
     default: return 'info'
   }
 }
-
 const getStatusText = (status) => {
   switch (status) {
     case 'approved': return '已审核'
@@ -297,54 +286,6 @@ const getStatusText = (status) => {
     case 'rejected': return '已驳回'
     default: return '未知'
   }
-}
-
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-}
-
-const handleCurrentChange = (page) => {
-  currentPage.value = page
-}
-
-const createDialogVisible = ref(false)
-const createForm = ref({
-  title: '',
-  instructorName: '',
-  category: '',
-  level: '',
-  price: 0
-})
-
-const resetCreateForm = () => {
-  createForm.value = {
-    title: '',
-    instructorName: '',
-    category: '',
-    level: '',
-    price: 0
-  }
-}
-
-const handleCreateCourse = () => {
-  if (!createForm.value.title || !createForm.value.instructorName) {
-    ElMessage.error('课程名称和讲师为必填项')
-    return
-  }
-  // 这里可以调用后端API，或直接添加到 courses 列表（模拟）
-  courses.value.unshift({
-    id: Date.now(),
-    ...createForm.value,
-    description: '',
-    imageUrl: '',
-    viewCount: 0,
-    rating: 0,
-    status: 'pending'
-  })
-  ElMessage.success('课程创建成功')
-  createDialogVisible.value = false
-  resetCreateForm()
 }
 
 // 组件挂载
