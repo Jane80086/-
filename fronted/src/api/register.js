@@ -78,7 +78,21 @@ api.interceptors.response.use(
 // API模块
 const auth = {
   login: (credentials) => api.post('/login', credentials),
-  register: (userData) => api.post('/register', userData),
+  // 分离的注册接口
+  adminRegister: (userData) => api.post('/auth/admin/register', userData),
+  userRegister: (userData) => api.post('/auth/user/register', userData),
+  enterpriseRegister: (userData) => api.post('/auth/enterprise/register', userData),
+  // 兼容旧接口
+  register: (userData) => {
+    const userType = userData.userType?.toLowerCase()
+    if (userType === 'admin') {
+      return api.post('/auth/admin/register', userData)
+    } else if (userType === 'enterprise') {
+      return api.post('/auth/enterprise/register', userData)
+    } else {
+      return api.post('/auth/user/register', userData)
+    }
+  },
   getCaptcha: () => '/auth/captcha?' + Date.now()
 }
 
@@ -115,22 +129,14 @@ const enterprise = {
 }
 
 export function askAI(question) {
-  return fetch('/api/ai/chat', {
+  return fetch('/api/ai/ask', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message: question }),
+    body: JSON.stringify({ question }),
   })
-    .then(res => res.json())
-    .then(res => {
-      // 兼容原有 answer 字段
-      if (res && res.code === 200 && res.data && res.data.response) {
-        return { answer: res.data.response };
-      } else {
-        return { answer: res?.message || 'AI无回复' };
-      }
-    });
+    .then(res => res.json());
 }
 
 export function getAIWelcome(userInfo) {
