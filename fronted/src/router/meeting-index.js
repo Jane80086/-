@@ -24,13 +24,6 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/meeting-test',
-    name: 'meeting-test',
-    component: () => import('@/views/MeetingTestView.vue'),
-    meta: { requiresAuth: false }
-  },
-  // 添加404路由
-  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     redirect: '/'
@@ -95,5 +88,4 @@ router.onError((error) => {
 });
 
 export const meetingRoutes = routes;
-
 export default router; 

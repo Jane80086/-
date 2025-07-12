@@ -1,71 +1,4 @@
-import axios from 'axios';
-
-const apiClient = axios.create({  
-  baseURL: 'http://localhost:8080/api',
-  withCredentials: false,
-  timeout: 10000, // 10秒超时
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
-  }
-});
-
-// 请求拦截器，自动添加token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// 响应拦截器，统一处理错误
-apiClient.interceptors.response.use(
-  (response) => {
-    // 处理后端ApiResponse格式
-    if (response.data && response.data.code && response.data.code !== 200) {
-      const error = new Error(response.data.message || '请求失败');
-      error.response = response;
-      error.code = response.data.code;
-      return Promise.reject(error);
-    }
-    return response;
-  },
-  (error) => {
-    if (error.response) {
-      const status = error.response.status;
-      if (status === 401 || status === 403) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-// 重试机制
-const retryRequest = async (fn, retries = 3, delay = 1000) => {
-  try {
-    return await fn();
-  } catch (error) {
-    if (retries > 0 && (error.code === 500 || error.message.includes('网络连接失败'))) {
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return retryRequest(fn, retries - 1, delay * 2);
-    }
-    throw error;
-  }
-};
-
-// 通用请求方法
-const makeRequest = async (requestFn, retries = 2) => {
-    return await retryRequest(requestFn, retries);
-};
+import request from './index'
 
 // 参数验证函数
 const validateParams = {
@@ -124,16 +57,34 @@ const validateParams = {
   }
 };
 
-export default {
+// 重试机制
+const retryRequest = async (fn, retries = 3, delay = 1000) => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries > 0 && (error.code === 500 || error.message.includes('网络连接失败'))) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return retryRequest(fn, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+};
+
+// 通用请求方法
+const makeRequest = async (requestFn, retries = 2) => {
+    return await retryRequest(requestFn, retries);
+};
+
+export const meetingAPI = {
   // 用户登录
   async login(credentials) {
     validateParams.credentials(credentials);
-    const res = await makeRequest(() => apiClient.post('/auth/login', credentials));
+    const res = await makeRequest(() => request.post('/api/auth/login', credentials));
     // 登录成功后保存token和用户信息
-    if (res.data && res.data.code === 200 && res.data.data) {
-      localStorage.setItem('token', res.data.data.token);
-      if (res.data.data.user) {
-        localStorage.setItem('user', JSON.stringify(res.data.data.user));
+    if (res.data && res.code === 200 && res.data) {
+      localStorage.setItem('token', res.data.token);
+      if (res.data.user) {
+        localStorage.setItem('user', JSON.stringify(res.data.user));
       }
     }
     return res;
@@ -141,13 +92,13 @@ export default {
 
   // 获取用户信息
   async getUserInfo() {
-    return makeRequest(() => apiClient.get('/auth/profile'));
+    return makeRequest(() => request.get('/api/auth/profile'));
   },
 
   // 创建会议
   async createMeeting(meeting) {
     validateParams.meeting(meeting);
-    return makeRequest(() => apiClient.post('/meeting/create', meeting));
+    return makeRequest(() => request.post('/api/meeting/create', meeting));
   },
 
   // 更新会议
@@ -156,13 +107,13 @@ export default {
       throw new Error('会议ID不能为空');
     }
     validateParams.meeting(meeting);
-    return makeRequest(() => apiClient.post('/meeting/update', meeting));
+    return makeRequest(() => request.post('/api/meeting/update', meeting));
   },
 
   // 删除会议
   async deleteMeeting(meetingId, confirmDelete) {
     if (!meetingId) throw new Error('会议ID不能为空');
-    return makeRequest(() => apiClient.post('/meeting/delete', { 
+    return makeRequest(() => request.post('/api/meeting/delete', { 
       meeting_id: meetingId, 
       confirm_delete: !!confirmDelete 
     }));
@@ -171,40 +122,40 @@ export default {
   // 审核会议
   async reviewMeeting(reviewRequest) {
     validateParams.reviewRequest(reviewRequest);
-    return makeRequest(() => apiClient.post('/meeting/review', reviewRequest));
+    return makeRequest(() => request.post('/api/meeting/review', reviewRequest));
   },
 
   // 查询会议列表
   async getMeetings(query) {
     validateParams.query(query);
-    return makeRequest(() => apiClient.post('/meeting/list', query));
+    return makeRequest(() => request.post('/api/meeting/list', query));
   },
 
   // 获取会议详情
   async getMeetingDetail(meetingId) {
     if (!meetingId) throw new Error('会议ID不能为空');
-    return makeRequest(() => apiClient.post('/meeting/detail', { meeting_id: meetingId }));
+    return makeRequest(() => request.post('/api/meeting/detail', { meeting_id: meetingId }));
   },
 
   // 获取待审核会议
   async getPendingMeetings() {
-    return makeRequest(() => apiClient.post('/meeting/pending'));
+    return makeRequest(() => request.post('/api/meeting/pending'));
   },
 
   // 获取审核记录（审核人视角）
   async getReviewRecordsByReviewer() {
-    return makeRequest(() => apiClient.post('/meeting/review/records/by-reviewer'));
+    return makeRequest(() => request.post('/api/meeting/review/records/by-reviewer'));
   },
 
   // 获取审核记录（创建人视角）
   async getReviewRecordsByCreator() {
-    return makeRequest(() => apiClient.post('/meeting/review/records/by-creator'));
+    return makeRequest(() => request.post('/api/meeting/review/records/by-creator'));
   },
 
   // 获取会议审核记录
   async getReviewRecordsByMeeting(meetingId) {
     if (!meetingId) throw new Error('会议ID不能为空');
-    return makeRequest(() => apiClient.post('/meeting/review/records/by-meeting', { meeting_id: meetingId }));
+    return makeRequest(() => request.post('/api/meeting/review/records/by-meeting', { meeting_id: meetingId }));
   },
 
   // 上传会议图片
@@ -214,10 +165,12 @@ export default {
     const formData = new FormData();
     formData.append('file', file);
     
-    return makeRequest(() => apiClient.post('/meeting/uploadImage', formData, {
+    return makeRequest(() => request.post('/api/meeting/uploadImage', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     }));
   }
-}; 
+};
+
+export default meetingAPI; 

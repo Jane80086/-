@@ -70,9 +70,7 @@ const routes = [
       { path: 'course/:id/audit', component: () => import('@/views/enterprise/CourseAudit.vue') },
       { path: 'course-list', component: () => import('@/views/enterprise/CourseList.vue') },
       { path: 'course-manage', component: () => import('@/views/enterprise/CourseManage.vue') },
-      // ... existing code ...
       { path: 'course/:id/play', component: () => import('@/views/user/CoursePlay.vue') },
-// ... existing code ...
       // 新闻相关路由
       { path: 'news', component: () => import('@/views/enterprise/NewsList.vue') },
       { path: 'news/publish', component: () => import('@/views/enterprise/NewsPublish.vue') },
@@ -102,6 +100,7 @@ const routes = [
       { path: 'course/:id', component: () => import('@/views/admin/CourseDetail.vue') },
       { path: 'course/:id/play', component: () => import('@/views/admin/CoursePlay.vue') },
       { path: 'users', component: () => import('@/views/admin/UserManagement.vue') },
+      { path: 'roles', component: () => import('@/views/admin/RoleManagement.vue') },
       { path: 'profile', component: () => import('@/views/admin/Profile.vue') },
       { path: 'settings', component: () => import('@/views/admin/Settings.vue') },
       { path: 'news', component: () => import('@/views/admin/NewsManagement.vue') },
@@ -141,14 +140,6 @@ router.beforeEach((to, from, next) => {
     if (role === 'enterprise') return next('/enterprise/home')
     return next('/user/home')
   }
-  
-  // 如果是企业路由，确保用户有企业角色
-  // if (to.path.startsWith('/enterprise/')) {
-  //   if (!role || role !== 'enterprise') {
-  //     console.log('非企业用户尝试访问企业路由，重定向到首页')
-  //     return next('/')
-  //   }
-  // }
   
   console.log('路由守卫通过，继续导航')
   next()

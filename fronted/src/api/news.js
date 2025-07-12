@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from './index'
 
 // 普通用户API
 export const searchNews = (params) => {

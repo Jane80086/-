@@ -1,32 +1,30 @@
 import request from '@/utils/request'
-import { useUserStore } from '@/store/user'
 
 // 课程相关API
 export const courseApi = {
   getCourseList(params) {
-    // 修正：调用 /api/course/search，参数为 keyword, page, size
-    return request.get('/api/course/search', { params })
+    return request.get('/course/list', { params })
   },
   getCourseDetail(id) {
-    return request.get(`/api/course/${id}`)
+    return request.get(`/course/${id}`)
   },
   createCourse(data) {
-    return request.post('/api/course/create', data)
+    return request.post('/course/create', data)
   },
   updateCourse(id, data) {
-    return request.put(`/api/course/${id}`, data)
+    return request.put(`/course/${id}`, data)
   },
   deleteCourse(id) {
-    return request.delete(`/api/course/${id}`)
+    return request.delete(`/course/${id}`)
   },
   getChapters(id) {
-    return request.get(`/api/course/${id}/chapters`)
+    return request.get(`/course/${id}/chapters`)
   },
 
   // 获取课程笔记
   getNotes(courseId) {
     return request({
-      url: `/api/course/${courseId}/notes`,
+      url: `/course/${courseId}/notes`,
       method: 'get'
     })
   },
@@ -34,7 +32,7 @@ export const courseApi = {
   // 添加笔记
   addNote(courseId, data) {
     return request({
-      url: `/api/course/${courseId}/notes`,
+      url: `/course/${courseId}/notes`,
       method: 'post',
       data
     })
@@ -51,7 +49,7 @@ export const courseApi = {
   // 获取课程问答
   getQuestions(courseId) {
     return request({
-      url: `/api/course/${courseId}/questions`,
+      url: `/course/${courseId}/questions`,
       method: 'get'
     })
   },
@@ -59,7 +57,7 @@ export const courseApi = {
   // 提交问题
   submitQuestion(courseId, data) {
     return request({
-      url: `/api/course/${courseId}/questions`,
+      url: `/course/${courseId}/questions`,
       method: 'post',
       data
     })
@@ -75,18 +73,16 @@ export const courseApi = {
 
   // 收藏/取消收藏课程
   toggleFavorite(courseId) {
-    // 修正：调用 /api/course/{id}/record，body: { action: 'favorite' }
     return request({
-      url: `/api/course/${courseId}/record`,
-      method: 'post',
-      data: { action: 'favorite' }
+      url: `/course/${courseId}/favorite`,
+      method: 'post'
     })
   },
 
   // 获取推荐课程
   getRecommendations(userId) {
     return request({
-      url: '/api/recommendation/courses',
+      url: '/recommendation/courses',
       method: 'get',
       params: { userId }
     })
@@ -95,7 +91,7 @@ export const courseApi = {
   // 获取热门课程
   getPopularCourses() {
     return request({
-      url: '/api/recommendation/popular',
+      url: '/recommendation/popular',
       method: 'get'
     })
   },
@@ -103,7 +99,7 @@ export const courseApi = {
   // 搜索课程
   searchCourses(keyword) {
     return request({
-      url: '/api/course/search',
+      url: '/course/search',
       method: 'get',
       params: { keyword }
     })
@@ -120,7 +116,7 @@ export const courseApi = {
   // 获取我的课程
   getMyCourses(params = {}) {
     return request({
-      url: '/api/course/my',
+      url: '/course/my',
       method: 'get',
       params
     })
@@ -129,7 +125,7 @@ export const courseApi = {
   // 获取我的课程统计
   getMyCourseStats() {
     return request({
-      url: '/api/course/my/stats',
+      url: '/course/my/stats',
       method: 'get'
     })
   },
@@ -137,76 +133,8 @@ export const courseApi = {
   // 获取学习进度
   getLearningProgress(courseId) {
     return request({
-      url: `/api/course/${courseId}/progress`,
+      url: `/course/${courseId}/progress`,
       method: 'get'
-    })
-  },
-
-  // 获取课程评论
-  getComments(courseId) {
-    return request({
-      url: `/api/course/${courseId}/comments`,
-      method: 'get'
-    })
-  },
-
-  // 获取课程AI问答列表
-  getAiQnaList(courseId) {
-    return request({
-      url: `/api/course/${courseId}/ai-qna-list`,
-      method: 'get'
-    })
-  },
-
-  // 获取待审核课程（兼容 admin/enterprise 审核页面）
-  getAuditCourses(params = {}) {
-    // 兼容旧用法，实际调用 statsApi.getPendingCourses
-    return statsApi.getPendingCourses(params)
-  },
-
-  // 课程审核
-  reviewCourse(courseId, status, reason = '') {
-    const userStore = useUserStore()
-    const reviewerId = userStore.user?.id || ''
-    return request({
-      url: `/api/admin/course/${courseId}/review`,
-      method: 'post',
-      params: { status, reason, reviewerId }
-    })
-  },
-
-  // 评论审核
-  reviewComment(commentId, status, reason = '') {
-    return request({
-      url: `/api/admin/comment/${commentId}/review`,
-      method: 'post',
-      params: { status, reason }
-    })
-  },
-
-  // 问答审核
-  reviewQnA(qnaId, status, reason = '') {
-    return request({
-      url: `/api/admin/qna/${qnaId}/review`,
-      method: 'post',
-      params: { status, reason }
-    })
-  },
-
-  // 查询课程审核日志（新表 audit_records）
-  getReviewLog(courseId) {
-    return request({
-      url: `/api/course/${courseId}/review-log`,
-      method: 'get'
-    })
-  },
-
-  // AI 问答（Dify+MCP）
-  aiAsk({ question, context = '' }) {
-    return request({
-      url: '/ai/qa',
-      method: 'post',
-      data: { question, context }
     })
   },
 }
@@ -358,15 +286,6 @@ export const statsApi = {
     return request({
       url: '/api/stats/trends',
       method: 'get'
-    })
-  },
-
-  // 获取待审核课程
-  getPendingCourses(params = {}) {
-    return request({
-      url: '/api/admin/courses/pending',
-      method: 'get',
-      params
     })
   }
 }
