@@ -60,8 +60,15 @@ const formatDateTime = (dateTime) => {
 };
 
 // 查看会议详情
-const viewMeeting = (id) => {
-  router.push(`/meeting/${id}`);
+const viewDetail = (id) => {
+  const role = userStore.user?.role
+  if (role === 'admin') {
+    router.push(`/admin/meeting/${id}`)
+  } else if (role === 'enterprise') {
+    router.push(`/enterprise/meeting/${id}`)
+  } else {
+    router.push(`/user/meeting/${id}`)
+  }
 };
 
 // 编辑会议
@@ -158,12 +165,29 @@ const onEditImageChange = async (event) => {
 };
 
 onMounted(() => {
-  console.log('MeetingList 组件挂载');
-  console.log('当前用户信息:', currentUser.value);
-  console.log('用户角色:', currentUser.value?.role);
-  console.log('用户类型:', currentUser.value?.userType);
-  console.log('接收到的会议数据:', props.meetings);
-  console.log('会议数据长度:', props.meetings?.length);
+  console.log('=== MeetingList 组件挂载 ===')
+  console.log('当前用户信息:', currentUser.value)
+  console.log('用户角色:', currentUser.value?.role)
+  console.log('用户类型:', currentUser.value?.userType)
+  console.log('是否为管理员:', isAdmin.value)
+  console.log('是否为企业用户:', isEnterprise.value)
+  console.log('接收到的会议数据:', props.meetings)
+  console.log('会议数据长度:', props.meetings?.length)
+  
+  // 检查每个会议的审核权限
+  if (props.meetings && props.meetings.length > 0) {
+    props.meetings.forEach((meeting, index) => {
+      console.log(`会议 ${index + 1}:`, {
+        id: meeting.id,
+        name: meeting.meetingName,
+        status: meeting.status,
+        statusText: getStatusText(meeting.status),
+        canReview: canReview(meeting),
+        canEdit: canEdit(meeting),
+        canDelete: canDelete(meeting)
+      })
+    })
+  }
 });
 </script>
 
@@ -183,7 +207,7 @@ onMounted(() => {
         :key="meeting.id"   
         class="meeting-card"
       >
-        <div class="meeting-content" @click="viewMeeting(meeting.id)"> 
+        <div class="meeting-content" @click="viewDetail(meeting.id)"> 
           <div class="meeting-header">
             <div class="meeting-title">
               <h3>{{ meeting.meetingName }}</h3>

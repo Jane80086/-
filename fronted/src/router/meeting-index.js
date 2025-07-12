@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '@/store/user';
-import HomeView from '../views/admin/Meeting-HomeView.vue'; 
-import MeetingDetailView from '../views/admin/MeetingDetailView.vue';
-import ReviewView from '../views/admin/ReviewView.vue';
+import HomeView from '../views/Meeting-HomeView.vue'; 
+import MeetingDetailView from '../views/MeetingDetailView.vue';   
+import ReviewView from '../views/ReviewView.vue';
  
 const routes = [
   {

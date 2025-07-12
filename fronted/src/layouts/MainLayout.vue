@@ -146,7 +146,7 @@ const primaryMenu = computed(() => {
         { label: '课程审核', path: '/admin/courses', icon: Collection },
       ],
       meeting: [
-        { label: '会议审核', path: '/admin/meetings', icon: Calendar },
+        { label: '会议管理', path: '/admin/meeting', icon: Calendar },
         { label: '会议统计', path: '/admin/meeting-stats', icon: DataAnalysis },
       ],
       more: [

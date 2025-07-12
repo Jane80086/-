@@ -2,9 +2,9 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/store/user';
-import MeetingList from '../../components/MeetingList.vue'; 
-import { meetingAPI } from '../../api/meeting.js';
-import fileService from '../../api/file.js';
+import MeetingList from '../components/MeetingList.vue'; 
+import { meetingAPI } from '../api/meeting.js';
+import fileService from '../api/file.js';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -275,6 +275,17 @@ const onAddImageChange = async (event) => {
   } finally {
     addUploading.value = false;
     event.target.value = '';
+  }
+};
+
+// 返回首页
+const goHome = () => {
+  if (isAdmin.value) {
+    router.push('/admin/dashboard');
+  } else if (isEnterprise.value) {
+    router.push('/enterprise/dashboard');
+  } else {
+    router.push('/'); // 默认返回首页
   }
 };
 
@@ -626,8 +637,9 @@ onMounted(() => {
         </form>
       </div>
     </div>
+
     <!-- 在页面合适位置添加返回首页按钮 -->
-    <button @click="router.push('/admin/dashboard')" class="back-btn">返回首页</button>
+    <button @click="goHome" class="back-btn">返回首页</button>
   </div>
 </template>
 

@@ -27,8 +27,10 @@ const isAdmin = computed(() => currentUser.value?.role === 'admin' || currentUse
 const fetchPendingMeetings = async () => {
   try {
     const response = await meetingAPI.getPendingMeetings();
-    if (response.data.code === 200) {
-      pendingMeetings.value = response.data.data || [];
+    console.log('待审核会议 API 响应:', response);
+    if (response.code === 200) {
+      pendingMeetings.value = response.data || [];
+      console.log('待审核会议数据:', pendingMeetings.value);
     }
   } catch (err) {
     error.value = '加载待审核会议失败，请稍后重试';
@@ -40,8 +42,10 @@ const fetchPendingMeetings = async () => {
 const fetchReviewRecords = async () => {
   try {
     const response = await meetingAPI.getReviewRecordsByReviewer();
-    if (response.data.code === 200) {
-      reviewRecords.value = response.data.data || [];
+    console.log('审核记录 API 响应:', response);
+    if (response.code === 200) {
+      reviewRecords.value = response.data || [];
+      console.log('审核记录数据:', reviewRecords.value);
     }
   } catch (err) {
     error.value = '加载审核记录失败，请稍后重试';
@@ -115,11 +119,17 @@ const formatDateTime = (dateTime) => {
 
 // 返回首页
 const goHome = () => {
-  router.push('/admin/dashboard');
+  const role = currentUser.value?.role
+  if (role === 'admin') {
+    router.push('/admin/meeting')
+  } else if (role === 'enterprise') {
+    router.push('/enterprise/meeting')
+  } else {
+    router.push('/user/meeting')
+  }
 };
 
 onMounted(() => {
-  userStore.initUser && userStore.initUser();
   console.log('ReviewView 组件挂载');
   console.log('当前用户信息:', currentUser.value);
   console.log('用户角色:', currentUser.value?.role);
@@ -240,11 +250,11 @@ onMounted(() => {
             <div class="record-meta">
               <div class="creator-info">
                 <span class="label">创建人:</span>
-                <span>{{ record.creator }}</span>
+                <span>{{ record.creatorName }}</span>
               </div>
               <div class="reviewer-info">
                 <span class="label">审核人:</span>
-                <span>{{ record.reviewer }}</span>
+                <span>{{ record.reviewerName }}</span>
               </div>
               <div class="review-time-info">
                 <span class="label">审核时间:</span>

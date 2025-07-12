@@ -4,7 +4,6 @@ import EnterpriseLayout from '@/layouts/EnterpriseLayout.vue'
 import CourseSearch from '@/views/enterprise/CourseSearch.vue'
 import TestPage from '@/views/enterprise/TestPage.vue'
 import { newsRoutes } from './news-index.js'
-import { meetingRoutes } from './meeting-index.js'
 import { registerRoutes } from './register_index.js'
 
 const routes = [
@@ -50,9 +49,9 @@ const routes = [
       { path: 'course/:id', component: () => import('@/views/user/CourseDetail.vue') },
       { path: 'course/:id/play', component: () => import('@/views/user/CoursePlay.vue') },
       { path: 'my-courses', component: () => import('@/views/user/MyCourses.vue') },
-      // { path: 'meeting', component: () => import('@/Meeting-HomeView.vue') },      
-      { path: 'meeting/:id', component: () => import('@/views/admin/MeetingDetailView.vue') },
-      { path: 'meeting/stats', component: () => import('@/views/user/ReviewView.vue') },
+      { path: 'meeting', component: () => import('@/views/Meeting-HomeView.vue') },
+      { path: 'meeting/:id', component: () => import('@/views/MeetingDetailView.vue') },
+      { path: 'meeting/stats', component: () => import('@/views/ReviewView.vue') },
       { path: 'profile', component: () => import('@/views/user/Profile.vue') },
     ]
   },
@@ -78,8 +77,8 @@ const routes = [
       { path: 'news/:id', component: () => import('@/views/enterprise/NewsDetail.vue') },
       { path: 'news/:id/edit', component: () => import('@/views/enterprise/NewsEdit.vue') },
       // 会议相关路由
-      // { path: 'meeting', component: () => import('@/Meeting-HomeView.vue') },  
-      { path: 'meeting/:id', component: () => import('@/views/admin/MeetingDetailView.vue') },
+      { path: 'meeting', component: () => import('@/views/Meeting-HomeView.vue') },
+      { path: 'meeting/:id', component: () => import('@/views/MeetingDetailView.vue') },
       { path: 'meeting-stats', component: () => import('@/views/ReviewView.vue') },
       // 设置路由
       { path: 'settings', component: () => import('@/views/enterprise/Settings.vue') },
@@ -109,15 +108,15 @@ const routes = [
       { path: 'news/:id/edit', component: () => import('@/views/admin/NewsEdit.vue') },
       { path: 'news/audit', component: () => import('@/views/admin/NewsAudit.vue') },
       { path: 'news/stats', component: () => import('@/views/admin/NewsStatistics.vue') },
-      { path: 'meeting', component: () => import('@/views/admin/Meeting-HomeView.vue') },
-      { path: 'meeting/:id', component: () => import('@/views/admin/MeetingDetailView.vue') },
+      { path: 'meeting', component: () => import('@/views/Meeting-HomeView.vue') },
+      { path: 'meeting/:id', component: () => import('@/views/MeetingDetailView.vue') },
+      { path: 'meeting-stats', component: () => import('@/views/ReviewView.vue') },
       { path: 'enterprise', component: () => import('@/views/admin/EnterpriseManagement.vue') },
       { path: 'ai-chat', component: () => import('@/views/admin/AIChat.vue') }
     ]
   },
   // 添加其他路由配置
   ...newsRoutes,
-  ...meetingRoutes,
   ...registerRoutes
 ]
 
