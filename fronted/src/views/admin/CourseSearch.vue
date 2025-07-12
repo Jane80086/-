@@ -69,7 +69,7 @@
         @click="viewCourseDetail(course.id)"
       >
         <div class="card-image-wrap">
-          <img :src="course.imageUrl || '/default-course.jpg'" :alt="course.title" class="card-image" />
+          <img :src="course.imageUrl || '/class.jpg'" :alt="course.title" class="card-image" />
           <div class="card-badge" v-if="course.price === 0">免费</div>
           <div class="card-badge paid" v-else>¥{{ course.price }}</div>
           <el-button

@@ -50,8 +50,8 @@ const routes = [
       { path: 'course/:id', component: () => import('@/views/user/CourseDetail.vue') },
       { path: 'course/:id/play', component: () => import('@/views/user/CoursePlay.vue') },
       { path: 'my-courses', component: () => import('@/views/user/MyCourses.vue') },
-      { path: 'meeting', component: () => import('@/views/user/MeetingDetailView.vue') },
-      { path: 'meeting/:id', component: () => import('@/views/user/MeetingDetailView.vue') },
+      { path: 'meeting', component: () => import('@/views/user/MyMeetings.vue') },
+      { path: 'meeting/:id', component: () => import('@/views/user/MyMeetings.vue') },
       { path: 'meeting/stats', component: () => import('@/views/user/ReviewView.vue') },
       { path: 'profile', component: () => import('@/views/user/Profile.vue') },
     ]

@@ -43,7 +43,7 @@ public interface AdminUserMapper {
     List<User> findAll();
 
     @Select("SELECT * FROM users WHERE username = #{username} AND user_type = 'ENTERPRISE' AND deleted = 0")
-    com.cemenghui.entity.EnterpriseUser findEnterpriseByAccount(String username);
+    com.cemenghui.system.entity.EnterpriseUser findEnterpriseByAccount(String username);
 
     @Select("SELECT * FROM users WHERE username = #{username} AND user_type = 'ADMIN' AND deleted = 0")
     AdminUser findAdminByAccount(String username);

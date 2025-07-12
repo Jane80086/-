@@ -3,28 +3,28 @@ import request from '@/utils/request'
 // 课程相关API
 export const courseApi = {
   getCourseList(params) {
-    return request.get('/course/list', { params })
+    return request.get('/api/course/list', { params })
   },
   getCourseDetail(id) {
-    return request.get(`/course/${id}`)
+    return request.get(`/api/course/${id}`)
   },
   createCourse(data) {
-    return request.post('/course/create', data)
+    return request.post('/api/course/create', data)
   },
   updateCourse(id, data) {
-    return request.put(`/course/${id}`, data)
+    return request.put(`/api/course/${id}`, data)
   },
   deleteCourse(id) {
-    return request.delete(`/course/${id}`)
+    return request.delete(`/api/course/${id}`)
   },
   getChapters(id) {
-    return request.get(`/course/${id}/chapters`)
+    return request.get(`/api/course/${id}/chapters`)
   },
 
   // 获取课程笔记
   getNotes(courseId) {
     return request({
-      url: `/course/${courseId}/notes`,
+      url: `/api/course/${courseId}/notes`,
       method: 'get'
     })
   },
@@ -32,7 +32,7 @@ export const courseApi = {
   // 添加笔记
   addNote(courseId, data) {
     return request({
-      url: `/course/${courseId}/notes`,
+      url: `/api/course/${courseId}/notes`,
       method: 'post',
       data
     })
@@ -41,7 +41,7 @@ export const courseApi = {
   // 删除笔记
   deleteNote(noteId) {
     return request({
-      url: `/notes/${noteId}`,
+      url: `/api/notes/${noteId}`,
       method: 'delete'
     })
   },
@@ -49,7 +49,7 @@ export const courseApi = {
   // 获取课程问答
   getQuestions(courseId) {
     return request({
-      url: `/course/${courseId}/questions`,
+      url: `/api/course/${courseId}/questions`,
       method: 'get'
     })
   },
@@ -57,7 +57,7 @@ export const courseApi = {
   // 提交问题
   submitQuestion(courseId, data) {
     return request({
-      url: `/course/${courseId}/questions`,
+      url: `/api/course/${courseId}/questions`,
       method: 'post',
       data
     })
@@ -66,7 +66,7 @@ export const courseApi = {
   // 点赞问题
   likeQuestion(questionId) {
     return request({
-      url: `/questions/${questionId}/like`,
+      url: `/api/questions/${questionId}/like`,
       method: 'post'
     })
   },
@@ -74,7 +74,7 @@ export const courseApi = {
   // 收藏/取消收藏课程
   toggleFavorite(courseId) {
     return request({
-      url: `/course/${courseId}/favorite`,
+      url: `/api/course/${courseId}/favorite`,
       method: 'post'
     })
   },
@@ -82,7 +82,7 @@ export const courseApi = {
   // 获取推荐课程
   getRecommendations(userId) {
     return request({
-      url: '/recommendation/courses',
+      url: '/api/recommendation/courses',
       method: 'get',
       params: { userId }
     })
@@ -91,7 +91,7 @@ export const courseApi = {
   // 获取热门课程
   getPopularCourses() {
     return request({
-      url: '/recommendation/popular',
+      url: '/api/recommendation/popular',
       method: 'get'
     })
   },
@@ -99,7 +99,7 @@ export const courseApi = {
   // 搜索课程
   searchCourses(keyword) {
     return request({
-      url: '/course/search',
+      url: '/api/course/search',
       method: 'get',
       params: { keyword }
     })
@@ -108,7 +108,7 @@ export const courseApi = {
   // 获取热搜关键词
   getHotKeywords() {
     return request({
-      url: '/search/hot-keywords',
+      url: '/api/search/hot-keywords',
       method: 'get'
     })
   },
@@ -116,7 +116,7 @@ export const courseApi = {
   // 获取我的课程
   getMyCourses(params = {}) {
     return request({
-      url: '/course/my',
+      url: '/api/course/my',
       method: 'get',
       params
     })
@@ -125,7 +125,7 @@ export const courseApi = {
   // 获取我的课程统计
   getMyCourseStats() {
     return request({
-      url: '/course/my/stats',
+      url: '/api/course/my/stats',
       method: 'get'
     })
   },
@@ -133,7 +133,7 @@ export const courseApi = {
   // 获取学习进度
   getLearningProgress(courseId) {
     return request({
-      url: `/course/${courseId}/progress`,
+      url: `/api/course/${courseId}/progress`,
       method: 'get'
     })
   },

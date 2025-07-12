@@ -69,7 +69,7 @@
         @click="viewCourseDetail(course.id)"
       >
         <div class="card-image-wrap">
-          <img :src="course.imageUrl || '/default-course.jpg'" :alt="course.title" class="card-image" />
+          <img :src="course.imageUrl || '/class.jpg'" :alt="course.title" class="card-image" />
           <div class="card-badge" v-if="course.price === 0">免费</div>
           <div class="card-badge paid" v-else>¥{{ course.price }}</div>
           <el-button
@@ -182,14 +182,26 @@ const loadCourses = async () => {
       level: selectedLevel.value,
       sortBy: sortBy.value
     }
+    console.log('请求参数:', params)
     const response = await courseApi.getCourseList(params)
+    console.log('课程列表响应:', response)
+    
     if (response.code === 200) {
-      courses.value = response.data.content || response.data || []
-      totalCourses.value = response.data.totalElements || courses.value.length
+      // 处理分页数据
+      if (response.data && response.data.content) {
+        courses.value = response.data.content
+        totalCourses.value = response.data.totalElements || 0
+      } else {
+        // 兼容非分页数据
+        courses.value = response.data || []
+        totalCourses.value = courses.value.length
+      }
+      console.log('课程数据:', courses.value)
     } else {
       ElMessage.error(response.message || '获取课程列表失败')
     }
   } catch (error) {
+    console.error('加载课程列表错误:', error)
     ElMessage.error(error?.message || '网络错误，请稍后重试')
   } finally {
     loading.value = false

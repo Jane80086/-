@@ -36,7 +36,7 @@ import axios from 'axios'
 import UploadMedia from '../components/UploadMedia.vue'
 import { ElMessage } from 'element-plus'
 const router = useRouter()
-const form = ref({ title: '', description: '', businessLicense: '', coverImage: '', videoUrl: '' })
+const form = ref({ title: '', description: '', businessLicense: '', coverImage: '/class.jpg', videoUrl: '' })
 const licenseUploadUrl = 'http://localhost:9000/company-files/license'
 const coverUploadUrl = 'http://localhost:9000/course-files/cover'
 const videoUploadUrl = 'http://localhost:9000/course-files/video'

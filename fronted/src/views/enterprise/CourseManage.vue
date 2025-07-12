@@ -115,7 +115,7 @@ const pageSize = ref(10)
 const totalCourses = ref(0)
 const displayCourses = computed(() => allCourses.value)
 const showAddDialog = ref(false)
-const editForm = ref({ id: null, title: '', description: '', isFree: true, price: 0, duration: 60, level: '', category: '' })
+const editForm = ref({ id: null, title: '', description: '', isFree: true, price: 0, duration: 60, level: '', category: '', coverImage: '/class.jpg' })
 let editingId = null
 
 // 1. 移除 mock 数据

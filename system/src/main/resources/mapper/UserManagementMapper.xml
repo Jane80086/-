@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cemenghui.system.repository.UserManagementMapper">
+
+    <!-- 添加缺失的field_name字段到system_user_modify_history表 -->
+    <update id="addFieldNameColumn">
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'system_user_modify_history' 
+                AND column_name = 'field_name'
+            ) THEN
+                ALTER TABLE system_user_modify_history ADD COLUMN field_name VARCHAR(255);
+            END IF;
+        END $$;
+    </update>
+
+    <!-- 查询用户总数 -->
+    <select id="getUserCount" parameterType="com.cemenghui.system.dto.UserQueryDTO" resultType="int">
+        SELECT COUNT(*) FROM users
+        <where>
+            <if test="username != null and username != ''">
+                AND username = #{username}
+            </if>
+            <!-- 可根据UserQueryDTO实际字段继续补充条件 -->
+        </where>
+    </select>
+
+    <!-- 其它方法可按需补全 -->
+
+</mapper> 

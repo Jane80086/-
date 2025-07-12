@@ -1,6 +1,6 @@
 <template>
   <el-card class="course-card" shadow="hover">
-    <img v-if="course.coverImage" :src="course.coverImage" class="cover" />
+    <img :src="course.coverImage || '/class.jpg'" class="cover" />
     <div class="title">{{ course.title }}</div>
     <div class="instructor">讲师：{{ course.instructorName || course.teacher }}</div>
     <div class="desc">{{ course.description }}</div>

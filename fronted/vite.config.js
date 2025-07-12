@@ -26,6 +26,11 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true
       },
+      // 搜索相关接口
+      '/api/search': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      },
       // 会议主模块
       '/api/meeting': {
         target: 'http://localhost:8082',
@@ -33,6 +38,16 @@ export default defineConfig({
       },
       // 登录、个人中心
       '/api/user': {
+        target: 'http://localhost:8084',
+        changeOrigin: true
+      },
+      // 认证相关接口
+      '/api/auth': {
+        target: 'http://localhost:8084',
+        changeOrigin: true
+      },
+      // 登录接口
+      '/api/login': {
         target: 'http://localhost:8084',
         changeOrigin: true
       },

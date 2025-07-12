@@ -28,7 +28,7 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 import UploadMedia from '../components/UploadMedia.vue'
 const router = useRouter()
-const form = ref({ title: '', description: '', coverImage: '', videoUrl: '' })
+const form = ref({ title: '', description: '', coverImage: '/class.jpg', videoUrl: '' })
 const coverUploadUrl = 'http://localhost:9000/course-files/cover'
 const videoUploadUrl = 'http://localhost:9000/course-files/video'
 const onCoverSuccess = (res) => { form.value.coverImage = res.url || res.data?.url }

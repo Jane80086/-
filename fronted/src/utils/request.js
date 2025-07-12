@@ -29,15 +29,14 @@ service.interceptors.response.use(
       const res = response.data
       // 兼容后端无 code 字段，仅 success 字段
       if (typeof res.code !== 'undefined') {
-        // 核心修改：将 200 改为 '0' 或者 0
-        // 建议使用 '0'，因为后端返回的是字符串
-        if (res.code !== '0') { // <-- 将 200 改为 '0'
+        // 后端返回 code: 200 表示成功
+        if (res.code !== 200) {
           ElMessage({
-            message: res.msg || '请求失败', // 注意这里是 res.msg，不是 res.message
+            message: res.message || '请求失败',
             type: 'error',
             duration: 5 * 1000
           })
-          return Promise.reject(new Error(res.msg || '请求失败')) // 注意这里是 res.msg
+          return Promise.reject(new Error(res.message || '请求失败'))
         } else {
           return res // 如果成功，返回整个 res 对象
         }
