@@ -28,7 +28,7 @@ export default defineConfig({
       },
       // 会议主模块
       '/api/meeting': {
-        target: 'http://localhost:8083',
+        target: 'http://localhost:8082',
         changeOrigin: true
       },
       // 登录、个人中心
