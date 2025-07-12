@@ -1,4 +1,70 @@
-import request from './index'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+
+// 创建axios实例
+const api = axios.create({
+  baseURL: '/',
+  timeout: 10000
+})
+
+// 请求拦截器
+api.interceptors.request.use(
+  config => {
+    // 从localStorage获取token
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
+
+// 响应拦截器
+api.interceptors.response.use(
+  response => {
+    // 兼容文件下载（blob）响应
+    if (response.config && response.config.responseType === 'blob') {
+      return response;
+    }
+    const { data } = response;
+    // 后端成功状态码是200
+    if (data.code === 200) {
+      return data;
+    } else {
+      ElMessage.error(data.msg || '请求失败');
+      return Promise.reject(new Error(data.msg || '请求失败'));
+    }
+  },
+  error => {
+    if (error.response) {
+      const { status, data } = error.response;
+      switch (status) {
+        case 401:
+          ElMessage.error('登录状态失效，请重新登录');
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+          break;
+        case 403:
+          ElMessage.error('拒绝访问');
+          break;
+        case 404:
+          ElMessage.error('请求的资源不存在');
+          break;
+        case 500:
+          ElMessage.error('服务器内部错误');
+          break;
+        default:
+          ElMessage.error(data?.msg || '网络错误');
+      }
+    } else {
+      ElMessage.error('网络连接失败');
+    }
+    return Promise.reject(error);
+  }
+)
 
 // 参数验证函数
 const validateParams = {
@@ -25,22 +91,11 @@ const validateParams = {
     }
   },
   
-  // 验证登录凭据
-  credentials: (credentials) => {
-    if (!credentials) throw new Error('登录凭据不能为空');
-    if (!credentials.username || credentials.username.trim() === '') {
-      throw new Error('用户名不能为空');
-    }
-    if (!credentials.password || credentials.password.trim() === '') {
-      throw new Error('密码不能为空');
-    }
-  },
-  
   // 验证审核请求
-  reviewRequest: (request) => {
-    if (!request) throw new Error('审核请求不能为空');
-    if (!request.meetingId) throw new Error('会议ID不能为空');
-    if (request.status === undefined || request.status === null) {
+  reviewRequest: (reviewData) => {
+    if (!reviewData) throw new Error('审核请求不能为空');
+    if (!reviewData.meetingId) throw new Error('会议ID不能为空');
+    if (reviewData.status === undefined || reviewData.status === null) {
       throw new Error('审核状态不能为空');
     }
   },
@@ -76,29 +131,10 @@ const makeRequest = async (requestFn, retries = 2) => {
 };
 
 export const meetingAPI = {
-  // 用户登录
-  async login(credentials) {
-    validateParams.credentials(credentials);
-    const res = await makeRequest(() => request.post('/api/auth/login', credentials));
-    // 登录成功后保存token和用户信息
-    if (res.data && res.code === 200 && res.data) {
-      localStorage.setItem('token', res.data.token);
-      if (res.data.user) {
-        localStorage.setItem('user', JSON.stringify(res.data.user));
-      }
-    }
-    return res;
-  },
-
-  // 获取用户信息
-  async getUserInfo() {
-    return makeRequest(() => request.get('/api/auth/profile'));
-  },
-
   // 创建会议
   async createMeeting(meeting) {
     validateParams.meeting(meeting);
-    return makeRequest(() => request.post('/api/meeting/create', meeting));
+    return makeRequest(() => api.post('/api/meeting/create', meeting));
   },
 
   // 更新会议
@@ -107,13 +143,13 @@ export const meetingAPI = {
       throw new Error('会议ID不能为空');
     }
     validateParams.meeting(meeting);
-    return makeRequest(() => request.post('/api/meeting/update', meeting));
+    return makeRequest(() => api.post('/api/meeting/update', meeting));
   },
 
   // 删除会议
   async deleteMeeting(meetingId, confirmDelete) {
     if (!meetingId) throw new Error('会议ID不能为空');
-    return makeRequest(() => request.post('/api/meeting/delete', { 
+    return makeRequest(() => api.post('/api/meeting/delete', { 
       meeting_id: meetingId, 
       confirm_delete: !!confirmDelete 
     }));
@@ -122,40 +158,40 @@ export const meetingAPI = {
   // 审核会议
   async reviewMeeting(reviewRequest) {
     validateParams.reviewRequest(reviewRequest);
-    return makeRequest(() => request.post('/api/meeting/review', reviewRequest));
+    return makeRequest(() => api.post('/api/meeting/review', reviewRequest));
   },
 
   // 查询会议列表
   async getMeetings(query) {
     validateParams.query(query);
-    return makeRequest(() => request.post('/api/meeting/list', query));
+    return makeRequest(() => api.post('/api/meeting/list', query));
   },
 
   // 获取会议详情
   async getMeetingDetail(meetingId) {
     if (!meetingId) throw new Error('会议ID不能为空');
-    return makeRequest(() => request.post('/api/meeting/detail', { meeting_id: meetingId }));
+    return makeRequest(() => api.post('/api/meeting/detail', { meeting_id: meetingId }));
   },
 
   // 获取待审核会议
   async getPendingMeetings() {
-    return makeRequest(() => request.post('/api/meeting/pending'));
+    return makeRequest(() => api.post('/api/meeting/pending'));
   },
 
   // 获取审核记录（审核人视角）
   async getReviewRecordsByReviewer() {
-    return makeRequest(() => request.post('/api/meeting/review/records/by-reviewer'));
+    return makeRequest(() => api.post('/api/meeting/review/records/by-reviewer'));
   },
 
   // 获取审核记录（创建人视角）
   async getReviewRecordsByCreator() {
-    return makeRequest(() => request.post('/api/meeting/review/records/by-creator'));
+    return makeRequest(() => api.post('/api/meeting/review/records/by-creator'));
   },
 
   // 获取会议审核记录
   async getReviewRecordsByMeeting(meetingId) {
     if (!meetingId) throw new Error('会议ID不能为空');
-    return makeRequest(() => request.post('/api/meeting/review/records/by-meeting', { meeting_id: meetingId }));
+    return makeRequest(() => api.post('/api/meeting/review/records/by-meeting', { meeting_id: meetingId }));
   },
 
   // 上传会议图片
@@ -165,11 +201,17 @@ export const meetingAPI = {
     const formData = new FormData();
     formData.append('file', file);
     
-    return makeRequest(() => request.post('/api/meeting/uploadImage', formData, {
+    return makeRequest(() => api.post('/api/meeting/uploadImage', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     }));
+  },
+
+  // 获取预签名URL
+  async getPresignedUrl(objectName) {
+    if (!objectName) throw new Error('对象名称不能为空');
+    return makeRequest(() => api.post('/api/meeting/presigned-url', { objectName }));
   }
 };
 

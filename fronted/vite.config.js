@@ -22,18 +22,19 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true
       },
+      // 会议主模块（包括文件操作）
+      '/api/meeting': {
+        target: 'http://localhost:8082',
+        changeOrigin: true
+      },
+      // 会议模块的文件接口
       '/api/file': {
-        target: 'http://localhost:8081',
+        target: 'http://localhost:8082',
         changeOrigin: true
       },
       // 搜索相关接口
       '/api/search': {
         target: 'http://localhost:8081',
-        changeOrigin: true
-      },
-      // 会议主模块
-      '/api/meeting': {
-        target: 'http://localhost:8082',
         changeOrigin: true
       },
       // 登录、个人中心
