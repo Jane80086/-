@@ -71,6 +71,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 onMounted(() => {
+  userStore.initUser();
   console.log('=== AdminLayout 组件挂载 ===')
   console.log('用户信息:', userStore.user)
   console.log('用户角色:', userStore.user.role)
