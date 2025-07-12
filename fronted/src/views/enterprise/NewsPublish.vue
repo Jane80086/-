@@ -81,44 +81,39 @@ const handleRefine = async (fieldName) => {
     return
   }
 
-  // 设置对应的加载状态
   if (fieldName === 'content') {
     refineLoadingContent.value = true
   }
-  // else if (fieldName === 'summary') { // 移除：简介润色加载状态
-  //   refineLoadingSummary.value = true
-  // }
 
   try {
-    const res = await refineContent(originalText) // 这里的 res 实际上是后端 Result.data 的内容 (RefineResponse)
+    // 1. 发起请求并等待完整响应
+    const response = await refineContent(originalText)
 
-    // *** 核心修改：根据实际的 res 结构调整判断条件 ***
-    // 如果 res 就是 RefineResponse 对象，那么直接判断 res.success
-    if (res.success) { // 检查 res 对象顶层的 success 字段
-      // newsForm.value[fieldName] = res.refinedContent // 不再直接替换
+    console.log('润色 API 响应:', response); // 打印整个响应对象
 
-      // --- 新增：显示预览弹窗 ---
-      previewContent.value = res.refinedContent // 存储润色内容到预览变量
-      currentRefineField.value = fieldName // 记录当前润色的字段
-      dialogVisible.value = true // 显示弹窗
-      // --- 新增结束 ---
-
-      ElMessage.success('润色成功，请预览！') // 提示用户进行预览
+    // 2. 核心修改：检查响应的顶层结构
+    // 根据你提供的后端返回，它是一个 Result 对象
+    if (response.code === '0' && response.data) {
+      // 3. 获取真正的润色数据
+      const refineResponse = response.data;
+      if (refineResponse.success) {
+        previewContent.value = refineResponse.refinedContent;
+        currentRefineField.value = fieldName;
+        dialogVisible.value = true;
+        ElMessage.success('润色成功，请预览！');
+      } else {
+        ElMessage.error(refineResponse.message || '润色失败，请稍后再试。');
+      }
     } else {
-      // 如果后端返回的 RefineResponse 中 success 为 false，则显示其 message
-      ElMessage.error(res.message || '润色失败，请稍后再试。')
+      // 如果外层响应不成功
+      ElMessage.error(response.msg || '润色请求失败：未收到有效数据');
     }
   } catch (error) {
-    // 捕获网络请求本身的错误
-    ElMessage.error(`润色请求失败: ${error.message || '网络或服务器错误'}`)
+    ElMessage.error(`润色请求异常: ${error.message || '网络或服务器错误'}`);
   } finally {
-    // 无论成功失败，都解除加载状态
     if (fieldName === 'content') {
-      refineLoadingContent.value = false
+      refineLoadingContent.value = false;
     }
-    // else if (fieldName === 'summary') { // 移除：简介润色加载状态
-    //   refineLoadingSummary.value = false
-    // }
   }
 }
 
