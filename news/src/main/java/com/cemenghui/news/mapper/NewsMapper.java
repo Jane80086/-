@@ -1,5 +1,6 @@
 package com.cemenghui.news.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cemenghui.news.entity.News;
@@ -15,8 +16,11 @@ import java.util.Map;
 @Mapper
 public interface NewsMapper extends BaseMapper<News> {
 
-    Page<News> findByCondition(Page<News> page, @Param("request") SearchRequest request, @Param("status") Integer status, @Param("currentUserId") Long currentUserId);
+    @Select("SELECT * FROM news WHERE id = #{id} AND is_deleted = 0")
+    News selectById(@Param("id") Long id);
 
+    Page<News> findByCondition(Page<News> page, @Param("request") SearchRequest request, @Param("status") Integer status, @Param("currentUserId") Long currentUserId);
+Long countByCondition(@Param("request") SearchRequest request, @Param("status") Integer status);
     Page<News> findByUserId(Page<News> page, @Param("userId") Long userId);
 
     @Update("UPDATE news SET view_count = view_count + 1 WHERE id = #{newsId}")

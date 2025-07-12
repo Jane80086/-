@@ -1,5 +1,6 @@
 package com.cemenghui.news.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cemenghui.news.constants.NewsConstants;
 import com.cemenghui.news.dto.*;
@@ -15,7 +16,7 @@ import com.cemenghui.news.mapper.NewsMapper;
 import com.cemenghui.news.service.AuthorizationService;
 import com.cemenghui.news.service.LogService;
 import com.cemenghui.news.service.NewsService;
-import com.google.gson.Gson;
+import com.google.gson.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -25,10 +26,13 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,17 +44,46 @@ public class NewsServiceImpl implements NewsService {
     private final NewsMapper newsMapper;
     private final AuthorizationService authorizationService;
     private final LogService logService;
-    private final Gson gson = new Gson();
+    // 替换原来的 Gson 初始化
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .create();
+
+    // 添加 LocalDateTimeAdapter 类
+    private static class LocalDateTimeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+        @Override
+        public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.toString());
+        }
+
+        @Override
+        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
+            return LocalDateTime.parse(json.getAsString());
+        }
+    }
 
     @Override
     public PageResult<NewsVO> searchNews(SearchRequest searchRequest) {
         Integer statusToSearch = NewsConstants.NEWS_STATUS_PUBLISHED;
+
+        // 手动获取总数
+        Long total = newsMapper.countByCondition(searchRequest, statusToSearch);
+        if (total == 0) {
+            // 如果总数为0，直接返回空结果，避免后续查询
+            return new PageResult<>(List.of(), 0L, searchRequest.getPage(), searchRequest.getPageSize());
+        }
+
+        // 手动分页
         Page<News> page = new Page<>(searchRequest.getPage(), searchRequest.getPageSize());
         Page<News> result = newsMapper.findByCondition(page, searchRequest, statusToSearch, null);
+
         List<NewsVO> voList = result.getRecords().stream()
                 .map(news -> convertToVO(news, authorizationService.getCurrentUserId()))
                 .collect(Collectors.toList());
-        return new PageResult<>(voList, result.getTotal(), searchRequest.getPage(), searchRequest.getPageSize());
+
+        // 确保这里传入的是手动获取的 total
+        return new PageResult<>(voList, total, searchRequest.getPage(), searchRequest.getPageSize());
     }
 
     @Override
@@ -194,16 +227,19 @@ public class NewsServiceImpl implements NewsService {
     @CacheEvict(value = "news", allEntries = true)
     public boolean auditNews(Long newsId, AuditRequest auditRequest) {
         Long currentUserId = authorizationService.getCurrentUserId();
-        // ==== 核心修改点：此方法在 AdminNewsController 中已有 @PreAuthorize("hasRole('ADMIN')")，所以可以移除此行 ====
-        // authorizationService.checkAdminPermission(currentUserId); // 删除或注释掉此行
-
         News news = newsMapper.selectById(newsId);
         if (news == null || news.getIsDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
-        if (!news.isPending()) { // 这是业务逻辑：只有待审核新闻才能被审核
+        if (!news.isPending()) {
             throw new BusinessException("只能审核待审核状态的新闻");
         }
+        // 新增校验逻辑：审核状态必须为 1（发布）或 2（拒绝）
+        if (auditRequest.getStatus() != NewsConstants.NEWS_STATUS_PUBLISHED &&
+                auditRequest.getStatus() != NewsConstants.NEWS_STATUS_REJECTED) {
+            throw new BusinessException("审核状态值错误，应为1或2");
+        }
+
         News oldNews = new News();
         BeanUtils.copyProperties(news, oldNews);
 
@@ -213,7 +249,7 @@ public class NewsServiceImpl implements NewsService {
         news.setAuditTime(LocalDateTime.now());
 
         int result = newsMapper.updateById(news);
-        if(result > 0) {
+        if (result > 0) {
             String statusText = NewsStatus.getByCode(auditRequest.getStatus()).getDesc();
             recordOperation(currentUserId, OperationType.AUDIT, newsId, "审核新闻: " + statusText, oldNews, news);
         }
@@ -222,56 +258,109 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "news", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "news", key = "'detail:' + #newsId"),
+            @CacheEvict(cacheNames = "news", allEntries = true)
+    })
     public boolean adminEditNews(Long newsId, NewsRequest newsRequest) {
+        // 1. 获取当前管理员ID
         Long currentUserId = authorizationService.getCurrentUserId();
-        // ==== 核心修改点：此方法在 AdminNewsController 中已有 @PreAuthorize("hasRole('ADMIN')")，所以可以移除此行 ====
-        // authorizationService.checkAdminPermission(currentUserId); // 删除或注释掉此行
 
+        // 2. 查询现有新闻
         News existingNews = newsMapper.selectById(newsId);
         if (existingNews == null || existingNews.getIsDeleted() == 1) {
             throw new NewsNotFoundException(newsId);
         }
+
+        // 3. 记录旧值用于日志
         News oldNews = new News();
         BeanUtils.copyProperties(existingNews, oldNews);
-        BeanUtils.copyProperties(newsRequest, existingNews);
+
+        // 4. 部分更新逻辑（只更新非null字段）
+        if (newsRequest.getTitle() != null) {
+            existingNews.setTitle(newsRequest.getTitle());
+        }
+        if (newsRequest.getContent() != null) {
+            existingNews.setContent(newsRequest.getContent());
+        }
+        if (newsRequest.getSummary() != null) {
+            existingNews.setSummary(newsRequest.getSummary());
+        }
+        if (newsRequest.getAuthor() != null) {
+            existingNews.setAuthor(newsRequest.getAuthor());
+        }
+        if (newsRequest.getImage() != null) {
+            existingNews.setImage(newsRequest.getImage());
+        }
+
+        // 5. 更新系统字段
         existingNews.setUpdateTime(LocalDateTime.now());
+
+        // 6. 执行更新
         int result = newsMapper.updateById(existingNews);
-        if(result > 0) recordOperation(currentUserId, OperationType.EDIT, newsId, "管理员编辑新闻", oldNews, existingNews);
+
+        // 7. 记录操作日志
+        if (result > 0) {
+            recordOperation(currentUserId, OperationType.EDIT, newsId,
+                    "管理员编辑新闻", oldNews, existingNews);
+        }
+
         return result > 0;
     }
 
     @Override
-    @Cacheable(key = "'allNews:' + #searchRequest.page + ':' + #searchRequest.pageSize + ':' + #searchRequest.status")
     public PageResult<NewsVO> getAllNewsList(SearchRequest searchRequest) {
-        Long currentUserId = authorizationService.getCurrentUserId();
-        // ==== 核心修改点：此方法在 AdminNewsController 中已有 @PreAuthorize("hasRole('ADMIN')")，所以可以移除此行 ====
-        // authorizationService.checkAdminPermission(currentUserId); // 删除或注释掉此行
+        // 处理空请求和设置默认分页值
+        SearchRequest request = Optional.ofNullable(searchRequest).orElse(new SearchRequest());
+        Integer pageNum = Optional.ofNullable(request.getPage()).orElse(1);
+        Integer pageSize = Optional.ofNullable(request.getPageSize()).orElse(10);
 
-        Page<News> page = new Page<>(searchRequest.getPage(), searchRequest.getPageSize());
-        Page<News> result = newsMapper.findByCondition(page, searchRequest, searchRequest.getStatus(), null);
+        // 手动获取总数
+        Long total = newsMapper.countByCondition(request, request.getStatus());
+        if (total == 0) {
+            // 如果总数为0，直接返回空结果
+            return new PageResult<>(List.of(), 0L, pageNum, pageSize);
+        }
+
+        // 手动分页
+        Page<News> page = new Page<>(pageNum, pageSize);
+        Page<News> result = newsMapper.findByCondition(page, request, request.getStatus(), null);
+
         List<NewsVO> voList = result.getRecords().stream()
-                .map(news -> convertToVO(news, currentUserId))
+                .map(news -> convertToVO(news, authorizationService.getCurrentUserId()))
                 .collect(Collectors.toList());
-        return new PageResult<>(voList, result.getTotal(), searchRequest.getPage(), searchRequest.getPageSize());
+
+        // 确保这里传入的是手动获取的 total
+        return new PageResult<>(voList, total, pageNum, pageSize);
     }
 
     @Override
     @Transactional
     @CacheEvict(value = "news", allEntries = true)
     public boolean adminDeleteNews(Long newsId) {
+        // 1. 获取当前用户ID
         Long currentUserId = authorizationService.getCurrentUserId();
-        // ==== 核心修改点：此方法在 AdminNewsController 中已有 @PreAuthorize("hasRole('ADMIN')")，所以可以移除此行 ====
-        // authorizationService.checkAdminPermission(currentUserId); // 删除或注释掉此行
 
+        // 2. 查询新闻
         News news = newsMapper.selectById(newsId);
-        if (news == null) throw new NewsNotFoundException(newsId);
+        if (news == null || news.getIsDeleted() == 1) {  // 重点检查这个条件
+            throw new NewsNotFoundException(newsId);
+        }
 
+        // 3. 记录旧值
         News oldNews = new News();
         BeanUtils.copyProperties(news, oldNews);
+
+        // 4. 执行软删除
         news.setIsDeleted(1);
         int result = newsMapper.updateById(news);
-        if(result > 0) recordOperation(currentUserId, OperationType.DELETE, newsId, "管理员删除新闻", oldNews, null);
+
+        // 5. 记录日志
+        if (result > 0) {
+            recordOperation(currentUserId, OperationType.DELETE, newsId,
+                    "管理员删除新闻", oldNews, null);
+        }
+
         return result > 0;
     }
 
@@ -302,9 +391,19 @@ public class NewsServiceImpl implements NewsService {
     @Override
     @Cacheable(key = "'viewTrend:' + #startDate + ':' + #endDate")
     public List<Map<String, Object>> getViewTrend(LocalDate startDate, LocalDate endDate) {
+        // 添加参数校验
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("开始日期和结束日期不能为null");
+        }
         Long currentUserId = authorizationService.getCurrentUserId();
-        // ==== 核心修改点：此方法在 AdminNewsController 中已有 @PreAuthorize("hasRole('ADMIN')")，所以可以移除此行 ====
-        // authorizationService.checkAdminPermission(currentUserId); // 删除或注释掉此行
+
+        // 添加日期交换逻辑
+        if (startDate.isAfter(endDate)) {
+            LocalDate temp = startDate;
+            startDate = endDate;
+            endDate = temp;
+        }
+
 
         return newsMapper.getViewTrend(startDate, endDate);
     }
