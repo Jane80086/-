@@ -134,12 +134,12 @@ onMounted(() => {
   <div class="review-page">
     <div class="header">
       <h1>审核管理</h1>
-      <button @click="router.push('/')" class="back-btn">返回首页</button>
+      <button @click="router.push('/meeting')" class="back-btn">返回首页</button>
     </div>
 
     <div v-if="!isAdmin" class="no-permission">
       <p>您没有权限访问审核管理页面</p>
-      <button @click="router.push('/')">返回首页</button>
+      <button @click="router.push('/meeting')">返回首页</button>
     </div>
 
     <div v-else>

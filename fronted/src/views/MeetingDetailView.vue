@@ -107,7 +107,7 @@ const processMeetingImageUrl = async (meeting) => {
 
 // 返回列表
 const goBack = () => {
-  router.push('/');
+  router.push('/meeting');
 };
 
 // 监听会议数据变化，自动处理图片URL
