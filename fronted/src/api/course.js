@@ -122,6 +122,14 @@ export const courseApi = {
     })
   },
 
+  // 获取课程审核日志
+  getReviewLog(courseId) {
+    return request({
+      url: `/api/course/${courseId}/review-log`,
+      method: 'get'
+    })
+  },
+
   // 获取我的课程统计
   getMyCourseStats() {
     return request({
@@ -135,6 +143,49 @@ export const courseApi = {
     return request({
       url: `/api/course/${courseId}/progress`,
       method: 'get'
+    })
+  },
+
+  // 获取课程评论
+  getComments(courseId) {
+    return request({
+      url: `/api/course/${courseId}/comments`,
+      method: 'get'
+    })
+  },
+
+  // 提交评论
+  submitComment(data) {
+    return request({
+      url: '/api/course/comments',
+      method: 'post',
+      data
+    })
+  },
+
+  // 获取AI问答列表
+  getAiQnaList(courseId) {
+    return request({
+      url: `/api/ai-questions/course/${courseId}`,
+      method: 'get'
+    })
+  },
+
+  // AI问答
+  aiAsk(data) {
+    return request({
+      url: '/api/ai-questions/ask',
+      method: 'post',
+      data
+    })
+  },
+
+  // AI优化课程内容
+  aiOptimize(data) {
+    return request({
+      url: '/ai/optimize',
+      method: 'post',
+      data
     })
   },
 }

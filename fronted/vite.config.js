@@ -22,6 +22,11 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true
       },
+      // AI问答接口
+      '/api/ai-questions': {
+        target: 'http://localhost:8090',
+        changeOrigin: true
+      },
       // 会议主模块（包括文件操作）
       '/api/meeting': {
         target: 'http://localhost:8082',
