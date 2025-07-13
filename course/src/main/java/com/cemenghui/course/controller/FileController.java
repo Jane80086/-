@@ -99,11 +99,10 @@ public class FileController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folder", required = false) String folder) {
         try {
-            // 如果没有指定folder，使用默认文件夹
             String targetFolder = folder != null ? folder : "general";
             String fileUrl = minioServiceImpl.uploadFile(file, targetFolder);
             Map<String, Object> result = new HashMap<>();
-            result.put("fileUrl", fileUrl);
+            result.put("url", fileUrl); // 关键：返回 url 字段，便于前端直接赋值
             result.put("fileName", file.getOriginalFilename());
             result.put("fileSize", file.getSize());
             result.put("folder", targetFolder);

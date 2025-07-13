@@ -127,10 +127,10 @@ const adminMenu = {
     { label: '发表动态', path: '/admin/news/publish', icon: UserFilled },
     { label: '动态统计', path: '/admin/news/stats', icon: UserFilled },
   ],
-  meeting: [
-    { label: '会议管理', path: '/admin/meeting', icon: Calendar },
-    { label: '会议统计', path: '/admin/meeting-stats', icon: DataAnalysis },
-  ],
+   meeting: [
+      { label: '会议管理', path: '/admin/meeting', icon: Calendar },
+      { label: '会议统计', path: '/admin/meeting-stats', icon: DataAnalysis },
+    ],
   more: [
     { label: '更多设置', path: '/admin/settings', icon: MoreFilled },
   ]

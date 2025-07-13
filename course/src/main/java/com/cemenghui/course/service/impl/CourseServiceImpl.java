@@ -13,6 +13,7 @@ import com.cemenghui.course.entity.CourseReviewHistory;
 import com.cemenghui.course.service.CourseService;
 import com.cemenghui.course.service.NotFoundException;
 import com.cemenghui.course.service.AIService;
+import com.cemenghui.course.vo.CoursePublishRecordVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
@@ -233,5 +234,21 @@ public class CourseServiceImpl implements CourseService {
         wrapper.eq(Course::getStatus, "PENDING"); // 0表示待审核状态
         wrapper.orderByDesc(Course::getCreatedTime);
         return courseDao.selectList(wrapper);
+    }
+
+    @Override
+    public List<CoursePublishRecordVO> getPublishRecords() {
+        List<Course> courses = courseDao.selectList(null); // 可根据实际需求筛选已发布课程
+        List<CoursePublishRecordVO> records = new java.util.ArrayList<>();
+        for (Course c : courses) {
+            CoursePublishRecordVO vo = new CoursePublishRecordVO();
+            vo.setCourseName(c.getTitle());
+            vo.setPublishTime(c.getCreatedTime() != null ? c.getCreatedTime().toString() : "");
+            vo.setReviewer(c.getReviewerName() != null ? c.getReviewerName() : "");
+            vo.setReviewResult("PUBLISHED".equals(c.getStatus()) ? "通过" : "未通过");
+            vo.setRemark(c.getRemark() != null ? c.getRemark() : "");
+            records.add(vo);
+        }
+        return records;
     }
 } 

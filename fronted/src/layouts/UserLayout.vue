@@ -122,10 +122,10 @@ const userMenu = {
     { label: '课程搜索', path: '/user/course', icon: Collection },
     { label: '我的课程', path: '/user/my-courses', icon: Reading },
   ],
-  meeting: [
-    { label: '会议管理', path: '/user/meeting', icon: Calendar },
-    { label: '会议统计', path: '/user/meeting/stats', icon: DataAnalysis },
-  ],
+   meeting: [
+      { label: '会议管理', path: '/user/meeting', icon: Calendar },
+      { label: '会议统计', path: '/user/meeting/stats', icon: DataAnalysis },
+    ],
   more: [
     { label: '个人设置', path: '/user/profile', icon: MoreFilled },
   ]

@@ -34,7 +34,7 @@ export default defineConfig({
       },
       // 会议模块的文件接口
       '/api/file': {
-        target: 'http://localhost:8082',
+        target: 'http://localhost:8081',
         changeOrigin: true
       },
       // 搜索相关接口

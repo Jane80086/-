@@ -410,11 +410,11 @@ export const adminApi = {
   },
 
   // 课程审核
-  reviewCourse(courseId, status, reason = '') {
+  reviewCourse(courseId, status, reason = '', reviewerId) {
     return request({
       url: `/api/admin/course/${courseId}/review`,
       method: 'post',
-      params: { status, reason }
+      params: { status, reason, reviewerId }
     })
   },
 

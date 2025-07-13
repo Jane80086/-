@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.cemenghui.course.entity.Review;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -177,21 +178,49 @@ public class AdminController {
      * 课程审核
      */
     @PostMapping("/course/{id}/review")
-    public Result reviewCourse(@PathVariable Long id, @RequestParam String status, @RequestParam(required = false) String reason, @RequestParam Long reviewerId) {
-        System.out.println("[审核接口] 收到参数: id=" + id + ", status=" + status + ", reason=" + reason + ", reviewerId=" + reviewerId);
+    public Result reviewCourse(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body,
+                               @RequestParam(required = false) String status,
+                               @RequestParam(required = false) String reason,
+                               @RequestParam(required = false) Long reviewerId) {
         try {
-            if ("approved".equalsIgnoreCase(status) || "PUBLISHED".equalsIgnoreCase(status)) {
-                reviewService.approveCourse(id, reviewerId);
+            // 优先从 body 取参数
+            String statusVal = status;
+            String reasonVal = reason;
+            Long reviewerIdVal = reviewerId;
+            if (body != null) {
+                if (body.get("status") != null) statusVal = body.get("status").toString();
+                if (body.get("reason") != null) reasonVal = body.get("reason").toString();
+                if (body.get("reviewerId") != null) {
+                    Object reviewerIdObj = body.get("reviewerId");
+                    if (reviewerIdObj instanceof Number) {
+                        reviewerIdVal = ((Number) reviewerIdObj).longValue();
+                    } else {
+                        reviewerIdVal = Long.valueOf(reviewerIdObj.toString());
+                    }
+                }
+            }
+            System.out.println("[审核接口] 收到参数: id=" + id + ", status=" + statusVal + ", reason=" + reasonVal + ", reviewerId=" + reviewerIdVal);
+            if (statusVal == null || reviewerIdVal == null) {
+                return Result.fail("参数缺失：status 或 reviewerId 不能为空");
+            }
+            if ("approved".equalsIgnoreCase(statusVal) || "PUBLISHED".equalsIgnoreCase(statusVal)) {
+                Review review = reviewService.approveCourse(id, reviewerIdVal);
+                if (review == null) {
+                    return Result.fail("审核失败：课程不存在或状态不正确（必须为PENDING）");
+                }
                 return Result.success("课程审核通过");
-            } else if ("rejected".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
-                reviewService.rejectCourse(id, reviewerId, reason);
+            } else if ("rejected".equalsIgnoreCase(statusVal) || "REJECTED".equalsIgnoreCase(statusVal)) {
+                Review review = reviewService.rejectCourse(id, reviewerIdVal, reasonVal);
+                if (review == null) {
+                    return Result.fail("驳回失败：课程不存在或状态不正确（必须为PENDING）");
+                }
                 return Result.success("课程已驳回");
             } else {
-                return Result.fail("未知审核状态: " + status);
+                return Result.fail("未知审核状态: " + statusVal);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.fail("课程审核失败: " + e.getMessage());
+            return Result.fail("审核接口异常: " + e.getMessage());
         }
     }
 

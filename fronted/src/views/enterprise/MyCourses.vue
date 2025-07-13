@@ -92,13 +92,17 @@
     <div class="publish-record-section" style="margin-top: 32px;">
       <h3 style="margin-bottom: 16px;">课程发布记录</h3>
       <el-table :data="publishRecords" border stripe>
-        <el-table-column prop="title" label="课程名" min-width="160" />
+        <el-table-column :prop="row => row.courseName || row.title" label="课程名" min-width="160">
+          <template #default="scope">
+            {{ scope.row.courseName || scope.row.title || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="publishTime" label="发布时间" min-width="160" />
         <el-table-column prop="reviewer" label="审核人" min-width="120" />
-        <el-table-column prop="result" label="审核结果" min-width="120">
+        <el-table-column prop="reviewResult" label="审核结果" min-width="120">
           <template #default="scope">
-            <el-tag v-if="scope.row.result === '通过'" type="success">通过</el-tag>
-            <el-tag v-else-if="scope.row.result === '未通过'" type="danger">未通过</el-tag>
+            <el-tag v-if="scope.row.reviewResult === '通过'" type="success">通过</el-tag>
+            <el-tag v-else-if="scope.row.reviewResult === '未通过'" type="danger">未通过</el-tag>
             <el-tag v-else type="info">审核中</el-tag>
           </template>
         </el-table-column>
@@ -420,14 +424,7 @@ async function loadAllReviewHistory() {
       const res = await courseApi.getReviewLog(course.id)
       console.log(`[MyCourses] getReviewLog(${course.id}) 响应:`, res)
       if (res.code === 200 && Array.isArray(res.data)) {
-        publishRecords.value.push(...res.data.map(item => ({
-          title: item.resource_name || '',
-          publishTime: item.audit_time || '',
-          reviewer: item.reviewer_name || (item.reviewer_id ? `ID:${item.reviewer_id}` : ''),
-          result: item.status === 'APPROVED' ? '通过' : item.status === 'REJECTED' ? '未通过' : '审核中',
-          remark: item.comment || ''
-        })))
-        console.log('[MyCourses] publishRecords after push:', publishRecords.value)
+        publishRecords.value.push(...res.data)
       }
     } catch (e) {
       console.error(`[MyCourses] getReviewLog(${course.id}) error:`, e)

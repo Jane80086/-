@@ -129,17 +129,17 @@ router.beforeEach((to, from, next) => {
   console.log('=== 路由守卫 ===')
   console.log('目标路径:', to.path)
   console.log('来源路径:', from.path)
-  
+
   const userStore = useUserStore()
   const role = userStore.user?.role
   console.log('用户角色:', role)
-  
+
   if (to.path === '/') {
     if (role === 'admin') return next('/admin/dashboard')
     if (role === 'enterprise') return next('/enterprise/home')
     return next('/user/home')
   }
-  
+
   console.log('路由守卫通过，继续导航')
   next()
 })
