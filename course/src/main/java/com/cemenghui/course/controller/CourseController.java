@@ -797,12 +797,14 @@ public class CourseController {
             course = courseService.getCourseDetail(id);
         } catch (com.cemenghui.course.service.NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write("Course not found");
+            response.getOutputStream().write("Course not found".getBytes());
+            response.getOutputStream().flush();
             return;
         }
         if (course == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write("Course not found");
+            response.getOutputStream().write("Course not found".getBytes());
+            response.getOutputStream().flush();
             return;
         }
         String videoUrl = course.getVideoUrl();
@@ -865,7 +867,8 @@ public class CourseController {
             }
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("Video streaming error: " + e.getMessage());
+            response.getOutputStream().write(("Video streaming error: " + e.getMessage()).getBytes());
+            response.getOutputStream().flush();
         }
     }
 

@@ -507,13 +507,14 @@ const submitAiQuestion = async () => {
   
   try {
     aiLoading.value = true
-    // const courseId = route.params.id // 不再传递courseId给aiAsk
+    const courseId = route.params.id
     const response = await courseApi.aiAsk({ 
-      question: aiQuestion.value 
+      question: aiQuestion.value,
+      courseId: parseInt(courseId)
     })
     
     if (response.code === 200) {
-      aiAnswer.value = response.data.aiAnswer || response.data.answer || 'AI回复已生成'
+      aiAnswer.value = response.data.answer || 'AI回复已生成'
       aiQuestion.value = ''
       await loadAiQnaList()
       ElMessage.success('AI回复已生成')

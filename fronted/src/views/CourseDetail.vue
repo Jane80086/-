@@ -21,8 +21,8 @@
     </div>
     <el-card class="ai-qa">
       <h4>AI问答</h4>
-      <el-input v-model="question" placeholder="请输入你的问题..." style="width:300px" @keyup.enter="askAI" />
-      <el-button type="primary" @click="askAI" style="margin-left:8px;">提问</el-button>
+      <el-input v-model="question" placeholder="请输入你的问题..." style="width:300px" @keyup.enter="askAIHandler" />
+      <el-button type="primary" @click="askAIHandler" style="margin-left:8px;">提问</el-button>
       <div v-if="answer" style="margin-top:12px;color:#409EFF;">AI：{{ answer }}</div>
     </el-card>
   </div>
@@ -34,6 +34,7 @@ import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { VideoPlay } from '@element-plus/icons-vue'
+import { askAI } from '@/api/register'
 
 const route = useRoute()
 const router = useRouter()
@@ -56,11 +57,11 @@ const startLearning = () => {
   router.push(`/course/${route.params.id}/play`)
 }
 
-const askAI = async () => {
+const askAIHandler = async () => {
   if (!question.value) return
   try {
-    const res = await axios.post('/api/ai/ask', { question: question.value, courseId: course.value.id })
-    answer.value = res.data.data
+    const res = await askAI(question.value)
+    answer.value = res.answer
   } catch (e) {
     answer.value = 'AI暂时无法回答，请稍后再试。'
   }

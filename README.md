@@ -1,201 +1,352 @@
-# 课程管理系统说明文档
+# 课程管理系统完整说明文档
 
 ---
 
-## 一、项目简介
+## 📋 项目概述
 
 本系统为多模块课程管理平台，包含注册、登录、用户管理、课程、新闻、会议、系统等子模块，前后端分离，支持统一用户体系和金仓数据库。
 
+### 🎯 核心功能
+- **课程管理** - 课程创建、编辑、审核、播放
+- **AI问答** - 基于Dify的智能问答系统
+- **会议管理** - 会议创建、审核、管理
+- **新闻管理** - 新闻发布、管理
+- **用户管理** - 统一用户体系，支持多种用户类型
+- **文件管理** - MinIO对象存储集成
+
 ---
 
-## 二、技术栈
-- 后端：Java 11+, Spring Boot, MyBatis, Maven
-- 前端：Vue 3, Element Plus, Vite
-- 数据库：KingbaseES（金仓数据库）
+## 🛠️ 技术栈
+
+### 后端技术
+- **Java 11+** - 核心开发语言
+- **Spring Boot** - 应用框架
+- **MyBatis Plus** - ORM框架
+- **Maven** - 项目管理
+- **KingbaseES** - 金仓数据库
+- **Redis** - 缓存服务
+- **MinIO** - 对象存储
+
+### 前端技术
+- **Vue 3** - 前端框架
+- **Element Plus** - UI组件库
+- **Vite** - 构建工具
+- **Axios** - HTTP客户端
+
+### AI服务
+- **Dify** - AI问答服务
+- **Python FastAPI** - AI服务后端
 
 ---
 
-## 三、环境依赖
+## 🚀 快速开始
+
+### 1. 环境要求
 - JDK 11 及以上
 - Node.js 16+、npm/yarn
 - KingbaseES（金仓数据库）
+- Redis
+- MinIO
 
----
-
-## 四、数据库设置与初始化
-
-### 1. 创建数据库
-
-建议使用金仓数据库管理工具，或执行：
+### 2. 数据库初始化
 ```sql
+-- 创建数据库
 CREATE DATABASE course_manager;
+
+-- 执行统一数据库脚本
+\i course_manager_kingbase_complete.sql
 ```
 
-### 2. 导入数据库结构
+### 3. 启动服务
 
-1. 连接到`course_manager`数据库
-2. 执行`course_manager_kingbase_complete.sql`脚本
+#### 后端服务
+```bash
+# 启动主应用
+cd main-app && mvn spring-boot:run
 
-### 3. 启动步骤
+# 启动课程模块
+cd course && mvn spring-boot:run
 
-1. 创建数据库
-2. 导入表结构
-3. 运行`mvn clean compile`编译项目
-4. 启动后端服务
+# 启动会议模块
+cd meeting && mvn spring-boot:run
 
-### 4. 注意事项
-- 确保金仓数据库服务已启动
-- 数据库连接参数正确（host: localhost, port: 54321）
-- 用户权限足够
+# 启动新闻模块
+cd news && mvn spring-boot:run
 
----
-
-## 五、数据库表结构分析与优化
-
-### 1. 优化目标
-- 减少表数量（11→6）
-- 统一用户、审核、日志、历史记录表
-- 提高可维护性和扩展性
-
-### 2. 优化前后对比
-| 模块 | 优化前 | 优化后 |
-|------|--------|--------|
-| 用户 | user_info, admin_user, enterprise_user, system_user | users, enterprise |
-| 审核 | course_review_history, meeting_review_record, review | audit_records |
-| 日志 | user_view_log, user_operation_log | user_view_logs, user_operation_logs |
-| 历史 | course_history, user_modify_history | history_records |
-
-### 3. 统一表结构示例
-
-#### users 表
-```sql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    real_name VARCHAR(100),
-    email VARCHAR(255),
-    phone VARCHAR(20),
-    user_type VARCHAR(20) NOT NULL, -- ADMIN, ENTERPRISE, NORMAL, SYSTEM
-    status INTEGER DEFAULT 1,
-    department VARCHAR(100),
-    nickname VARCHAR(100),
-    is_remembered BOOLEAN DEFAULT FALSE,
-    enterprise_id VARCHAR(64),
-    dynamic_code VARCHAR(20),
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted INTEGER DEFAULT 0
-);
+# 启动系统模块
+cd system && mvn spring-boot:run
 ```
 
-#### audit_records 表
-```sql
-CREATE TABLE audit_records (
-    id SERIAL PRIMARY KEY,
-    resource_type VARCHAR(50) NOT NULL, -- COURSE, MEETING, NEWS, USER
-    resource_id BIGINT NOT NULL,
-    resource_name VARCHAR(255),
-    action VARCHAR(50) NOT NULL, -- APPROVE, REJECT, MODIFY, DELETE
-    reviewer_id BIGINT NOT NULL,
-    reviewer_name VARCHAR(100),
-    status VARCHAR(20) NOT NULL, -- PENDING, APPROVED, REJECTED
-    comment TEXT,
-    old_value TEXT,
-    new_value TEXT,
-    audit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+#### AI服务
+```bash
+# 启动AI问答服务
+cd ai && uvicorn main:app --host 0.0.0.0 --port 8090 --reload
 ```
 
-#### user_view_logs 表
-```sql
-CREATE TABLE user_view_logs (
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT,
-    resource_type VARCHAR(50) NOT NULL, -- COURSE, NEWS, MEETING
-    resource_id BIGINT NOT NULL,
-    resource_title VARCHAR(255),
-    ip_address VARCHAR(50),
-    user_agent VARCHAR(500),
-    session_id VARCHAR(100),
-    view_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### user_operation_logs 表
-```sql
-CREATE TABLE user_operation_logs (
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    operation_type VARCHAR(50) NOT NULL, -- CREATE, UPDATE, DELETE, PUBLISH, AUDIT
-    resource_type VARCHAR(50) NOT NULL, -- COURSE, NEWS, MEETING, USER
-    resource_id BIGINT NOT NULL,
-    resource_title VARCHAR(255),
-    operation_desc VARCHAR(500),
-    old_value TEXT,
-    new_value TEXT,
-    ip_address VARCHAR(50),
-    operation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    operation_result INTEGER DEFAULT 1
-);
-```
-
-#### history_records 表
-```sql
-CREATE TABLE history_records (
-    id SERIAL PRIMARY KEY,
-    resource_type VARCHAR(50) NOT NULL, -- COURSE, USER, ENTERPRISE
-    resource_id BIGINT NOT NULL,
-    action VARCHAR(50) NOT NULL, -- VIEW, MODIFY, DELETE
-    user_id BIGINT,
-    old_value TEXT,
-    new_value TEXT,
-    record_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+#### 前端服务
+```bash
+# 启动前端开发服务器
+cd fronted && npm run dev
 ```
 
 ---
 
-## 六、数据库优化实施指南
+## 📁 项目结构
 
-### 1. 备份与测试
-- 备份原有数据库
-- 在测试环境验证新表结构和迁移脚本
-
-### 2. 数据迁移
-- 按照分析报告中的迁移SQL，将旧表数据迁移到新表
-- 验证迁移后数据完整性
-
-### 3. 功能测试
-- 验证用户、课程、会议、新闻等主要功能
-- 检查审核、日志、历史记录等功能
-
-### 4. 生产部署
-- 停止应用，备份生产库，执行迁移，重启应用
+```
+course_manager/
+├── main-app/                 # 主应用模块
+├── course/                   # 课程管理模块
+├── meeting/                  # 会议管理模块
+├── news/                     # 新闻管理模块
+├── system/                   # 系统管理模块
+├── fronted/                  # 前端应用
+├── ai/                       # AI问答服务
+├── minio/                    # MinIO配置
+└── docs/                     # 文档目录
+```
 
 ---
 
-## 七、常见问题与解决方案
+## 🔧 配置说明
 
-### 1. 数据库不存在
-- 检查数据库是否已创建，连接参数是否正确
+### 数据库配置
+所有模块统一使用 `course_manager` 数据库：
 
-### 2. 方言或驱动错误
-- 确认JPA配置和依赖已正确设置为Kingbase/PostgreSQL
+```yaml
+spring:
+  datasource:
+    url: jdbc:kingbase8://localhost:54321/course_manager
+    username: system
+    password: 123456
+    driver-class-name: com.kingbase8.Driver
+```
 
-### 3. 迁移后数据缺失
-- 检查迁移脚本执行日志，核对数据量
+### MinIO配置
+```yaml
+minio:
+  endpoint: http://localhost:9000
+  accessKey: minioadmin
+  secretKey: minioadmin
+  bucket: course-files
+```
+
+### AI服务配置
+```python
+# config.py
+DIFY_API_KEY = "your-dify-api-key"
+DIFY_BASE_URL = "http://localhost:8088/v1"
+MCP_API_URL = "http://localhost:6277/ai-qa"
+```
 
 ---
 
-## 八、附录
+## 🎯 核心功能详解
 
-- 详细表结构、索引、视图、存储过程请见 `course_manager_kingbase_complete.sql`
-- 如需回滚，使用备份文件恢复
+### 1. 课程管理
+- **课程创建** - 支持视频上传、封面设置
+- **课程审核** - 管理员审核流程
+- **课程播放** - HTML5视频播放器，支持进度保存
+- **AI优化** - 自动优化课程标题和描述
+- **学习记录** - 学习进度跟踪和统计
+
+### 2. AI问答系统
+- **智能问答** - 基于Dify的课程相关问题回答
+- **历史记录** - 问答历史管理
+- **多后端支持** - 支持Dify和MCP后端
+- **编码优化** - 解决中文编码问题
+
+### 3. 会议管理
+- **会议创建** - 支持图片上传和内容编辑
+- **审核流程** - 管理员审核机制
+- **状态管理** - 待审核、已通过、已拒绝状态
+- **历史记录** - 审核历史追踪
+
+### 4. 用户管理
+- **统一用户体系** - 支持管理员、企业用户、普通用户
+- **权限管理** - 基于用户类型的权限控制
+- **企业信息** - 企业工商信息管理
+- **第三方账户** - 第三方平台账户绑定
 
 ---
 
-> 本文档整合了所有数据库相关说明、分析、实施和常见问题，作为唯一权威说明文档。
+## 🔍 API接口
+
+### 课程相关API
+- `GET /api/course/list` - 获取课程列表
+- `POST /api/course/create` - 创建课程
+- `GET /api/course/{id}` - 获取课程详情
+- `POST /api/course/{id}/submit-review` - 提交审核
+
+### AI问答API
+- `POST /api/ai-questions/ask` - 提交AI问题
+- `GET /api/ai-questions/course/{courseId}` - 获取课程问题列表
+
+### 会议相关API
+- `GET /api/meeting/list` - 获取会议列表
+- `POST /api/meeting/create` - 创建会议
+- `POST /api/meeting/{id}/review` - 审核会议
+
+### 文件上传API
+- `POST /api/file/upload` - 文件上传
+- `GET /api/file/presigned-url` - 获取预签名URL
+
+---
+
+## 🛡️ 安全配置
+
+### JWT认证
+```yaml
+app:
+  jwt:
+    secret: your-secret-key-here
+    expiration: 86400000
+    refresh-expiration: 604800000
+```
+
+### 跨域配置
+```java
+@Configuration
+public class CorsConfig {
+    @Bean
+    public CorsFilter corsFilter() {
+        // 允许前端域名访问
+    }
+}
+```
+
+---
+
+## 📊 数据库设计
+
+### 统一数据库架构
+- **用户表** - 统一用户信息管理
+- **课程表** - 课程基本信息
+- **会议表** - 会议信息管理
+- **新闻表** - 新闻内容管理
+- **审核表** - 统一审核记录
+- **日志表** - 操作日志记录
+
+### 表关联关系
+- 所有涉及用户的表都通过`user_id`字段关联
+- 外键约束确保数据一致性
+- 逻辑删除支持数据安全
+
+---
+
+## 🔧 故障排除
+
+### 常见问题
+
+#### 1. 数据库连接失败
+- 检查数据库服务是否启动
+- 验证连接参数是否正确
+- 确认数据库用户权限
+
+#### 2. MinIO连接失败
+- 检查MinIO服务是否启动
+- 验证accessKey和secretKey
+- 确认bucket是否存在
+
+#### 3. AI服务异常
+- 检查Dify服务是否可用
+- 验证API密钥是否正确
+- 确认网络连接正常
+
+#### 4. 前端超时错误
+- 检查后端服务是否启动
+- 验证代理配置是否正确
+- 确认API路径是否正确
+
+### 日志查看
+```bash
+# 查看应用日志
+tail -f logs/application.log
+
+# 查看错误日志
+tail -f logs/error.log
+```
+
+---
+
+## 📈 性能优化
+
+### 数据库优化
+- 为常用查询字段创建索引
+- 使用连接池优化数据库连接
+- 定期清理无用数据
+
+### 缓存策略
+- 使用Redis缓存热点数据
+- 实现合理的缓存过期策略
+- 避免缓存穿透和雪崩
+
+### 前端优化
+- 使用CDN加速静态资源
+- 实现懒加载和分页
+- 优化图片和视频加载
+
+---
+
+## 🔄 部署指南
+
+### 生产环境部署
+1. **环境准备** - 安装JDK、Node.js、数据库等
+2. **数据库初始化** - 执行数据库脚本
+3. **配置文件** - 修改生产环境配置
+4. **服务启动** - 启动所有后端服务
+5. **前端部署** - 构建并部署前端应用
+6. **监控配置** - 配置日志和监控
+
+### Docker部署
+```dockerfile
+# 后端服务Dockerfile示例
+FROM openjdk:11-jre-slim
+COPY target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+```
+
+---
+
+## 📞 技术支持
+
+### 文档资源
+- `API_TEST_GUIDE.md` - API测试指南
+- `COURSE_PLAYER_README.md` - 课程播放功能说明
+- `database_migration_guide.md` - 数据库迁移指南
+
+### 联系方式
+- 项目维护者：[维护者信息]
+- 技术支持：[技术支持邮箱]
+- 问题反馈：[问题反馈地址]
+
+---
+
+## 📝 更新日志
+
+### v1.0.0 (2024-07-13)
+- ✅ 完成多模块整合
+- ✅ 实现统一用户体系
+- ✅ 集成AI问答功能
+- ✅ 优化数据库架构
+- ✅ 完善前端功能
+
+### 主要更新
+- 数据库从多库整合为单库
+- System模块使用main-app统一User实体
+- 集成Dify AI问答服务
+- 优化MinIO文件存储
+- 完善课程播放功能
+
+---
+
+## 📄 许可证
+
+本项目采用 [许可证类型] 许可证，详情请查看 LICENSE 文件。
+
+---
+
+> 本文档整合了项目的所有重要信息，包括架构设计、部署指南、故障排除等，作为项目的权威说明文档。
 
 

@@ -93,6 +93,8 @@ public class MinioServiceImpl {
                     .build()
             );
         } catch (Exception e) {
+            System.err.println("[MinIO] 文件下载失败: " + objectName + ", 错误: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("文件下载失败: " + e.getMessage());
         }
     }
@@ -112,11 +114,13 @@ public class MinioServiceImpl {
             );
             return stat.size();
         } catch (io.minio.errors.ErrorResponseException e) {
+            System.err.println("[MinIO] 获取文件大小失败: " + objectName + ", 错误: " + e.getMessage());
             if (e.errorResponse().code().equals("NoSuchKey")) {
                 return 0L;
             }
             throw new RuntimeException("获取文件大小失败: " + e.getMessage());
         } catch (Exception e) {
+            System.err.println("[MinIO] 获取文件大小失败: " + objectName + ", 错误: " + e.getMessage());
             throw new RuntimeException("获取文件大小失败: " + e.getMessage());
         }
     }
@@ -132,11 +136,13 @@ public class MinioServiceImpl {
         try {
             long fileSize = getFileSize(objectName);
             if (fileSize == 0) {
+                System.err.println("[MinIO] 文件不存在: " + objectName);
                 throw new RuntimeException("文件不存在: " + objectName);
             }
             if (start < 0) start = 0;
             if (end >= fileSize) end = fileSize - 1;
             if (start > end) start = 0;
+            System.out.printf("[MinIO] 分片下载: %s [%d-%d/%d]\n", objectName, start, end, fileSize);
             return minioClient.getObject(
                 GetObjectArgs.builder()
                     .bucket(bucketName)
@@ -146,6 +152,8 @@ public class MinioServiceImpl {
                     .build()
             );
         } catch (Exception e) {
+            System.err.println("[MinIO] 分片下载失败: " + objectName + ", 错误: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("分片下载失败: " + e.getMessage());
         }
     }

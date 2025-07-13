@@ -128,15 +128,52 @@ const enterprise = {
   }
 }
 
-export function askAI(question) {
-  return fetch('/api/ai/ask', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ question }),
-  })
-    .then(res => res.json());
+export function askAI(question, ai_backend = "dify") {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      resolve({ answer: 'AI服务超时，请稍后再试。' });
+    }, 120000); // 120秒
+    
+    fetch('http://localhost:8090/api/ai-questions/ask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ question, ai_backend }),
+      signal: controller.signal
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        clearTimeout(timeoutId);
+        // 检查后端返回的错误信息
+        if (data && data.error) {
+          resolve({ answer: `AI服务异常: ${data.error}` });
+          return;
+        }
+        if (data && data.data && data.data.answer) {
+          resolve({ answer: data.data.answer });
+        } else {
+          resolve({ answer: 'AI无回复' });
+        }
+      })
+      .catch(e => {
+        clearTimeout(timeoutId);
+        if (e.name === 'AbortError') {
+          resolve({ answer: 'AI服务超时，请稍后再试。' });
+        } else {
+          // 不直接显示原始错误信息，避免编码问题
+          console.error('AI服务异常:', e);
+          resolve({ answer: 'AI服务暂时不可用，请稍后再试。' });
+        }
+      });
+  });
 }
 
 export function getAIWelcome(userInfo) {

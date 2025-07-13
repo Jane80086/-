@@ -4,7 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 // 创建axios实例
 const service = axios.create({
   baseURL: '', // 修正：不要加 /，防止出现 //api/xxx
-  timeout: 30000, // 30秒，提升AI问答等慢接口的容忍时间
+  timeout: 120000, // 120秒，提升AI问答等慢接口的容忍时间
 })
 
 // 请求拦截器

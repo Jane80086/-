@@ -39,8 +39,8 @@ public class AiQuestionServiceImpl implements AiQuestionService {
             question.setQuestion(questionContent);
             question.setCreatedAt(LocalDateTime.now());
             
-            // 2. 快速生成AI回答（避免超时）
-            String aiAnswer = generateQuickAnswer(questionContent);
+            // 2. 调用Dify API获取AI回答
+            String aiAnswer = callDifyWorkflow(questionContent, courseId);
             question.setAiAnswer(aiAnswer);
             
             // 3. 保存到数据库
@@ -50,12 +50,13 @@ public class AiQuestionServiceImpl implements AiQuestionService {
             
         } catch (Exception e) {
             System.err.println("AI问答失败: " + e.getMessage());
+            e.printStackTrace();
             // 返回一个默认回答，避免前端超时
             Question question = new Question();
             question.setCourseId(courseId);
             question.setUserId(userId);
             question.setQuestion(questionContent);
-            question.setAiAnswer("感谢您的提问！这是一个很好的问题，建议您仔细学习相关章节内容。");
+            question.setAiAnswer("AI服务暂时不可用，请稍后再试。如果问题紧急，建议您仔细学习相关章节内容或联系课程管理员。");
             question.setCreatedAt(LocalDateTime.now());
             return question;
         }
@@ -142,22 +143,40 @@ public class AiQuestionServiceImpl implements AiQuestionService {
      */
     private String callDifyWorkflow(String question, Long courseId) {
         try {
+            System.out.println("开始调用Dify API，问题: " + question);
+            System.out.println("Dify配置 - URL: " + difyBaseUrl + ", API Key: " + difyApiKey.substring(0, 10) + "...");
+            
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + difyApiKey);
+            
             Map<String, Object> body = new HashMap<>();
             body.put("model", "gpt-3.5-turbo");
+            body.put("temperature", 0.7);
+            body.put("max_tokens", 1000);
+            
             List<Map<String, String>> messages = new java.util.ArrayList<>();
+            // 添加系统提示，让AI更好地理解这是课程问答场景
+            messages.add(Map.of("role", "system", "content", 
+                "你是一个专业的课程助教，请针对用户关于课程内容的问题提供准确、详细、易懂的回答。回答要简洁明了，重点突出，并鼓励学生深入学习。"));
             messages.add(Map.of("role", "user", "content", question));
             body.put("messages", messages);
+            
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            
+            System.out.println("发送请求到: " + difyBaseUrl + "/chat/completions");
             ResponseEntity<Map> response = restTemplate.postForEntity(
                 difyBaseUrl + "/chat/completions",
                 entity,
                 Map.class
             );
+            
+            System.out.println("Dify API响应状态: " + response.getStatusCode());
+            
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> result = response.getBody();
+                System.out.println("Dify API响应内容: " + result);
+                
                 if (result.containsKey("choices")) {
                     Object choicesObj = result.get("choices");
                     if (choicesObj instanceof List && !((List<?>) choicesObj).isEmpty()) {
@@ -167,15 +186,26 @@ public class AiQuestionServiceImpl implements AiQuestionService {
                             Object messageObj = firstMap.get("message");
                             if (messageObj instanceof Map) {
                                 Object content = ((Map<?, ?>) messageObj).get("content");
-                                if (content != null) return content.toString();
+                                if (content != null) {
+                                    String answer = content.toString();
+                                    System.out.println("AI回答成功: " + answer.substring(0, Math.min(100, answer.length())) + "...");
+                                    return answer;
+                                }
                             }
                         }
                     }
                 }
+                
+                // 如果响应格式不符合预期，返回原始响应用于调试
+                System.out.println("Dify API响应格式不符合预期，返回原始响应");
+                return "AI服务响应格式异常，请稍后重试。";
+            } else {
+                System.out.println("Dify API请求失败，状态码: " + response.getStatusCode());
+                return "AI服务请求失败，请稍后重试。";
             }
-            return "AI服务暂时不可用，请稍后重试。";
         } catch (Exception e) {
             System.err.println("调用Dify失败: " + e.getMessage());
+            e.printStackTrace();
             return "AI服务暂时不可用，请稍后重试。";
         }
     }
